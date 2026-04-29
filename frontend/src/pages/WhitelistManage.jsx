@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
+import { useNavigate, useParams } from 'react-router-dom'
 import { getWhitelist, createWhitelist, addEntry, updateEntry, deleteEntry } from '../api/whitelist'
 import { useToast } from '../components/Toast'
 
@@ -97,10 +96,9 @@ function EntryForm({ schoolId, editing, onCancel }) {
 
 export default function WhitelistManage() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { schoolId } = useParams()
   const toast = useToast()
   const queryClient = useQueryClient()
-  const schoolId = user?.schoolId
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState(null)
 
@@ -132,13 +130,13 @@ export default function WhitelistManage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       <button
-        onClick={() => navigate('/school-admin')}
+        onClick={() => navigate(`/admin/schools/${schoolId}`)}
         className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-6 transition"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
-        대시보드로
+        학교 상세로
       </button>
 
       <div className="flex items-center justify-between mb-6">

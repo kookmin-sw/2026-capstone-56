@@ -6,48 +6,33 @@ const { requireRole } = require('../middleware/auth')
 const router = express.Router({ mergeParams: true })
 const prisma = new PrismaClient()
 
-const SCHOOL_ADMIN = requireRole('SCHOOL_ADMIN', 'OPERATOR')
+const OPERATOR = requireRole('OPERATOR')
 
 function isValidEntry(value) {
-  // "@domain.ac.kr" 또는 "user@domain.ac.kr" 형식
   if (value.startsWith('@')) return /^@[\w.-]+\.[a-z]{2,}$/.test(value)
   return /^[^\s@]+@[\w.-]+\.[a-z]{2,}$/.test(value)
 }
 
 function matchesWhitelist(email, entries) {
   const [, domain] = email.split('@')
-  return entries.some(e =>
-    e.value === email || e.value === `@${domain}`
-  )
+  return entries.some(e => e.value === email || e.value === `@${domain}`)
 }
 
 // GET /api/schools/:schoolId/whitelist
-router.get('/', authMiddleware, SCHOOL_ADMIN, async (req, res, next) => {
+router.get('/', authMiddleware, OPERATOR, async (req, res, next) => {
   try {
-    const { schoolId } = req.params
-
-    if (req.user.role === 'SCHOOL_ADMIN' && req.user.schoolId !== schoolId) {
-      return res.status(403).json({ message: '다른 학교의 화이트리스트에 접근할 수 없습니다.' })
-    }
-
     const whitelist = await prisma.whitelist.findUnique({
-      where: { schoolId },
+      where: { schoolId: req.params.schoolId },
       include: { entries: { orderBy: { createdAt: 'asc' } } },
     })
-
     res.json(whitelist || null)
   } catch (err) { next(err) }
 })
 
-// POST /api/schools/:schoolId/whitelist — 화이트리스트 최초 생성
-router.post('/', authMiddleware, SCHOOL_ADMIN, async (req, res, next) => {
+// POST /api/schools/:schoolId/whitelist — 최초 생성
+router.post('/', authMiddleware, OPERATOR, async (req, res, next) => {
   try {
     const { schoolId } = req.params
-
-    if (req.user.role === 'SCHOOL_ADMIN' && req.user.schoolId !== schoolId) {
-      return res.status(403).json({ message: '다른 학교의 화이트리스트에 접근할 수 없습니다.' })
-    }
-
     const existing = await prisma.whitelist.findUnique({ where: { schoolId } })
     if (existing) return res.status(409).json({ message: '이미 화이트리스트가 존재합니다.' })
 
@@ -60,14 +45,10 @@ router.post('/', authMiddleware, SCHOOL_ADMIN, async (req, res, next) => {
 })
 
 // POST /api/schools/:schoolId/whitelist/entries — 항목 추가
-router.post('/entries', authMiddleware, SCHOOL_ADMIN, async (req, res, next) => {
+router.post('/entries', authMiddleware, OPERATOR, async (req, res, next) => {
   try {
     const { schoolId } = req.params
     const { value } = req.body
-
-    if (req.user.role === 'SCHOOL_ADMIN' && req.user.schoolId !== schoolId) {
-      return res.status(403).json({ message: '다른 학교의 화이트리스트에 접근할 수 없습니다.' })
-    }
 
     if (!value || !isValidEntry(value.trim())) {
       return res.status(400).json({ message: '유효하지 않은 형식입니다. (예: @kookmin.ac.kr 또는 user@kookmin.ac.kr)' })
@@ -87,14 +68,10 @@ router.post('/entries', authMiddleware, SCHOOL_ADMIN, async (req, res, next) => 
 })
 
 // PUT /api/schools/:schoolId/whitelist/entries/:entryId — 항목 수정
-router.put('/entries/:entryId', authMiddleware, SCHOOL_ADMIN, async (req, res, next) => {
+router.put('/entries/:entryId', authMiddleware, OPERATOR, async (req, res, next) => {
   try {
     const { schoolId, entryId } = req.params
     const { value } = req.body
-
-    if (req.user.role === 'SCHOOL_ADMIN' && req.user.schoolId !== schoolId) {
-      return res.status(403).json({ message: '다른 학교의 화이트리스트에 접근할 수 없습니다.' })
-    }
 
     if (!value || !isValidEntry(value.trim())) {
       return res.status(400).json({ message: '유효하지 않은 형식입니다.' })
@@ -120,13 +97,9 @@ router.put('/entries/:entryId', authMiddleware, SCHOOL_ADMIN, async (req, res, n
 })
 
 // DELETE /api/schools/:schoolId/whitelist/entries/:entryId — 항목 삭제
-router.delete('/entries/:entryId', authMiddleware, SCHOOL_ADMIN, async (req, res, next) => {
+router.delete('/entries/:entryId', authMiddleware, OPERATOR, async (req, res, next) => {
   try {
     const { schoolId, entryId } = req.params
-
-    if (req.user.role === 'SCHOOL_ADMIN' && req.user.schoolId !== schoolId) {
-      return res.status(403).json({ message: '다른 학교의 화이트리스트에 접근할 수 없습니다.' })
-    }
 
     const whitelist = await prisma.whitelist.findUnique({ where: { schoolId } })
     if (!whitelist) return res.status(404).json({ message: '화이트리스트가 없습니다.' })

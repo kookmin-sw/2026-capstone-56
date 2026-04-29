@@ -104,12 +104,25 @@ export default function Register() {
             <div>
               <label className="label">비밀번호</label>
               <input
-                {...register('password', { required: '비밀번호를 입력하세요', minLength: { value: 6, message: '6자 이상 입력하세요' } })}
+                {...register('password', { required: '비밀번호를 입력하세요', minLength: { value: 8, message: '8자 이상 입력하세요' } })}
                 type="password"
-                placeholder="6자 이상"
+                placeholder="8자 이상"
                 className="input"
               />
               {errors.password && <p className="text-red-500 text-xs mt-1.5">{errors.password.message}</p>}
+            </div>
+            <div>
+              <label className="label">비밀번호 확인</label>
+              <input
+                {...register('confirm', {
+                  required: '비밀번호 확인을 입력하세요',
+                  validate: (v) => v === watch('password') || '비밀번호가 일치하지 않습니다'
+                })}
+                type="password"
+                placeholder="비밀번호 재입력"
+                className="input"
+              />
+              {errors.confirm && <p className="text-red-500 text-xs mt-1.5">{errors.confirm.message}</p>}
             </div>
             <div className="flex flex-col gap-2">
               <div className="flex items-start gap-2.5">

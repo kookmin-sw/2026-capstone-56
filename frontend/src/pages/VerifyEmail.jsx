@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { verifyEmail } from '../api/auth'
 
@@ -6,9 +6,12 @@ export default function VerifyEmail() {
   const [params] = useSearchParams()
   const token = params.get('token')
   const [status, setStatus] = useState('loading') // loading | success | error
+  const called = useRef(false)
 
   useEffect(() => {
     if (!token) { setStatus('error'); return }
+    if (called.current) return
+    called.current = true
     verifyEmail(token)
       .then(() => setStatus('success'))
       .catch(() => setStatus('error'))

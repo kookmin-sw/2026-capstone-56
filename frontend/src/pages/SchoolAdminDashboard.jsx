@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getMySchoolUsers, updateMySchoolUserRole } from '../api/schoolAdmin'
 import { useToast } from '../components/Toast'
@@ -66,7 +65,6 @@ function RoleSelect({ user }) {
 }
 
 export default function SchoolAdminDashboard() {
-  const navigate = useNavigate()
   const { user: me } = useAuth()
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
@@ -89,18 +87,13 @@ export default function SchoolAdminDashboard() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {school?.name ?? '내 학교'} 관리
-          </h1>
-          <p className="text-sm text-gray-400 mt-0.5">
-            {me?.name} · 학교 총 관리자
-          </p>
-        </div>
-        <button onClick={() => navigate('/school-admin/whitelist')} className="btn-secondary text-sm">
-          화이트리스트 관리
-        </button>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">
+          {school?.name ?? '내 학교'} 관리
+        </h1>
+        <p className="text-sm text-gray-400 mt-0.5">
+          {me?.name} · 학교 총 관리자
+        </p>
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-6">

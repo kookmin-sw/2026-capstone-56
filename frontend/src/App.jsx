@@ -11,32 +11,30 @@ import SchoolManage from './pages/SchoolManage'
 import SchoolDetail from './pages/SchoolDetail'
 import SchoolAdminDashboard from './pages/SchoolAdminDashboard'
 import WhitelistManage from './pages/WhitelistManage'
-
-function Home() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">사용자 관리 도메인</h1>
-        <p className="text-gray-500 text-sm">로그인/회원가입 기능 테스트 페이지</p>
-      </div>
-    </div>
-  )
-}
+import Home from './pages/Home'
+import Profile from './pages/Profile'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
+import Header from './components/Header'
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#e9e4ff]">
+      <Header />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/register/kakao" element={<KakaoRegister />} />
         <Route path="/auth/kakao/callback" element={<KakaoCallback />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
-        <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><Home /></div></PrivateRoute>} />
         <Route path="/admin/schools" element={<OperatorRoute><SchoolManage /></OperatorRoute>} />
         <Route path="/admin/schools/:schoolId" element={<OperatorRoute><SchoolDetail /></OperatorRoute>} />
+        <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/school-admin" element={<SchoolAdminRoute><SchoolAdminDashboard /></SchoolAdminRoute>} />
-        <Route path="/school-admin/whitelist" element={<SchoolAdminRoute><WhitelistManage /></SchoolAdminRoute>} />
+        <Route path="/admin/schools/:schoolId/whitelist" element={<OperatorRoute><WhitelistManage /></OperatorRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

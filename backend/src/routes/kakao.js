@@ -82,7 +82,7 @@ router.get('/callback', async (req, res) => {
       const userJson = encodeURIComponent(JSON.stringify({
         id: existingUser.id, name: existingUser.name, email: existingUser.email,
         role: existingUser.role, emailVerified: existingUser.emailVerified,
-        schoolId: existingUser.schoolId, school: schoolData,
+        schoolId: existingUser.schoolId, school: schoolData, isKakaoUser: true,
       }))
 
       return res.redirect(`${process.env.FRONTEND_URL}/auth/kakao/callback?token=${token}&user=${userJson}`)

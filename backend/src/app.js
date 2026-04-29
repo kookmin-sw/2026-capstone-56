@@ -23,6 +23,9 @@ app.use('/api/admin', adminRoutes)
 app.use('/api/school-admin', schoolAdminRoutes)
 app.use('/api/schools/:schoolId/whitelist', whitelistRoutes)
 
+// 행사 도메인 stub (메인 페이지 렌더링용)
+app.get('/api/events', (req, res) => res.json([]))
+
 app.use((err, req, res, next) => {
   console.error(err)
   res.status(500).json({ message: '서버 오류가 발생했습니다.' })

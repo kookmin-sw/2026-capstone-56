@@ -77,9 +77,17 @@ export default function SchoolDetail() {
       </button>
 
       {school && (
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">{school.name}</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{school.domain} · {school.address || '주소 없음'}</p>
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{school.name}</h1>
+            <p className="text-sm text-gray-400 mt-0.5">{school.domain} · {school.address || '주소 없음'}</p>
+          </div>
+          <button
+            onClick={() => navigate(`/admin/schools/${schoolId}/whitelist`)}
+            className="btn-secondary text-sm"
+          >
+            화이트리스트 관리
+          </button>
         </div>
       )}
 
