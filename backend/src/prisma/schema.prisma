@@ -27,13 +27,32 @@ model User {
 }
 
 model School {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  domain    String    @unique
+  id        String     @id @default(cuid())
+  name      String     @unique
+  domain    String     @unique
   address   String?
   users     User[]
-  createdAt DateTime  @default(now())
+  whitelist Whitelist?
+  createdAt DateTime   @default(now())
   deletedAt DateTime?
+}
+
+model Whitelist {
+  id        String           @id @default(cuid())
+  schoolId  String           @unique
+  school    School           @relation(fields: [schoolId], references: [id])
+  entries   WhitelistEntry[]
+  createdAt DateTime         @default(now())
+}
+
+model WhitelistEntry {
+  id          String    @id @default(cuid())
+  whitelistId String
+  whitelist   Whitelist @relation(fields: [whitelistId], references: [id], onDelete: Cascade)
+  value       String
+  createdAt   DateTime  @default(now())
+
+  @@unique([whitelistId, value])
 }
 
 enum Role {

@@ -10,6 +10,7 @@ import SchoolAdminRoute from './components/SchoolAdminRoute'
 import SchoolManage from './pages/SchoolManage'
 import SchoolDetail from './pages/SchoolDetail'
 import SchoolAdminDashboard from './pages/SchoolAdminDashboard'
+import WhitelistManage from './pages/WhitelistManage'
 
 function Home() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/admin/schools" element={<OperatorRoute><SchoolManage /></OperatorRoute>} />
         <Route path="/admin/schools/:schoolId" element={<OperatorRoute><SchoolDetail /></OperatorRoute>} />
         <Route path="/school-admin" element={<SchoolAdminRoute><SchoolAdminDashboard /></SchoolAdminRoute>} />
+        <Route path="/school-admin/whitelist" element={<SchoolAdminRoute><WhitelistManage /></SchoolAdminRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

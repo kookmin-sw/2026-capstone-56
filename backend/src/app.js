@@ -8,6 +8,7 @@ const schoolRoutes = require('./routes/schools')
 const kakaoRoutes = require('./routes/kakao')
 const adminRoutes = require('./routes/admin')
 const schoolAdminRoutes = require('./routes/schoolAdmin')
+const whitelistRoutes = require('./routes/whitelist')
 
 const app = express()
 
@@ -20,6 +21,7 @@ app.use('/api/auth/kakao', kakaoRoutes)
 app.use('/api/schools', schoolRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/school-admin', schoolAdminRoutes)
+app.use('/api/schools/:schoolId/whitelist', whitelistRoutes)
 
 app.use((err, req, res, next) => {
   console.error(err)

@@ -6,6 +6,7 @@ const { PrismaClient } = require('@prisma/client')
 const rateLimit = require('express-rate-limit')
 const authMiddleware = require('../middleware/auth')
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../services/mailer')
+const { matchesWhitelist } = require('./whitelist')
 
 const router = express.Router()
 const prisma = new PrismaClient()
@@ -65,6 +66,20 @@ router.post('/register', registerLimiter, async (req, res, next) => {
     // 이메일 도메인으로 학교 자동 매칭
     const domain = email.split('@')[1]
     const school = await prisma.school.findUnique({ where: { domain } })
+
+    // 화이트리스트 검증
+    if (school) {
+      const whitelist = await prisma.whitelist.findUnique({
+        where: { schoolId: school.id },
+        include: { entries: true },
+      })
+      if (!whitelist || whitelist.entries.length === 0) {
+        return res.status(403).json({ message: '해당 학교는 아직 가입이 허용되지 않았습니다.' })
+      }
+      if (!matchesWhitelist(email, whitelist.entries)) {
+        return res.status(403).json({ message: '해당 학교의 가입 가능 이메일이 아닙니다.' })
+      }
+    }
 
     const hashed = await bcrypt.hash(password, 10)
     const verifyToken = randomUUID()
