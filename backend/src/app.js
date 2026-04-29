@@ -6,6 +6,8 @@ const helmet = require('helmet')
 const authRoutes = require('./routes/auth')
 const schoolRoutes = require('./routes/schools')
 const kakaoRoutes = require('./routes/kakao')
+const adminRoutes = require('./routes/admin')
+const schoolAdminRoutes = require('./routes/schoolAdmin')
 
 const app = express()
 
@@ -16,6 +18,8 @@ app.use(express.json())
 app.use('/api/auth', authRoutes)
 app.use('/api/auth/kakao', kakaoRoutes)
 app.use('/api/schools', schoolRoutes)
+app.use('/api/admin', adminRoutes)
+app.use('/api/school-admin', schoolAdminRoutes)
 
 app.use((err, req, res, next) => {
   console.error(err)

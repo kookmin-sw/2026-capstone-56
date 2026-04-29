@@ -5,6 +5,11 @@ import KakaoCallback from './pages/KakaoCallback'
 import KakaoRegister from './pages/KakaoRegister'
 import VerifyEmail from './pages/VerifyEmail'
 import PrivateRoute from './components/PrivateRoute'
+import OperatorRoute from './components/OperatorRoute'
+import SchoolAdminRoute from './components/SchoolAdminRoute'
+import SchoolManage from './pages/SchoolManage'
+import SchoolDetail from './pages/SchoolDetail'
+import SchoolAdminDashboard from './pages/SchoolAdminDashboard'
 
 function Home() {
   return (
@@ -27,6 +32,9 @@ export default function App() {
         <Route path="/auth/kakao/callback" element={<KakaoCallback />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
+        <Route path="/admin/schools" element={<OperatorRoute><SchoolManage /></OperatorRoute>} />
+        <Route path="/admin/schools/:schoolId" element={<OperatorRoute><SchoolDetail /></OperatorRoute>} />
+        <Route path="/school-admin" element={<SchoolAdminRoute><SchoolAdminDashboard /></SchoolAdminRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
