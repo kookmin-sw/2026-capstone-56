@@ -8,7 +8,6 @@ const ROLES = [
   { value: 'ATTENDEE', label: '일반' },
   { value: 'CERTIFIED', label: '인증주최자' },
   { value: 'SCHOOL_ADMIN', label: '학교관리자' },
-  { value: 'OPERATOR', label: '운영자' },
 ]
 
 const ROLE_BADGE = {
@@ -82,12 +81,6 @@ export default function SchoolDetail() {
             <h1 className="text-2xl font-bold text-gray-900">{school.name}</h1>
             <p className="text-sm text-gray-400 mt-0.5">{school.domain} · {school.address || '주소 없음'}</p>
           </div>
-          <button
-            onClick={() => navigate(`/admin/schools/${schoolId}/whitelist`)}
-            className="btn-secondary text-sm"
-          >
-            화이트리스트 관리
-          </button>
         </div>
       )}
 
@@ -150,7 +143,7 @@ export default function SchoolDetail() {
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${ROLE_BADGE[user.role]}`}>
                         {ROLES.find(r => r.value === user.role)?.label ?? user.role}
                       </span>
-                      <RoleSelect user={user} schoolId={schoolId} />
+                      {user.role !== 'OPERATOR' && <RoleSelect user={user} schoolId={schoolId} />}
                     </div>
                   </td>
                 </tr>

@@ -10,7 +10,6 @@ import SchoolAdminRoute from './components/SchoolAdminRoute'
 import SchoolManage from './pages/SchoolManage'
 import SchoolDetail from './pages/SchoolDetail'
 import SchoolAdminDashboard from './pages/SchoolAdminDashboard'
-import WhitelistManage from './pages/WhitelistManage'
 import Home from './pages/Home'
 import Profile from './pages/Profile'
 import ForgotPassword from './pages/ForgotPassword'
@@ -34,7 +33,6 @@ export default function App() {
         <Route path="/admin/schools/:schoolId" element={<OperatorRoute><SchoolDetail /></OperatorRoute>} />
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/school-admin" element={<SchoolAdminRoute><SchoolAdminDashboard /></SchoolAdminRoute>} />
-        <Route path="/admin/schools/:schoolId/whitelist" element={<OperatorRoute><WhitelistManage /></OperatorRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
