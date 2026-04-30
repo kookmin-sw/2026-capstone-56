@@ -37,6 +37,9 @@ router.post('/register', registerLimiter, async (req, res, next) => {
     if (!name || !email || !password) {
       return res.status(400).json({ message: '모든 필드를 입력해주세요.' })
     }
+    if (password.length < 8) {
+      return res.status(400).json({ message: '비밀번호는 8자 이상이어야 합니다.' })
+    }
 
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) {
