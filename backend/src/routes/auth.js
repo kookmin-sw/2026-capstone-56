@@ -67,12 +67,13 @@ router.post('/register', registerLimiter, async (req, res, next) => {
 
     const hashed = await bcrypt.hash(password, 10)
     const verifyToken = randomUUID()
+    const verifyTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000)
     const user = await prisma.user.create({
       data: {
         name, email, password: hashed,
         studentId: studentId || null,
         schoolId: school?.id || null,
-        verifyToken
+        verifyToken, verifyTokenExpiry
       },
       select: { id: true, name: true, email: true, role: true, studentId: true, schoolId: true, school: { select: { name: true } } }
     })
@@ -92,10 +93,13 @@ router.get('/verify-email', async (req, res, next) => {
 
     const user = await prisma.user.findUnique({ where: { verifyToken: token } })
     if (!user) return res.status(400).json({ message: '유효하지 않거나 만료된 링크입니다.' })
+    if (user.verifyTokenExpiry && user.verifyTokenExpiry < new Date()) {
+      return res.status(400).json({ message: '만료된 인증 링크입니다. 재발송 버튼을 클릭해주세요.' })
+    }
 
     await prisma.user.update({
       where: { id: user.id },
-      data: { emailVerified: true, verifyToken: null }
+      data: { emailVerified: true, verifyToken: null, verifyTokenExpiry: null }
     })
     res.json({ message: '이메일 인증이 완료되었습니다.' })
   } catch (err) { next(err) }
@@ -108,7 +112,8 @@ router.post('/resend-verification', authMiddleware, async (req, res, next) => {
     if (user.emailVerified) return res.status(400).json({ message: '이미 인증된 이메일입니다.' })
 
     const verifyToken = randomUUID()
-    await prisma.user.update({ where: { id: user.id }, data: { verifyToken, emailVerified: false } })
+    const verifyTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    await prisma.user.update({ where: { id: user.id }, data: { verifyToken, verifyTokenExpiry, emailVerified: false } })
 
     const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verifyToken}`
     await sendVerificationEmail({ to: user.email, name: user.name, verifyUrl })

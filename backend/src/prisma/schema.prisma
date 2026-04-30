@@ -17,8 +17,9 @@ model User {
   studentId        String?   @unique
   role             Role      @default(ATTENDEE)
   emailVerified    Boolean   @default(false)
-  verifyToken      String?   @unique
-  resetToken       String?   @unique
+  verifyToken       String?   @unique
+  verifyTokenExpiry DateTime?
+  resetToken        String?   @unique
   resetTokenExpiry DateTime?
   schoolId         String?
   school           School?   @relation(fields: [schoolId], references: [id])
