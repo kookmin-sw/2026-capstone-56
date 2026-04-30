@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  password         String?
+  name             String
+  kakaoId          String?   @unique
+  studentId        String?   @unique
+  role             Role      @default(ATTENDEE)
+  emailVerified    Boolean   @default(false)
+  verifyToken      String?   @unique
+  resetToken       String?   @unique
+  resetTokenExpiry DateTime?
+  schoolId         String?
+  school           School?   @relation(fields: [schoolId], references: [id])
+  createdAt        DateTime  @default(now())
+  deletedAt        DateTime?
+}
+
+model School {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  domain    String    @unique
+  address   String?
+  users     User[]
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+}
+
+enum Role {
+  ATTENDEE      // 일반사용자
+  CERTIFIED     // 인증사용자(주최자)
+  SCHOOL_ADMIN  // 학교총관리자
+  OPERATOR      // 운영자
+}
