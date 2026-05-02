@@ -31,7 +31,6 @@ app.use('/api/v1/registrations', registrationDomainRoutes)
 // 결제 도메인(다른 팀원) — 유료 본인 환불(POST /:id/cancel)
 app.use('/api/v1/registrations', registrationRouter)
 app.use('/api/v1/admin', adminRefundRouter)
-app.use('/api/v1/registrations', registrationDomainRoutes)
 app.use('/api/v1/events', eventRoutes)
 app.use('/api/v1/events/:eventId/whitelist', whitelistRoutes)
 

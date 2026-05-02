@@ -1,8 +1,22 @@
 const express = require('express')
+const path = require('path')
+const multer = require('multer')
 const { PrismaClient } = require('@prisma/client')
 const authMiddleware = require('../middleware/auth')
 const { requireRole, optionalAuth } = authMiddleware
 const { cancelPayment } = require('../services/toss')
+const supabase = require('../services/supabase')
+
+const STORAGE_BUCKET = 'event-images'
+
+// 파일은 메모리에만 버퍼링 (디스크 사용 안 함 → 배포 환경 안전)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },  // 5MB
+  fileFilter: (req, file, cb) => {
+    cb(null, /image\/(jpeg|png|webp)/.test(file.mimetype))
+  },
+})
 
 const router = express.Router()
 const prisma = new PrismaClient()
@@ -16,6 +30,38 @@ function canManageEvent(user, event) {
   if (event.hostId === user.id) return true
   return false
 }
+
+// ─── 이미지 업로드 ────────────────────────────────────────────────────────────
+
+// POST /upload-image — 대표 이미지 업로드 (CERTIFIED 이상)
+// 주의: /:id 보다 앞에 정의해야 'upload-image'가 :id로 매칭되지 않음
+router.post('/upload-image', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERATOR'),
+  upload.single('image'),
+  async (req, res) => {
+    if (!req.file) return res.status(400).json({ message: '이미지 파일이 필요합니다. (JPG·PNG·WEBP, 최대 5MB)' })
+
+    const ext = path.extname(req.file.originalname).toLowerCase() || '.jpg'
+    const storagePath = `events/${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`
+
+    const { error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(storagePath, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: false,
+      })
+
+    if (error) {
+      console.error('Supabase Storage upload error:', error)
+      return res.status(500).json({ message: '이미지 업로드에 실패했습니다.', detail: error.message })
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(storagePath)
+
+    res.json({ imageUrl: publicUrl })
+  }
+)
 
 // ─── 행사 CRUD ────────────────────────────────────────────────────────────────
 
@@ -104,6 +150,7 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
       isPaid, price, capacity,
       startAt, endAt, registrationDeadline,
       releaseIntervalMinutes,
+      imageUrl,
       refundContact,
       refundDeadlineType = 'NONE', refundDeadlineValue,
       refundPolicyText, contactEmail, contactPhone,
@@ -165,6 +212,7 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
         // BR-05: 호스트 스냅샷 (권한 변경과 무관하게 영구 보존)
         hostNameSnapshot: user.name,
         hostAffiliationSnapshot: user.school?.name ?? null,
+        imageUrl: imageUrl ?? null,
         isPaid: !!isPaid,
         price: isPaid ? price : null,
         capacity,

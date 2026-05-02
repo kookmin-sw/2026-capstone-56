@@ -39,3 +39,12 @@ export const getAttendees = async (id) => {
   const res = await api.get(`/v1/events/${id}/attendees`)
   return res.data
 }
+
+export const uploadEventImage = async (file) => {
+  const form = new FormData()
+  form.append('image', file)
+  const res = await api.post('/v1/events/upload-image', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return res.data  // { imageUrl }
+}
