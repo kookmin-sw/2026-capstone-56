@@ -132,7 +132,11 @@ router.post('/complete', async (req, res, next) => {
     const domain = email.split('@')[1]
     const school = await prisma.school.findUnique({ where: { domain } })
 
-    const existingStudent = await prisma.user.findFirst({ where: { studentId, schoolId: school?.id || null } })
+    if (!school) {
+      return res.status(400).json({ message: '등록되지 않은 학교 이메일입니다.' })
+    }
+
+    const existingStudent = await prisma.user.findFirst({ where: { studentId, schoolId: school.id } })
     if (existingStudent) return res.status(409).json({ message: '이미 등록된 학번입니다.' })
 
     const verifyToken = randomUUID()
