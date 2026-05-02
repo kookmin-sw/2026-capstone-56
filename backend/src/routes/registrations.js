@@ -1,6 +1,7 @@
 const express = require('express')
 const { PrismaClient } = require('@prisma/client')
 const authMiddleware = require('../middleware/auth')
+const audit = require('../utils/audit')
 
 const router = express.Router()
 const prisma = new PrismaClient()
@@ -78,6 +79,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
         })
       })
 
+      audit(userId, 'REGISTER', 'REGISTRATION', registration.id, event.title)
       res.status(201).json({
         registrationId: registration.id,
         status: registration.status,
@@ -125,6 +127,7 @@ router.post('/:id/cancel-free', authMiddleware, async (req, res, next) => {
       data: { status: 'CANCELLED' },
     })
 
+    audit(userId, 'CANCEL_FREE', 'REGISTRATION', id, registration.event.title)
     res.json({ registrationId: updated.id, status: updated.status })
   } catch (err) {
     next(err)

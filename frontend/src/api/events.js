@@ -40,6 +40,11 @@ export const getAttendees = async (id) => {
   return res.data
 }
 
+export const getEventRegistrations = async (id) => {
+  const res = await api.get(`/v1/events/${id}/registrations`)
+  return res.data
+}
+
 export const uploadEventImage = async (file) => {
   const form = new FormData()
   form.append('image', file)

@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { register as registerApi } from '../api/auth'
 import { getSchools } from '../api/schools'
 import { useToast } from '../components/Toast'
+import PasswordStrength from '../components/PasswordStrength'
 
 export default function Register() {
   const { register, handleSubmit, formState: { errors, isSubmitting }, watch } = useForm()
@@ -110,6 +111,7 @@ export default function Register() {
                 placeholder="8자 이상"
                 className="input"
               />
+              <PasswordStrength password={watch('password')} />
               {errors.password && <p className="text-red-500 text-xs mt-1.5">{errors.password.message}</p>}
             </div>
             <div>

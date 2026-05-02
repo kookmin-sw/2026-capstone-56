@@ -4,6 +4,7 @@ const crypto = require('crypto')
 const authMiddleware = require('../middleware/auth')
 const { requireRole } = authMiddleware
 const { confirmPayment, cancelPayment } = require('../services/toss')
+const audit = require('../utils/audit')
 
 const prisma = new PrismaClient()
 
@@ -108,6 +109,7 @@ paymentRouter.post('/confirm', authMiddleware, async (req, res, next) => {
       data: { status: 'CONFIRMED', paymentKey, paidAmount: amount, paidAt: new Date() },
     })
 
+    audit(userId, 'PAYMENT_CONFIRM', 'REGISTRATION', updated.id, `${registration.event.title} · ${amount.toLocaleString()}원`)
     res.json({ message: '결제가 완료되었습니다.', registrationId: updated.id })
   } catch (err) {
     const tossCode = err.response?.data?.code
@@ -237,6 +239,7 @@ registrationRouter.post('/:id/cancel', authMiddleware, async (req, res, next) =>
         data: { status: 'CANCELLED', refundedAmount: registration.paidAmount, refundedAt: new Date() },
       })
 
+      audit(userId, 'CANCEL_PAID', 'REGISTRATION', id, registration.event.title)
       res.json({ message: '환불이 완료되었습니다.' })
     } catch (tossErr) {
       const tossCode = tossErr.response?.data?.code
@@ -246,6 +249,7 @@ registrationRouter.post('/:id/cancel', authMiddleware, async (req, res, next) =>
           where: { id },
           data: { status: 'CANCELLED', refundedAmount: registration.paidAmount, refundedAt: new Date() },
         })
+        audit(userId, 'CANCEL_PAID', 'REGISTRATION', id, registration.event.title)
         return res.json({ message: '환불이 완료되었습니다.' })
       }
 
@@ -311,6 +315,7 @@ adminRefundRouter.post('/refund-queue/:id/retry', authMiddleware, requireRole('O
         data: { status: 'CANCELLED', refundedAmount: registration.paidAmount, refundedAt: new Date() },
       })
 
+      audit(req.user.id, 'REFUND_RETRY', 'REGISTRATION', id, `운영자 수동 환불 완료`)
       res.json({ message: '환불이 완료되었습니다.' })
     } catch (tossErr) {
       const tossCode = tossErr.response?.data?.code
@@ -320,6 +325,7 @@ adminRefundRouter.post('/refund-queue/:id/retry', authMiddleware, requireRole('O
           where: { id },
           data: { status: 'CANCELLED', refundedAmount: registration.paidAmount, refundedAt: new Date() },
         })
+        audit(req.user.id, 'REFUND_RETRY', 'REGISTRATION', id, `운영자 수동 환불 완료 (이미 취소됨)`)
         return res.json({ message: '환불이 완료되었습니다.' })
       }
 
