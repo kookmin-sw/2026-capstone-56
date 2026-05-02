@@ -116,7 +116,7 @@ export default function EventCreate() {
                 <input type="number" min={0} className="input" value={form.refundDeadlineValue} onChange={update('refundDeadlineValue')} disabled={form.refundDeadlineType === 'NONE'} />
               </Field>
             </div>
-            <Field label="환불 마감 이후 문의처">
+            <Field label="환불 마감 이후 문의처 (refundContact, 자유 텍스트)">
               <input className="input" value={form.refundContact} onChange={update('refundContact')} placeholder="예: hostkim@univ.ac.kr / 010-1234-5678" />
             </Field>
           </>

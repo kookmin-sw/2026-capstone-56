@@ -29,7 +29,7 @@ const optionalAuth = (req, res, next) => {
     const token = header.split(' ')[1]
     req.user = jwt.verify(token, process.env.JWT_SECRET)
   } catch {
-    // invalid token → proceed as anonymous
+    // 토큰이 잘못되어도 비로그인으로 간주
   }
   next()
 }

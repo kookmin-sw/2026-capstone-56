@@ -92,6 +92,36 @@ model WhitelistEntry {
   createdAt   DateTime       @default(now())
 
   @@unique([whitelistId, studentId])
+model Event {
+  id                      String             @id @default(cuid())
+  title                   String
+  description             String?
+  location                String?
+  schoolId                String
+  school                  School             @relation(fields: [schoolId], references: [id])
+  hostId                  String
+  host                    User               @relation("EventHost", fields: [hostId], references: [id])
+  hostNameSnapshot        String?
+  hostAffiliationSnapshot String?
+  status                  EventStatus        @default(DRAFT)
+  isPaid                  Boolean            @default(false)
+  price                   Int?
+  capacity                Int
+  startAt                 DateTime
+  endAt                   DateTime
+  registrationDeadline    DateTime?
+  releaseIntervalMinutes  Int?
+  refundContact           String?
+  refundDeadlineType      RefundDeadlineType @default(NONE)
+  refundDeadlineValue     Int?
+  refundDeadlineAt        DateTime?
+  refundPolicyText        String?
+  contactEmail            String?
+  contactPhone            String?
+  registrations           Registration[]
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+  deletedAt               DateTime?
 }
 
 model Registration {

@@ -1,7 +1,7 @@
 const express = require('express')
 const { PrismaClient } = require('@prisma/client')
 const authMiddleware = require('../middleware/auth')
-const { requireRole } = authMiddleware
+const { requireRole, optionalAuth } = authMiddleware
 const { cancelPayment } = require('../services/toss')
 
 const router = express.Router()
@@ -19,12 +19,21 @@ function canManageEvent(user, event) {
 
 // ─── 행사 CRUD ────────────────────────────────────────────────────────────────
 
-// GET / — 행사 목록 조회
-router.get('/', authMiddleware, async (req, res, next) => {
+// GET / — 행사 목록 조회 (UC-05, BR-01 비로그인 허용)
+// 일반사용자: 본인 학교만(BR-02). 비로그인/SCHOOL_ADMIN/OPERATOR: schoolId 쿼리 우선, 없으면 전체.
+router.get('/', optionalAuth, async (req, res, next) => {
   try {
     const { schoolId, status } = req.query
     const where = { deletedAt: null }
-    if (schoolId) where.schoolId = schoolId
+
+    if (req.user?.role === 'ATTENDEE') {
+      const me = await prisma.user.findUnique({ where: { id: req.user.id }, select: { schoolId: true } })
+      if (!me?.schoolId) return res.json([])
+      where.schoolId = me.schoolId
+    } else if (schoolId) {
+      where.schoolId = schoolId
+    }
+
     if (status) where.status = status
 
     const events = await prisma.event.findMany({
@@ -44,8 +53,8 @@ router.get('/', authMiddleware, async (req, res, next) => {
   }
 })
 
-// GET /:id — 행사 상세 조회 (환불 정책, 취소 자리 수 포함)
-router.get('/:id', authMiddleware, async (req, res, next) => {
+// GET /:id — 행사 상세 조회 (UC-05, 비로그인 허용)
+router.get('/:id', optionalAuth, async (req, res, next) => {
   try {
     const event = await prisma.event.findUnique({
       where: { id: req.params.id },
@@ -59,14 +68,27 @@ router.get('/:id', authMiddleware, async (req, res, next) => {
     })
     if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
 
-    const [cancelledCount, myRegistration] = await Promise.all([
-      prisma.registration.count({
-        where: { eventId: event.id, status: { in: ['CANCELLED', 'EXPIRED'] } },
-      }),
-      req.user ? prisma.registration.findFirst({
+    // BR-02: 일반사용자는 본인 학교 행사만 상세 조회 가능
+    if (req.user?.role === 'ATTENDEE') {
+      const me = await prisma.user.findUnique({ where: { id: req.user.id }, select: { schoolId: true } })
+      if (me?.schoolId && event.schoolId !== me.schoolId) {
+        return res.status(403).json({ message: '본인 학교 행사만 조회할 수 있습니다.' })
+      }
+    }
+
+    // 누적 취소 자리 수 (UI 표시용)
+    const cancelledCount = await prisma.registration.count({
+      where: { eventId: event.id, status: { in: ['CANCELLED', 'EXPIRED'] } },
+    })
+
+    // 본인 활성 신청 상태(로그인 시)
+    let myRegistration = null
+    if (req.user) {
+      myRegistration = await prisma.registration.findFirst({
         where: { eventId: event.id, userId: req.user.id, status: { in: ACTIVE_STATUSES } },
-      }) : null,
-    ])
+        select: { id: true, status: true, orderId: true },
+      })
+    }
 
     res.json({ ...event, cancelledCount, myRegistration })
   } catch (err) {
@@ -74,13 +96,15 @@ router.get('/:id', authMiddleware, async (req, res, next) => {
   }
 })
 
-// POST / — 행사 생성 (CERTIFIED 이상, 환불 정책 설정 포함)
+// POST / — 행사 생성 (UC-01)
 router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERATOR'), async (req, res, next) => {
   try {
     const {
-      title, description, schoolId,
+      title, description, location, schoolId,
       isPaid, price, capacity,
       startAt, endAt, registrationDeadline,
+      releaseIntervalMinutes,
+      refundContact,
       refundDeadlineType = 'NONE', refundDeadlineValue,
       refundPolicyText, contactEmail, contactPhone,
     } = req.body
@@ -88,44 +112,74 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
     if (!title || !capacity || !startAt || !endAt) {
       return res.status(400).json({ message: '필수 항목이 누락되었습니다. (title, capacity, startAt, endAt)' })
     }
-    // BR-19: 유료 행사 최소 금액 100원
+
+    // BR-20: 시작 시각은 현재 이후
+    const startDate = new Date(startAt)
+    const endDate = new Date(endAt)
+    if (startDate <= new Date()) {
+      return res.status(400).json({ message: '행사 시작 시각은 현재 시각 이후여야 합니다. (BR-20)' })
+    }
+    if (endDate <= startDate) {
+      return res.status(400).json({ message: '행사 종료 시각은 시작 시각 이후여야 합니다.' })
+    }
+    // BR-21: 신청 마감은 시작 이전
+    if (registrationDeadline && new Date(registrationDeadline) >= startDate) {
+      return res.status(400).json({ message: '신청 마감 시각은 행사 시작 이전이어야 합니다. (BR-21)' })
+    }
+    // BR-22: 정원 1 이상
+    if (capacity < 1) {
+      return res.status(400).json({ message: '정원은 1 이상이어야 합니다. (BR-22)' })
+    }
+    // BR-23: 유료 행사 최소 금액 100원
     if (isPaid && (!price || price < 100)) {
-      return res.status(400).json({ message: '유료 행사는 100원 이상이어야 합니다. (BR-19)' })
+      return res.status(400).json({ message: '유료 행사는 100원 이상이어야 합니다. (BR-23)' })
+    }
+    // BR-24: 릴리즈 주기는 5/15/30/60 중 하나
+    if (releaseIntervalMinutes != null && ![5, 15, 30, 60].includes(releaseIntervalMinutes)) {
+      return res.status(400).json({ message: '취소표 릴리즈 주기는 5/15/30/60 중 하나여야 합니다. (BR-24)' })
     }
 
-    const user = await prisma.user.findUnique({ where: { id: req.user.id } })
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { school: { select: { name: true } } },
+    })
     const targetSchoolId = schoolId || user.schoolId
     if (!targetSchoolId) return res.status(400).json({ message: '학교 정보가 없습니다.' })
 
-    // 환불 마감 절대 시각 자동 계산 (5절 refundDeadlineAt)
+    // 환불 마감 절대 시각 자동 계산 (payment 도메인이 BR-P01에서 사용)
     let refundDeadlineAt = null
     if (refundDeadlineType !== 'NONE' && refundDeadlineValue) {
-      const start = new Date(startAt)
       const ms = refundDeadlineType === 'MINUTES'
         ? refundDeadlineValue * 60 * 1000
         : refundDeadlineValue * 60 * 60 * 1000
-      refundDeadlineAt = new Date(start.getTime() - ms)
+      refundDeadlineAt = new Date(startDate.getTime() - ms)
     }
 
     const event = await prisma.event.create({
       data: {
         title,
         description,
+        location,
         schoolId: targetSchoolId,
         hostId: req.user.id,
+        // BR-05: 호스트 스냅샷 (권한 변경과 무관하게 영구 보존)
+        hostNameSnapshot: user.name,
+        hostAffiliationSnapshot: user.school?.name ?? null,
         isPaid: !!isPaid,
         price: isPaid ? price : null,
         capacity,
-        startAt: new Date(startAt),
-        endAt: new Date(endAt),
+        startAt: startDate,
+        endAt: endDate,
         registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
+        releaseIntervalMinutes: releaseIntervalMinutes ?? null,
+        refundContact: refundContact ?? null,
         refundDeadlineType,
         refundDeadlineValue: refundDeadlineValue || null,
         refundDeadlineAt,
         refundPolicyText,
         contactEmail,
         contactPhone,
-        status: 'DRAFT',
+        status: 'PUBLISHED',
       },
     })
 
