@@ -17,12 +17,11 @@ router.post('/', authMiddleware, async (req, res, next) => {
 
     const [event, user] = await Promise.all([
       prisma.event.findUnique({ where: { id: eventId } }),
-      prisma.user.findUnique({ where: { id: userId }, select: { schoolId: true } }),
+      prisma.user.findUnique({ where: { id: userId }, select: { schoolId: true, studentId: true } }),
     ])
 
     if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
     if (event.status !== 'PUBLISHED') return res.status(400).json({ message: '신청 가능한 행사가 아닙니다.' })
-    if (event.isPaid) return res.status(400).json({ message: '유료 행사는 결제 도메인을 통해 신청해야 합니다.' })
     if (event.registrationDeadline && new Date() > event.registrationDeadline) {
       return res.status(400).json({ message: '신청 마감된 행사입니다.' })
     }
@@ -32,6 +31,21 @@ router.post('/', authMiddleware, async (req, res, next) => {
     // BR-02: 본인 학교 행사만 신청 가능
     if (user.schoolId !== event.schoolId) {
       return res.status(403).json({ message: '본인 학교 행사만 신청할 수 있습니다.' })
+    }
+
+    // BR-W03: 유료 행사 — 화이트리스트에 등록된 학번이면 무료 신청 허용
+    if (event.isPaid) {
+      const isOnWhitelist = user.studentId
+        ? await prisma.eventWhitelist.findFirst({
+            where: {
+              eventId,
+              entries: { some: { studentId: user.studentId } },
+            },
+          })
+        : null
+      if (!isOnWhitelist) {
+        return res.status(400).json({ message: '유료 행사는 결제 도메인을 통해 신청해야 합니다.' })
+      }
     }
 
     // BR-08: 활성 신청 1건 제한

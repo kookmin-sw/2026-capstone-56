@@ -15,10 +15,10 @@ function getPalette(id) {
 }
 
 export default function EventCard({ event }) {
-  const sold = event._count?.tickets ?? 0
-  const remaining = event.maxCapacity - sold
+  const sold = event._count?.registrations ?? 0
+  const remaining = event.capacity - sold
   const isFull = remaining <= 0
-  const ratio = Math.min(100, Math.round((sold / event.maxCapacity) * 100))
+  const ratio = Math.min(100, Math.round((sold / event.capacity) * 100))
   const palette = getPalette(event.id)
 
   const date = new Date(event.startAt)
@@ -66,7 +66,7 @@ export default function EventCard({ event }) {
           {/* 가격 뱃지 */}
           <div className="absolute top-4 right-4 z-10">
             <span className="bg-white/90 backdrop-blur-sm text-gray-800 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
-              {event.price === 0 ? '무료' : `${event.price.toLocaleString()}원`}
+              {!event.isPaid || !event.price ? '무료' : `${event.price.toLocaleString()}원`}
             </span>
           </div>
 

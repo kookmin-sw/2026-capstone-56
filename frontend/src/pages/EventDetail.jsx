@@ -1,8 +1,9 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getEvent } from '../api/events'
+import { getEvent, publishEvent } from '../api/events'
 import { createFreeRegistration, cancelFreeRegistration } from '../api/registrations'
 import { useAuth } from '../hooks/useAuth'
+import EventWhitelistManager from '../components/EventWhitelistManager'
 
 function fmtDateTime(iso) {
   if (!iso) return ''
@@ -45,6 +46,16 @@ export default function EventDetail() {
     },
   })
 
+  const publishMutation = useMutation({
+    mutationFn: () => publishEvent(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['event', id] })
+    },
+    onError: (err) => {
+      alert(err.response?.data?.message ?? '공개에 실패했습니다.')
+    },
+  })
+
   if (isLoading) return <div className="card p-12 text-center text-gray-500">불러오는 중...</div>
   if (isError) return <div className="card p-12 text-center text-red-500">{error?.response?.data?.message ?? '행사를 불러올 수 없습니다.'}</div>
   if (!event) return null
@@ -53,6 +64,7 @@ export default function EventDetail() {
   const remaining = event.capacity - activeCount
   const isFull = remaining <= 0
   const myReg = event.myRegistration
+  const isHost = user && (user.id === event.host?.id || user.role === 'SCHOOL_ADMIN' || user.role === 'OPERATOR')
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -91,6 +103,27 @@ export default function EventDetail() {
           </div>
         )}
 
+        {/* 호스트 전용: DRAFT 공개 버튼 */}
+        {isHost && event.status === 'DRAFT' && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between">
+            <span className="text-sm text-amber-700 font-medium">이 행사는 아직 공개되지 않았습니다.</span>
+            <button
+              onClick={() => { if (confirm('행사를 공개하시겠습니까?')) publishMutation.mutate() }}
+              disabled={publishMutation.isPending}
+              className="btn btn-primary text-sm px-4 py-2"
+            >
+              {publishMutation.isPending ? '공개 중...' : '공개하기'}
+            </button>
+          </div>
+        )}
+
+        {/* 호스트 전용: 화이트리스트 관리 */}
+        {isHost && (
+          <div className="border-t pt-4">
+            <EventWhitelistManager eventId={id} />
+          </div>
+        )}
+
         {/* 신청/취소 액션 */}
         <div className="border-t pt-4">
           {!user ? (
@@ -114,10 +147,6 @@ export default function EventDetail() {
             <div className="text-center text-gray-500 text-sm">신청 가능한 상태가 아닙니다.</div>
           ) : isFull ? (
             <div className="text-center text-red-500 text-sm font-medium">정원이 마감되었습니다.</div>
-          ) : event.isPaid ? (
-            <button className="btn btn-primary w-full" disabled>
-              유료 결제 신청 (결제 도메인 연동 예정)
-            </button>
           ) : (
             <button
               onClick={() => applyMutation.mutate()}

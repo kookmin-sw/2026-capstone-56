@@ -93,7 +93,7 @@ export default function Home() {
 
   const stats = events && events.length > 0 ? [
     { label: '행사 모집 중', value: `${events.length}개` },
-    { label: '총 모집 인원', value: `${events.reduce((s, e) => s + e.maxCapacity, 0).toLocaleString()}명` },
+    { label: '총 모집 인원', value: `${events.reduce((s, e) => s + e.capacity, 0).toLocaleString()}명` },
     { label: '무료 행사', value: `${events.filter(e => e.price === 0).length}개` },
   ] : []
 

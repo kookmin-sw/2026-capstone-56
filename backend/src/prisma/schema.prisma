@@ -44,55 +44,54 @@ model School {
 }
 
 model Event {
-  id                   String             @id @default(cuid())
-  title                String
-  description          String?
-  schoolId             String
-  hostId               String
-  status               EventStatus        @default(DRAFT)
-  isPaid               Boolean            @default(false)
-  price                Int?
-  capacity             Int
-  startAt              DateTime
-  endAt                DateTime
-  registrationDeadline DateTime?
-  refundDeadlineType   RefundDeadlineType @default(NONE)
-  refundDeadlineValue  Int?
-  refundDeadlineAt     DateTime?
-  refundPolicyText     String?
-  contactEmail         String?
-  contactPhone         String?
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
-  deletedAt            DateTime?
-  host                 User               @relation("EventHost", fields: [hostId], references: [id])
-  school               School             @relation(fields: [schoolId], references: [id])
-  registrations        Registration[]
+  id                      String             @id @default(cuid())
+  title                   String
+  description             String?
+  location                String?
+  schoolId                String
+  school                  School             @relation(fields: [schoolId], references: [id])
+  hostId                  String
+  host                    User               @relation("EventHost", fields: [hostId], references: [id])
+  hostNameSnapshot        String?
+  hostAffiliationSnapshot String?
+  status                  EventStatus        @default(DRAFT)
+  isPaid                  Boolean            @default(false)
+  price                   Int?
+  capacity                Int
+  startAt                 DateTime
+  endAt                   DateTime
+  registrationDeadline    DateTime?
+  releaseIntervalMinutes  Int?
+  refundContact           String?
+  refundDeadlineType      RefundDeadlineType @default(NONE)
+  refundDeadlineValue     Int?
+  refundDeadlineAt        DateTime?
+  refundPolicyText        String?
+  contactEmail            String?
+  contactPhone            String?
+  registrations           Registration[]
+  whitelist               EventWhitelist?
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+  deletedAt               DateTime?
 }
 
-model Registration {
-  id              String             @id @default(cuid())
-  eventId         String
-  userId          String
-  status          RegistrationStatus @default(PENDING_PAYMENT)
-  orderId         String?            @unique
-  paymentKey      String?
-  paidAmount      Int?
-  paidAt          DateTime?
-  refundedAmount  Int?
-  refundedAt      DateTime?
-  idempotencyKey  String?
-  retryCount      Int                @default(0)
-  nextRetryAt     DateTime?
-  cancelReason    String?
-  cancelledBy     String?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  cancelledByUser User?              @relation("CancelledBy", fields: [cancelledBy], references: [id])
-  event           Event              @relation(fields: [eventId], references: [id])
-  user            User               @relation("Registrant", fields: [userId], references: [id])
+model EventWhitelist {
+  id        String           @id @default(cuid())
+  eventId   String           @unique
+  event     Event            @relation(fields: [eventId], references: [id])
+  entries   WhitelistEntry[]
+  createdAt DateTime         @default(now())
 }
 
+model WhitelistEntry {
+  id          String         @id @default(cuid())
+  whitelistId String
+  whitelist   EventWhitelist @relation(fields: [whitelistId], references: [id])
+  studentId   String
+  createdAt   DateTime       @default(now())
+
+  @@unique([whitelistId, studentId])
 model Event {
   id                      String             @id @default(cuid())
   title                   String

@@ -10,6 +10,7 @@ const adminRoutes = require('./routes/admin')
 const schoolAdminRoutes = require('./routes/schoolAdmin')
 const { paymentRouter, registrationRouter, adminRefundRouter } = require('./routes/payments')
 const eventRoutes = require('./routes/events')
+const whitelistRoutes = require('./routes/whitelist')
 const registrationDomainRoutes = require('./routes/registrations')
 const { start: startRefundWorker } = require('./workers/refundWorker')
 
@@ -30,7 +31,9 @@ app.use('/api/v1/registrations', registrationDomainRoutes)
 // 결제 도메인(다른 팀원) — 유료 본인 환불(POST /:id/cancel)
 app.use('/api/v1/registrations', registrationRouter)
 app.use('/api/v1/admin', adminRefundRouter)
+app.use('/api/v1/registrations', registrationDomainRoutes)
 app.use('/api/v1/events', eventRoutes)
+app.use('/api/v1/events/:eventId/whitelist', whitelistRoutes)
 
 app.use((err, req, res, next) => {
   console.error(err)

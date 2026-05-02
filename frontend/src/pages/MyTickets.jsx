@@ -1,5 +1,3 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getMyRegistrations, cancelFreeRegistration } from '../api/registrations'
 
@@ -87,6 +85,28 @@ export default function MyTickets() {
   )
 }
 
+function TicketCard({ reg, onCancel }) {
+  const { event, status } = reg
+  const canCancel = status === 'CONFIRMED' && !event.isPaid
+
+  return (
+    <div className="card p-5 flex items-start justify-between gap-4">
+      <div className="space-y-1 flex-1 min-w-0">
+        <div className="font-semibold text-gray-900 truncate">{event.title}</div>
+        <div className="text-sm text-gray-500">{fmtDateTime(event.startAt)}</div>
+        {event.location && <div className="text-xs text-gray-400">{event.location}</div>}
+      </div>
+      <div className="flex flex-col items-end gap-2 shrink-0">
+        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS_COLOR[status]}`}>
+          {STATUS_LABEL[status] ?? status}
+        </span>
+        {canCancel && onCancel && (
+          <button onClick={onCancel} className="text-xs text-red-400 hover:text-red-600">
+            취소
+          </button>
+        )}
+      </div>
+    </div>
 function TabButton({ active, children, ...rest }) {
   return (
     <button
