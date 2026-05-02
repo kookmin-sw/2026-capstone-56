@@ -8,6 +8,9 @@ const schoolRoutes = require('./routes/schools')
 const kakaoRoutes = require('./routes/kakao')
 const adminRoutes = require('./routes/admin')
 const schoolAdminRoutes = require('./routes/schoolAdmin')
+const { paymentRouter, registrationRouter, adminRefundRouter } = require('./routes/payments')
+const eventRoutes = require('./routes/events')
+const { start: startRefundWorker } = require('./workers/refundWorker')
 
 const app = express()
 
@@ -20,9 +23,10 @@ app.use('/api/auth/kakao', kakaoRoutes)
 app.use('/api/schools', schoolRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/school-admin', schoolAdminRoutes)
-
-// 행사 도메인 stub (메인 페이지 렌더링용)
-app.get('/api/events', (req, res) => res.json([]))
+app.use('/api/v1/payments', paymentRouter)
+app.use('/api/v1/registrations', registrationRouter)
+app.use('/api/v1/admin', adminRefundRouter)
+app.use('/api/v1/events', eventRoutes)
 
 app.use((err, req, res, next) => {
   console.error(err)
@@ -30,4 +34,7 @@ app.use((err, req, res, next) => {
 })
 
 const PORT = process.env.PORT || 4000
-app.listen(PORT, () => console.log(`Auth server running on port ${PORT}`))
+app.listen(PORT, () => {
+  console.log(`Auth server running on port ${PORT}`)
+  startRefundWorker()
+})

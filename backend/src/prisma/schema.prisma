@@ -9,22 +9,25 @@ datasource db {
 }
 
 model User {
-  id               String    @id @default(cuid())
-  email            String    @unique
-  password         String?
-  name             String
-  kakaoId          String?   @unique
-  studentId        String?   @unique
-  role             Role      @default(ATTENDEE)
-  emailVerified    Boolean   @default(false)
-  verifyToken       String?   @unique
-  verifyTokenExpiry DateTime?
-  resetToken        String?   @unique
-  resetTokenExpiry DateTime?
-  schoolId         String?
-  school           School?   @relation(fields: [schoolId], references: [id])
-  createdAt        DateTime  @default(now())
-  deletedAt        DateTime?
+  id                     String         @id @default(cuid())
+  email                  String         @unique
+  password               String?
+  name                   String
+  kakaoId                String?        @unique
+  studentId              String?        @unique
+  role                   Role           @default(ATTENDEE)
+  emailVerified          Boolean        @default(false)
+  verifyToken            String?        @unique
+  verifyTokenExpiry      DateTime?
+  resetToken             String?        @unique
+  resetTokenExpiry       DateTime?
+  schoolId               String?
+  school                 School?        @relation(fields: [schoolId], references: [id])
+  hostedEvents           Event[]        @relation("EventHost")
+  registrations          Registration[] @relation("Registrant")
+  cancelledRegistrations Registration[] @relation("CancelledBy")
+  createdAt              DateTime       @default(now())
+  deletedAt              DateTime?
 }
 
 model School {
@@ -33,13 +36,86 @@ model School {
   domain    String    @unique
   address   String?
   users     User[]
+  events    Event[]
   createdAt DateTime  @default(now())
   deletedAt DateTime?
 }
 
+model Event {
+  id                   String             @id @default(cuid())
+  title                String
+  description          String?
+  schoolId             String
+  school               School             @relation(fields: [schoolId], references: [id])
+  hostId               String
+  host                 User               @relation("EventHost", fields: [hostId], references: [id])
+  status               EventStatus        @default(DRAFT)
+  isPaid               Boolean            @default(false)
+  price                Int?
+  capacity             Int
+  startAt              DateTime
+  endAt                DateTime
+  registrationDeadline DateTime?
+  refundDeadlineType   RefundDeadlineType @default(NONE)
+  refundDeadlineValue  Int?
+  refundDeadlineAt     DateTime?
+  refundPolicyText     String?
+  contactEmail         String?
+  contactPhone         String?
+  registrations        Registration[]
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  deletedAt            DateTime?
+}
+
+model Registration {
+  id              String             @id @default(cuid())
+  eventId         String
+  event           Event              @relation(fields: [eventId], references: [id])
+  userId          String
+  user            User               @relation("Registrant", fields: [userId], references: [id])
+  status          RegistrationStatus @default(PENDING_PAYMENT)
+  orderId         String?            @unique
+  paymentKey      String?
+  paidAmount      Int?
+  paidAt          DateTime?
+  refundedAmount  Int?
+  refundedAt      DateTime?
+  idempotencyKey  String?
+  retryCount      Int                @default(0)
+  nextRetryAt     DateTime?
+  cancelReason    String?
+  cancelledBy     String?
+  cancelledByUser User?              @relation("CancelledBy", fields: [cancelledBy], references: [id])
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
+
 enum Role {
-  ATTENDEE      // 일반사용자
-  CERTIFIED     // 인증사용자(주최자)
-  SCHOOL_ADMIN  // 학교총관리자
-  OPERATOR      // 운영자
+  ATTENDEE     // 일반사용자
+  CERTIFIED    // 인증사용자(주최자)
+  SCHOOL_ADMIN // 학교총관리자
+  OPERATOR     // 운영자
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+}
+
+enum RefundDeadlineType {
+  NONE
+  MINUTES
+  HOURS
+}
+
+enum RegistrationStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  EXPIRED
+  CANCELLATION_REQUESTED
+  CANCELLED
+  REFUND_FAILED
+  CHECKED_IN
 }
