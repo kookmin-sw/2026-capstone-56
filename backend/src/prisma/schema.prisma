@@ -93,6 +93,56 @@ model Registration {
   user            User               @relation("Registrant", fields: [userId], references: [id])
 }
 
+model Event {
+  id                   String             @id @default(cuid())
+  title                String
+  description          String?
+  schoolId             String
+  school               School             @relation(fields: [schoolId], references: [id])
+  hostId               String
+  host                 User               @relation("EventHost", fields: [hostId], references: [id])
+  status               EventStatus        @default(DRAFT)
+  isPaid               Boolean            @default(false)
+  price                Int?
+  capacity             Int
+  startAt              DateTime
+  endAt                DateTime
+  registrationDeadline DateTime?
+  refundDeadlineType   RefundDeadlineType @default(NONE)
+  refundDeadlineValue  Int?
+  refundDeadlineAt     DateTime?
+  refundPolicyText     String?
+  contactEmail         String?
+  contactPhone         String?
+  registrations        Registration[]
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  deletedAt            DateTime?
+}
+
+model Registration {
+  id              String             @id @default(cuid())
+  eventId         String
+  event           Event              @relation(fields: [eventId], references: [id])
+  userId          String
+  user            User               @relation("Registrant", fields: [userId], references: [id])
+  status          RegistrationStatus @default(PENDING_PAYMENT)
+  orderId         String?            @unique
+  paymentKey      String?
+  paidAmount      Int?
+  paidAt          DateTime?
+  refundedAmount  Int?
+  refundedAt      DateTime?
+  idempotencyKey  String?
+  retryCount      Int                @default(0)
+  nextRetryAt     DateTime?
+  cancelReason    String?
+  cancelledBy     String?
+  cancelledByUser User?              @relation("CancelledBy", fields: [cancelledBy], references: [id])
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
+
 enum Role {
   ATTENDEE     // 일반사용자
   CERTIFIED    // 인증사용자(주최자)
