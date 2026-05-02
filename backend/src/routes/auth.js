@@ -34,7 +34,7 @@ const passwordLimiter = rateLimit({
 router.post('/register', registerLimiter, async (req, res, next) => {
   try {
     const { name, email, password, studentId } = req.body
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !studentId) {
       return res.status(400).json({ message: '모든 필드를 입력해주세요.' })
     }
     if (password.length < 8) {
@@ -55,14 +55,12 @@ router.post('/register', registerLimiter, async (req, res, next) => {
       await prisma.user.delete({ where: { id: existing.id } })
     }
 
-    if (studentId) {
-      const existingStudent = await prisma.user.findUnique({ where: { studentId } })
-      if (existingStudent) return res.status(409).json({ message: '이미 등록된 학번입니다.' })
-    }
-
     // 이메일 도메인으로 학교 자동 매칭
     const domain = email.split('@')[1]
     const school = await prisma.school.findUnique({ where: { domain } })
+
+    const existingStudent = await prisma.user.findFirst({ where: { studentId, schoolId: school?.id || null } })
+    if (existingStudent) return res.status(409).json({ message: '이미 등록된 학번입니다.' })
 
     if (!school) {
       return res.status(400).json({ message: '등록되지 않은 학교 이메일입니다.' })

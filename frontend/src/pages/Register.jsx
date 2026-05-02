@@ -74,13 +74,14 @@ export default function Register() {
                 {errors.name && <p className="text-red-500 text-xs mt-1.5">{errors.name.message}</p>}
               </div>
               <div>
-                <label className="label">학번</label>
+                <label className="label">학번 *</label>
                 <input
-                  {...register('studentId')}
+                  {...register('studentId', { required: '학번을 입력하세요' })}
                   type="text"
                   placeholder="20230001"
                   className="input"
                 />
+                {errors.studentId && <p className="text-red-500 text-xs mt-1.5">{errors.studentId.message}</p>}
               </div>
             </div>
             <div>
