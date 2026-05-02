@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getMyRegistrations, cancelFreeRegistration } from '../api/registrations'
 
@@ -107,6 +109,9 @@ function TicketCard({ reg, onCancel }) {
         )}
       </div>
     </div>
+  )
+}
+
 function TabButton({ active, children, ...rest }) {
   return (
     <button
