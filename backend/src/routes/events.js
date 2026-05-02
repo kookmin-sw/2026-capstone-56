@@ -59,12 +59,16 @@ router.get('/:id', authMiddleware, async (req, res, next) => {
     })
     if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
 
-    // BR-P07: 누적 취소 자리 수 (UI 표시용, 알림 미발송)
-    const cancelledCount = await prisma.registration.count({
-      where: { eventId: event.id, status: { in: ['CANCELLED', 'EXPIRED'] } },
-    })
+    const [cancelledCount, myRegistration] = await Promise.all([
+      prisma.registration.count({
+        where: { eventId: event.id, status: { in: ['CANCELLED', 'EXPIRED'] } },
+      }),
+      req.user ? prisma.registration.findFirst({
+        where: { eventId: event.id, userId: req.user.id, status: { in: ACTIVE_STATUSES } },
+      }) : null,
+    ])
 
-    res.json({ ...event, cancelledCount })
+    res.json({ ...event, cancelledCount, myRegistration })
   } catch (err) {
     next(err)
   }

@@ -10,6 +10,8 @@ const adminRoutes = require('./routes/admin')
 const schoolAdminRoutes = require('./routes/schoolAdmin')
 const { paymentRouter, registrationRouter, adminRefundRouter } = require('./routes/payments')
 const eventRoutes = require('./routes/events')
+const whitelistRoutes = require('./routes/whitelist')
+const registrationDomainRoutes = require('./routes/registrations')
 const { start: startRefundWorker } = require('./workers/refundWorker')
 
 const app = express()
@@ -26,7 +28,9 @@ app.use('/api/school-admin', schoolAdminRoutes)
 app.use('/api/v1/payments', paymentRouter)
 app.use('/api/v1/registrations', registrationRouter)
 app.use('/api/v1/admin', adminRefundRouter)
+app.use('/api/v1/registrations', registrationDomainRoutes)
 app.use('/api/v1/events', eventRoutes)
+app.use('/api/v1/events/:eventId/whitelist', whitelistRoutes)
 
 app.use((err, req, res, next) => {
   console.error(err)

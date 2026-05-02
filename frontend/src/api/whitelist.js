@@ -1,18 +1,23 @@
 import api from './axios'
 
-const base = (schoolId) => `/schools/${schoolId}/whitelist`
+const base = (eventId) => `/v1/events/${eventId}/whitelist`
 
-export const getWhitelist = (schoolId) =>
-  api.get(base(schoolId)).then(r => r.data)
+export const getEventWhitelist = (eventId) =>
+  api.get(base(eventId)).then(r => r.data)
 
-export const createWhitelist = (schoolId) =>
-  api.post(base(schoolId)).then(r => r.data)
+export const createEventWhitelist = (eventId) =>
+  api.post(base(eventId)).then(r => r.data)
 
-export const addEntry = (schoolId, value) =>
-  api.post(`${base(schoolId)}/entries`, { value }).then(r => r.data)
+export const addWhitelistEntry = (eventId, studentId) =>
+  api.post(`${base(eventId)}/entries`, { studentId }).then(r => r.data)
 
-export const updateEntry = (schoolId, entryId, value) =>
-  api.put(`${base(schoolId)}/entries/${entryId}`, { value }).then(r => r.data)
+export const uploadWhitelistFile = (eventId, file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return api.post(`${base(eventId)}/upload`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then(r => r.data)
+}
 
-export const deleteEntry = (schoolId, entryId) =>
-  api.delete(`${base(schoolId)}/entries/${entryId}`).then(r => r.data)
+export const deleteWhitelistEntry = (eventId, entryId) =>
+  api.delete(`${base(eventId)}/entries/${entryId}`).then(r => r.data)
