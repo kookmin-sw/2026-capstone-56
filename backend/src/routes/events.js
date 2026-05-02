@@ -6,6 +6,7 @@ const authMiddleware = require('../middleware/auth')
 const { requireRole, optionalAuth } = authMiddleware
 const { cancelPayment } = require('../services/toss')
 const supabase = require('../services/supabase')
+const audit = require('../utils/audit')
 
 const STORAGE_BUCKET = 'event-images'
 
@@ -64,6 +65,39 @@ router.post('/upload-image', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_AD
 )
 
 // ─── 행사 CRUD ────────────────────────────────────────────────────────────────
+
+// GET /mine — 내가 주최한 행사 목록 (호스트 본인, SCHOOL_ADMIN: 학교 전체)
+// 주의: /:id 보다 앞에 정의해야 'mine'이 :id로 매칭되지 않음
+router.get('/mine', authMiddleware, async (req, res, next) => {
+  try {
+    const where = { deletedAt: null }
+
+    if (req.user.role === 'SCHOOL_ADMIN') {
+      const me = await prisma.user.findUnique({ where: { id: req.user.id }, select: { schoolId: true } })
+      if (!me?.schoolId) return res.json([])
+      where.schoolId = me.schoolId
+    } else if (req.user.role === 'OPERATOR') {
+      // 운영자는 전체 중 본인 주최 행사만
+      where.hostId = req.user.id
+    } else {
+      where.hostId = req.user.id
+    }
+
+    const events = await prisma.event.findMany({
+      where,
+      include: {
+        school: { select: { id: true, name: true } },
+        _count: {
+          select: { registrations: { where: { status: { in: ACTIVE_STATUSES } } } },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+    res.json(events)
+  } catch (err) {
+    next(err)
+  }
+})
 
 // GET / — 행사 목록 조회 (UC-05, BR-01 비로그인 허용)
 // 일반사용자: 본인 학교만(BR-02). 비로그인/SCHOOL_ADMIN/OPERATOR: schoolId 쿼리 우선, 없으면 전체.
@@ -231,6 +265,7 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
       },
     })
 
+    audit(req.user.id, 'CREATE_EVENT', 'EVENT', event.id, event.title)
     res.status(201).json(event)
   } catch (err) {
     next(err)
@@ -250,6 +285,7 @@ router.put('/:id/publish', authMiddleware, async (req, res, next) => {
       where: { id: event.id },
       data: { status: 'PUBLISHED' },
     })
+    audit(req.user.id, 'PUBLISH_EVENT', 'EVENT', event.id, event.title)
     res.json(updated)
   } catch (err) {
     next(err)
@@ -314,6 +350,7 @@ router.delete('/:id', authMiddleware, async (req, res, next) => {
       }
     }
 
+    audit(req.user.id, 'DELETE_EVENT', 'EVENT', event.id, event.title)
     res.json({
       message: '행사가 삭제되었습니다.',
       freeCancelled: freeCount,

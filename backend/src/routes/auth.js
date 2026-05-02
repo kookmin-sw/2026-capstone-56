@@ -265,6 +265,18 @@ router.delete('/me', authMiddleware, async (req, res, next) => {
       return res.status(403).json({ message: '학교총관리자는 운영자에게 탈퇴 요청이 필요합니다.' })
     }
 
+    // BR-U08: 인증사용자는 진행 중 행사(PUBLISHED) 0건일 때만 탈퇴 가능
+    if (user.role === 'CERTIFIED') {
+      const activeEventCount = await prisma.event.count({
+        where: { hostId: user.id, status: 'PUBLISHED', deletedAt: null },
+      })
+      if (activeEventCount > 0) {
+        return res.status(403).json({
+          message: `진행 중인 행사 ${activeEventCount}건이 있어 탈퇴할 수 없습니다. 행사를 먼저 종료하거나 삭제해주세요.`,
+        })
+      }
+    }
+
     await prisma.user.update({
       where: { id: req.user.id },
       data: { deletedAt: new Date() }

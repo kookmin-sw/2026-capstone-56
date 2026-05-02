@@ -5,3 +5,6 @@ export const getMySchoolUsers = (search) =>
 
 export const updateMySchoolUserRole = (userId, role) =>
   api.put(`/school-admin/users/${userId}/role`, { role }).then(r => r.data)
+
+export const getSchoolUserRegistrations = (userId) =>
+  api.get(`/school-admin/users/${userId}/registrations`).then(r => r.data)

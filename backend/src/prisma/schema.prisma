@@ -27,6 +27,7 @@ model User {
   hostedEvents           Event[]        @relation("EventHost")
   cancelledRegistrations Registration[] @relation("CancelledBy")
   registrations          Registration[] @relation("Registrant")
+  auditLogs              AuditLog[]     @relation("AuditAdmin")
   school                 School?        @relation(fields: [schoolId], references: [id])
 
   @@unique([studentId, schoolId])
@@ -114,8 +115,20 @@ model Registration {
   cancelReason    String?
   cancelledBy     String?
   cancelledByUser User?              @relation("CancelledBy", fields: [cancelledBy], references: [id])
+  checkedInAt     DateTime?
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  admin      User     @relation("AuditAdmin", fields: [adminId], references: [id])
+  action     String
+  targetType String
+  targetId   String
+  detail     String?
+  createdAt  DateTime @default(now())
 }
 
 enum Role {

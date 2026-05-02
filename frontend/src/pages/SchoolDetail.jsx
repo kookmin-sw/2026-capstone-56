@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getSchoolUsers, updateUserRole } from '../api/admin'
+import { getSchoolUsers, updateUserRole, getUserRegistrations, cancelRegistration } from '../api/admin'
 import { useToast } from '../components/Toast'
+import UserTicketsModal from '../components/UserTicketsModal'
 
 const ROLES = [
   { value: 'ATTENDEE', label: '일반' },
@@ -49,6 +50,7 @@ export default function SchoolDetail() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [searchInput, setSearchInput] = useState('')
+  const [ticketUser, setTicketUser] = useState(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['school-users', schoolId, search],
@@ -64,6 +66,7 @@ export default function SchoolDetail() {
   }
 
   return (
+    <>
     <div className="max-w-4xl mx-auto px-4 py-10">
       <button
         onClick={() => navigate('/admin/schools')}
@@ -124,6 +127,7 @@ export default function SchoolDetail() {
                 <th className="text-left px-5 py-3.5 font-medium text-gray-600">학번</th>
                 <th className="text-left px-5 py-3.5 font-medium text-gray-600">이메일인증</th>
                 <th className="text-left px-5 py-3.5 font-medium text-gray-600">역할</th>
+                <th className="px-5 py-3.5" />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -146,6 +150,14 @@ export default function SchoolDetail() {
                       {user.role !== 'OPERATOR' && <RoleSelect user={user} schoolId={schoolId} />}
                     </div>
                   </td>
+                  <td className="px-5 py-4 text-right">
+                    <button
+                      onClick={() => setTicketUser(user)}
+                      className="text-xs text-primary-600 hover:underline font-medium"
+                    >
+                      티켓
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -153,5 +165,15 @@ export default function SchoolDetail() {
         )}
       </div>
     </div>
+
+    {ticketUser && (
+      <UserTicketsModal
+        user={ticketUser}
+        fetchFn={getUserRegistrations}
+        cancelFn={cancelRegistration}
+        onClose={() => setTicketUser(null)}
+      />
+    )}
+    </>
   )
 }

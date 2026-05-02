@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getEvent, publishEvent } from '../api/events'
 import { createFreeRegistration, cancelFreeRegistration } from '../api/registrations'
@@ -327,6 +327,17 @@ export default function EventDetail() {
                     {publishMutation.isPending ? '공개 중...' : '공개하기'}
                   </button>
                 </div>
+              )}
+              {event.status === 'PUBLISHED' && (
+                <Link
+                  to={`/events/${id}/checkin`}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl text-sm font-semibold transition w-fit"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.243m-4.243 0L9.757 9.757M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  QR 체크인 관리
+                </Link>
               )}
               <EventWhitelistManager eventId={id} />
             </div>

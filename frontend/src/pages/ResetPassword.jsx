@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { resetPassword } from '../api/auth'
 import { useToast } from '../components/Toast'
+import PasswordStrength from '../components/PasswordStrength'
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams()
@@ -72,6 +73,7 @@ export default function ResetPassword() {
                 placeholder="8자 이상"
                 className="input"
               />
+              <PasswordStrength password={pw.password} />
             </div>
             <div>
               <label className="label">새 비밀번호 확인</label>
