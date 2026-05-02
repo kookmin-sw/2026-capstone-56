@@ -14,20 +14,22 @@ model User {
   password               String?
   name                   String
   kakaoId                String?        @unique
-  studentId              String?        @unique
+  studentId              String?
   role                   Role           @default(ATTENDEE)
   emailVerified          Boolean        @default(false)
   verifyToken            String?        @unique
-  verifyTokenExpiry      DateTime?
   resetToken             String?        @unique
   resetTokenExpiry       DateTime?
   schoolId               String?
-  school                 School?        @relation(fields: [schoolId], references: [id])
-  hostedEvents           Event[]        @relation("EventHost")
-  registrations          Registration[] @relation("Registrant")
-  cancelledRegistrations Registration[] @relation("CancelledBy")
   createdAt              DateTime       @default(now())
   deletedAt              DateTime?
+  verifyTokenExpiry      DateTime?
+  hostedEvents           Event[]        @relation("EventHost")
+  cancelledRegistrations Registration[] @relation("CancelledBy")
+  registrations          Registration[] @relation("Registrant")
+  school                 School?        @relation(fields: [schoolId], references: [id])
+
+  @@unique([studentId, schoolId])
 }
 
 model School {
@@ -35,10 +37,60 @@ model School {
   name      String    @unique
   domain    String    @unique
   address   String?
-  users     User[]
-  events    Event[]
   createdAt DateTime  @default(now())
   deletedAt DateTime?
+  events    Event[]
+  users     User[]
+}
+
+model Event {
+  id                   String             @id @default(cuid())
+  title                String
+  description          String?
+  schoolId             String
+  hostId               String
+  status               EventStatus        @default(DRAFT)
+  isPaid               Boolean            @default(false)
+  price                Int?
+  capacity             Int
+  startAt              DateTime
+  endAt                DateTime
+  registrationDeadline DateTime?
+  refundDeadlineType   RefundDeadlineType @default(NONE)
+  refundDeadlineValue  Int?
+  refundDeadlineAt     DateTime?
+  refundPolicyText     String?
+  contactEmail         String?
+  contactPhone         String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  deletedAt            DateTime?
+  host                 User               @relation("EventHost", fields: [hostId], references: [id])
+  school               School             @relation(fields: [schoolId], references: [id])
+  registrations        Registration[]
+}
+
+model Registration {
+  id              String             @id @default(cuid())
+  eventId         String
+  userId          String
+  status          RegistrationStatus @default(PENDING_PAYMENT)
+  orderId         String?            @unique
+  paymentKey      String?
+  paidAmount      Int?
+  paidAt          DateTime?
+  refundedAmount  Int?
+  refundedAt      DateTime?
+  idempotencyKey  String?
+  retryCount      Int                @default(0)
+  nextRetryAt     DateTime?
+  cancelReason    String?
+  cancelledBy     String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  cancelledByUser User?              @relation("CancelledBy", fields: [cancelledBy], references: [id])
+  event           Event              @relation(fields: [eventId], references: [id])
+  user            User               @relation("Registrant", fields: [userId], references: [id])
 }
 
 model Event {
