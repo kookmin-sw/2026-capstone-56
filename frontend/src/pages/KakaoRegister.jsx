@@ -8,7 +8,11 @@ import axios from '../api/axios'
 
 function decodeToken(token) {
   try {
-    return JSON.parse(atob(token.split('.')[1]))
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const json = decodeURIComponent(
+      atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+    )
+    return JSON.parse(json)
   } catch {
     return {}
   }
@@ -111,13 +115,14 @@ export default function KakaoRegister() {
               {errors.name && <p className="text-red-500 text-xs mt-1.5">{errors.name.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">학번 <span className="text-gray-400 font-normal">(선택)</span></label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">학번 *</label>
               <input
-                {...register('studentId')}
+                {...register('studentId', { required: '학번을 입력하세요' })}
                 type="text"
                 placeholder="20230001"
                 className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition"
               />
+              {errors.studentId && <p className="text-red-500 text-xs mt-1.5">{errors.studentId.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">학교 이메일 *</label>
