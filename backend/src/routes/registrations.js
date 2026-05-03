@@ -2,6 +2,7 @@ const express = require('express')
 const { PrismaClient } = require('@prisma/client')
 const authMiddleware = require('../middleware/auth')
 const audit = require('../utils/audit')
+const { sendRegistrationConfirmEmail } = require('../services/mailer')
 
 const router = express.Router()
 const prisma = new PrismaClient()
@@ -18,7 +19,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
 
     const [event, user] = await Promise.all([
       prisma.event.findUnique({ where: { id: eventId } }),
-      prisma.user.findUnique({ where: { id: userId }, select: { schoolId: true, studentId: true } }),
+      prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true, schoolId: true, studentId: true } }),
     ])
 
     if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
@@ -80,6 +81,9 @@ router.post('/', authMiddleware, async (req, res, next) => {
       })
 
       audit(userId, 'REGISTER', 'REGISTRATION', registration.id, event.title)
+      sendRegistrationConfirmEmail({
+        to: user.email, name: user.name, event, registrationId: registration.id,
+      }).catch(e => console.error('[mail]', e.message))
       res.status(201).json({
         registrationId: registration.id,
         status: registration.status,
