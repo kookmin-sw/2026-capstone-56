@@ -1,5 +1,16 @@
 import { Link } from 'react-router-dom'
 
+function fmtPublishAt(iso) {
+  const d = new Date(iso)
+  const month = d.getMonth() + 1
+  const day = d.getDate()
+  const h = d.getHours()
+  const m = d.getMinutes()
+  const ampm = h < 12 ? '오전' : '오후'
+  const h12 = h % 12 || 12
+  return `${month}월 ${day}일 ${ampm} ${h12}시 ${m.toString().padStart(2, '0')}분`
+}
+
 const PALETTES = [
   { from: '#6366f1', to: '#8b5cf6' },
   { from: '#f43f5e', to: '#fb923c' },
@@ -27,9 +38,11 @@ export default function EventCard({ event }) {
   const weekday = date.toLocaleDateString('ko-KR', { weekday: 'short' })
   const time = date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
 
+  const isUpcoming = event.publishAt && new Date(event.publishAt) > new Date()
+
   return (
     <Link to={`/events/${event.id}`} className="group block">
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-card hover:shadow-card-hover hover:-translate-y-1.5 transition-all duration-300 overflow-hidden">
+      <div className="relative bg-white rounded-3xl border border-gray-100 shadow-card hover:shadow-card-hover hover:-translate-y-1.5 transition-all duration-300 overflow-hidden">
 
         {/* 컬러 헤더 */}
         <div
@@ -150,6 +163,18 @@ export default function EventCard({ event }) {
             </div>
           </div>
         </div>
+
+        {/* 오픈 예정 오버레이 */}
+        {isUpcoming && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center rounded-3xl">
+            <div className="bg-white/90 shadow-sm rounded-2xl px-4 py-2.5 flex flex-col items-center gap-1">
+              <span className="text-[12px] font-black text-gray-700 tracking-wide">오픈 예정</span>
+              <span className="text-[10px] font-semibold text-gray-500 text-center">
+                {fmtPublishAt(event.publishAt)}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </Link>
   )

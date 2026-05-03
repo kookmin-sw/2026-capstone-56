@@ -17,6 +17,16 @@ function fmtTime(iso) {
   if (!iso) return ''
   return new Date(iso).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
 }
+function fmtPublishAt(iso) {
+  const d = new Date(iso)
+  const month = d.getMonth() + 1
+  const day = d.getDate()
+  const h = d.getHours()
+  const m = d.getMinutes()
+  const ampm = h < 12 ? '오전' : '오후'
+  const h12 = h % 12 || 12
+  return `${month}월 ${day}일 ${ampm} ${h12}시 ${m.toString().padStart(2, '0')}분`
+}
 
 // ── 신청 상태 표시 ────────────────────────────────────────────────────────────
 const STATUS_LABEL = {
@@ -32,6 +42,7 @@ function RegistrationCard({ event, user, myReg, activeCount, navigate, applyMuta
   const remaining = event.capacity - activeCount
   const isFull = remaining <= 0
   const ratio = Math.min(100, Math.round((activeCount / event.capacity) * 100))
+  const isUpcoming = event.publishAt && new Date(event.publishAt) > new Date()
 
   return (
     <div className="bg-white rounded-3xl shadow-card p-5 space-y-4">
@@ -59,7 +70,16 @@ function RegistrationCard({ event, user, myReg, activeCount, navigate, applyMuta
 
       {/* 신청 버튼 */}
       <div className="space-y-2">
-        {!user ? (
+        {isUpcoming ? (
+          <>
+            <button disabled className="btn w-full py-3.5 rounded-2xl bg-gray-100 text-gray-400 text-base font-bold cursor-not-allowed">
+              오픈 예정
+            </button>
+            <p className="text-xs text-center text-gray-400">
+              오픈 예정: {fmtPublishAt(event.publishAt)}
+            </p>
+          </>
+        ) : !user ? (
           <button
             onClick={() => navigate('/login')}
             className="btn btn-primary w-full py-3.5 rounded-2xl text-base font-bold"

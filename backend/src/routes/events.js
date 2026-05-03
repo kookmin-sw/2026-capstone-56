@@ -116,11 +116,6 @@ router.get('/', optionalAuth, async (req, res, next) => {
 
     if (status) where.status = status
 
-    // 오픈 시각이 미래인 행사는 OPERATOR/SCHOOL_ADMIN만 조회 가능
-    if (!req.user || !['OPERATOR', 'SCHOOL_ADMIN'].includes(req.user.role)) {
-      where.OR = [{ publishAt: null }, { publishAt: { lte: new Date() } }]
-    }
-
     const events = await prisma.event.findMany({
       where,
       include: {
@@ -152,15 +147,6 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
       },
     })
     if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
-
-    // 오픈 시각 전이면 호스트/관리자만 접근 가능
-    const isHostOrAdmin = req.user && (
-      event.hostId === req.user.id ||
-      ['OPERATOR', 'SCHOOL_ADMIN'].includes(req.user.role)
-    )
-    if (!isHostOrAdmin && event.publishAt && event.publishAt > new Date()) {
-      return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
-    }
 
     // BR-02: 일반사용자는 본인 학교 행사만 상세 조회 가능
     if (req.user?.role === 'ATTENDEE') {
