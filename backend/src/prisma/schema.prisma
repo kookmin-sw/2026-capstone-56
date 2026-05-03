@@ -63,6 +63,7 @@ model Event {
   endAt                   DateTime
   registrationDeadline    DateTime?
   imageUrl                String?
+  publishAt               DateTime?
   releaseIntervalMinutes  Int?
   refundContact           String?
   refundDeadlineType      RefundDeadlineType @default(NONE)

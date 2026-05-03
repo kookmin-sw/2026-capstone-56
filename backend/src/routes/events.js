@@ -116,6 +116,11 @@ router.get('/', optionalAuth, async (req, res, next) => {
 
     if (status) where.status = status
 
+    // 오픈 시각이 미래인 행사는 OPERATOR/SCHOOL_ADMIN만 조회 가능
+    if (!req.user || !['OPERATOR', 'SCHOOL_ADMIN'].includes(req.user.role)) {
+      where.OR = [{ publishAt: null }, { publishAt: { lte: new Date() } }]
+    }
+
     const events = await prisma.event.findMany({
       where,
       include: {
@@ -147,6 +152,15 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
       },
     })
     if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
+
+    // 오픈 시각 전이면 호스트/관리자만 접근 가능
+    const isHostOrAdmin = req.user && (
+      event.hostId === req.user.id ||
+      ['OPERATOR', 'SCHOOL_ADMIN'].includes(req.user.role)
+    )
+    if (!isHostOrAdmin && event.publishAt && event.publishAt > new Date()) {
+      return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
+    }
 
     // BR-02: 일반사용자는 본인 학교 행사만 상세 조회 가능
     if (req.user?.role === 'ATTENDEE') {
@@ -185,6 +199,7 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
       startAt, endAt, registrationDeadline,
       releaseIntervalMinutes,
       imageUrl,
+      publishAt,
       refundContact,
       refundDeadlineType = 'NONE', refundDeadlineValue,
       refundPolicyText, contactEmail, contactPhone,
@@ -219,6 +234,16 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
     if (releaseIntervalMinutes != null && ![5, 15, 30, 60].includes(releaseIntervalMinutes)) {
       return res.status(400).json({ message: '취소표 릴리즈 주기는 5/15/30/60 중 하나여야 합니다. (BR-24)' })
     }
+    // publishAt 검증: 유효한 시각이어야 하며 행사 시작 이전이어야 함
+    if (publishAt) {
+      const publishDate = new Date(publishAt)
+      if (isNaN(publishDate.getTime())) {
+        return res.status(400).json({ message: '유효하지 않은 오픈 시각입니다.' })
+      }
+      if (publishDate >= startDate) {
+        return res.status(400).json({ message: '오픈 시각은 행사 시작 시각 이전이어야 합니다.' })
+      }
+    }
 
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
@@ -247,6 +272,7 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
         hostNameSnapshot: user.name,
         hostAffiliationSnapshot: user.school?.name ?? null,
         imageUrl: imageUrl ?? null,
+        publishAt: publishAt ? new Date(publishAt) : null,
         isPaid: !!isPaid,
         price: isPaid ? price : null,
         capacity,

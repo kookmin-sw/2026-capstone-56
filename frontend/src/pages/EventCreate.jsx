@@ -20,7 +20,7 @@ function getPalette(seed) {
   return PALETTES[sum % PALETTES.length]
 }
 
-function EventPreviewCard({ form, imagePreview }) {
+function EventPreviewCard({ form, imagePreview, openMode }) {
   const palette = getPalette(form.title)
   const startDate = form.startAt ? new Date(form.startAt) : new Date()
   const isValidDate = !isNaN(startDate)
@@ -65,7 +65,12 @@ function EventPreviewCard({ form, imagePreview }) {
         </div>
 
         {/* 가격 뱃지 */}
-        <div className="absolute top-4 right-4 z-10">
+        <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-1.5">
+          {openMode === 'scheduled' && (
+            <span className="bg-amber-400/90 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm">
+              예약 오픈
+            </span>
+          )}
           <span className="bg-white/90 backdrop-blur-sm text-gray-800 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
             {form.isPaid
               ? form.price ? `${Number(form.price).toLocaleString()}원` : '유료'
@@ -233,6 +238,8 @@ export default function EventCreate() {
     refundDeadlineValue: 30,
     refundContact: '',
     imageUrl: '',
+    openMode: 'immediate',
+    publishAt: '',
   })
   const [imagePreview, setImagePreview] = useState(null)
   const [uploading, setUploading] = useState(false)
@@ -270,6 +277,7 @@ export default function EventCreate() {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (uploading) return alert('이미지 업로드가 완료될 때까지 기다려주세요.')
+    if (form.openMode === 'scheduled' && !form.publishAt) return alert('오픈 시각을 입력해주세요.')
     const payload = {
       ...form,
       capacity: Number(form.capacity),
@@ -278,6 +286,7 @@ export default function EventCreate() {
       refundDeadlineValue: form.isPaid && form.refundDeadlineType !== 'NONE' ? Number(form.refundDeadlineValue) : null,
       refundDeadlineType: form.isPaid ? form.refundDeadlineType : 'NONE',
       imageUrl: form.imageUrl || null,
+      publishAt: form.openMode === 'scheduled' && form.publishAt ? form.publishAt : null,
     }
     createMutation.mutate(payload)
   }
@@ -445,6 +454,42 @@ export default function EventCreate() {
               )}
             </Section>
 
+            {/* 오픈 설정 */}
+            <Section icon="🚀" title="오픈 설정">
+              <Field label="행사 카드 공개 시점">
+                <div className="flex gap-2">
+                  {[
+                    { mode: 'immediate', label: '⚡ 바로 오픈' },
+                    { mode: 'scheduled', label: '🕐 지정된 시간에 오픈' },
+                  ].map(({ mode, label }) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, openMode: mode, publishAt: mode === 'immediate' ? '' : f.publishAt }))}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                        form.openMode === mode
+                          ? 'bg-primary-600 text-white shadow-sm'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {form.openMode === 'scheduled' && (
+                  <div className="mt-3 space-y-1">
+                    <input
+                      type="datetime-local"
+                      className="input"
+                      value={form.publishAt}
+                      onChange={set('publishAt')}
+                    />
+                    <p className="text-xs text-gray-400">설정한 시각이 되면 행사 카드가 목록에 공개됩니다.</p>
+                  </div>
+                )}
+              </Field>
+            </Section>
+
             {/* 제출 */}
             <div className="flex gap-3 pb-8">
               <button type="button" onClick={() => navigate(-1)} className="btn flex-1 border border-gray-200 text-gray-600">
@@ -470,7 +515,7 @@ export default function EventCreate() {
                 </div>
                 <span className="text-[11px] text-gray-400">실시간 반영</span>
               </div>
-              <EventPreviewCard form={form} imagePreview={imagePreview} />
+              <EventPreviewCard form={form} imagePreview={imagePreview} openMode={form.openMode} />
               <p className="text-[11px] text-gray-400 text-center mt-3">
                 행사 ID 기반 테마 색상이 자동 배정됩니다
               </p>
