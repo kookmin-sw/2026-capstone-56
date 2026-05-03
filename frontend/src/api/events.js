@@ -50,6 +50,11 @@ export const getEventRegistrations = async (id) => {
   return res.data
 }
 
+export const approveRefund = async (eventId, regId, reason) => {
+  const res = await api.post(`/v1/events/${eventId}/registrations/${regId}/refund`, { cancelReason: reason })
+  return res.data
+}
+
 export const uploadEventImage = async (file) => {
   const form = new FormData()
   form.append('image', file)

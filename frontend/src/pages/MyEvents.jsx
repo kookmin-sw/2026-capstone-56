@@ -178,10 +178,10 @@ function EventRow({ event, onPublish, onClose, onDelete, isPublishing, isClosing
       {/* 액션 버튼 */}
       <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100 flex-wrap">
         <Link
-          to={`/events/${event.id}`}
+          to={`/events/${event.id}/manage`}
           className="btn text-xs border border-gray-200 text-gray-600 hover:bg-gray-50 px-3 py-1.5 rounded-lg"
         >
-          상세 보기
+          관리
         </Link>
 
         {!['CANCELLED', 'CLOSED'].includes(event.status) && (
