@@ -30,6 +30,11 @@ export const publishEvent = async (id) => {
   return res.data
 }
 
+export const closeEvent = async (id) => {
+  const res = await api.post(`/v1/events/${id}/close`)
+  return res.data
+}
+
 export const deleteEvent = async (id) => {
   const res = await api.delete(`/v1/events/${id}`)
   return res.data

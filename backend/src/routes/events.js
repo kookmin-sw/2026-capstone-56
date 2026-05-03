@@ -304,6 +304,123 @@ router.put('/:id/publish', authMiddleware, async (req, res, next) => {
   }
 })
 
+// PUT /:id — 행사 수정 (UC-02)
+router.put('/:id', authMiddleware, async (req, res, next) => {
+  try {
+    const event = await prisma.event.findUnique({ where: { id: req.params.id } })
+    if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } })
+    if (!canManageEvent(user, event)) return res.status(403).json({ message: '권한이 없습니다.' })
+
+    const now = new Date()
+    const isStarted = event.startAt <= now
+
+    const {
+      title, description, location,
+      startAt, endAt, registrationDeadline,
+      capacity, isPaid, price,
+      releaseIntervalMinutes, imageUrl, publishAt,
+      refundContact, refundDeadlineType, refundDeadlineValue,
+    } = req.body
+
+    // BR-26: 행사 시작 후에는 종료 시각만 수정 가능
+    if (isStarted) {
+      if (!endAt) return res.status(400).json({ message: '행사 시작 후에는 종료 시각만 수정할 수 있습니다. (BR-26)' })
+      const newEnd = new Date(endAt)
+      if (newEnd <= event.startAt) return res.status(400).json({ message: '종료 시각은 시작 시각 이후여야 합니다.' })
+      const updated = await prisma.event.update({ where: { id: event.id }, data: { endAt: newEnd } })
+      audit(req.user.id, 'UPDATE_EVENT', 'EVENT', event.id, event.title)
+      return res.json(updated)
+    }
+
+    const activeCount = await prisma.registration.count({
+      where: { eventId: event.id, status: { in: ACTIVE_STATUSES } },
+    })
+
+    // BR-25: 정원은 활성 신청자 수 이하로 줄일 수 없음
+    if (capacity !== undefined && Number(capacity) < activeCount) {
+      return res.status(400).json({ message: `정원은 현재 신청자 수(${activeCount}명) 이상이어야 합니다. (BR-25)` })
+    }
+    // BR-27: 유/무료 전환은 신청자 0명일 때만 가능
+    if (isPaid !== undefined && !!isPaid !== event.isPaid && activeCount > 0) {
+      return res.status(400).json({ message: '신청자가 있는 경우 유/무료 전환이 불가합니다. (BR-27)' })
+    }
+
+    const newStartAt = startAt ? new Date(startAt) : event.startAt
+    const newEndAt = endAt ? new Date(endAt) : event.endAt
+
+    if (startAt && newStartAt <= now) {
+      return res.status(400).json({ message: '행사 시작 시각은 현재 시각 이후여야 합니다.' })
+    }
+    if (newEndAt <= newStartAt) {
+      return res.status(400).json({ message: '종료 시각은 시작 시각 이후여야 합니다.' })
+    }
+    if (registrationDeadline && new Date(registrationDeadline) >= newStartAt) {
+      return res.status(400).json({ message: '신청 마감은 행사 시작 이전이어야 합니다.' })
+    }
+
+    // 환불 마감 절대 시각 재계산
+    const effectiveType = refundDeadlineType ?? event.refundDeadlineType
+    const effectiveValue = refundDeadlineValue ?? event.refundDeadlineValue
+    let refundDeadlineAt = event.refundDeadlineAt
+    if (refundDeadlineType !== undefined || refundDeadlineValue !== undefined || startAt) {
+      if (effectiveType !== 'NONE' && effectiveValue) {
+        const ms = effectiveType === 'MINUTES' ? effectiveValue * 60 * 1000 : effectiveValue * 60 * 60 * 1000
+        refundDeadlineAt = new Date(newStartAt.getTime() - ms)
+      } else {
+        refundDeadlineAt = null
+      }
+    }
+
+    const data = { refundDeadlineAt }
+    if (title !== undefined) data.title = title
+    if (description !== undefined) data.description = description
+    if (location !== undefined) data.location = location
+    if (startAt) data.startAt = newStartAt
+    if (endAt) data.endAt = newEndAt
+    if (registrationDeadline !== undefined) data.registrationDeadline = registrationDeadline ? new Date(registrationDeadline) : null
+    if (capacity !== undefined) data.capacity = Number(capacity)
+    if (isPaid !== undefined) { data.isPaid = !!isPaid; data.price = isPaid ? Number(price) : null }
+    if (releaseIntervalMinutes !== undefined) data.releaseIntervalMinutes = Number(releaseIntervalMinutes)
+    if (imageUrl !== undefined) data.imageUrl = imageUrl || null
+    if (publishAt !== undefined) data.publishAt = publishAt ? new Date(publishAt) : null
+    if (refundContact !== undefined) data.refundContact = refundContact
+    if (refundDeadlineType !== undefined) data.refundDeadlineType = refundDeadlineType
+    if (refundDeadlineValue !== undefined) data.refundDeadlineValue = refundDeadlineValue
+
+    const updated = await prisma.event.update({ where: { id: event.id }, data })
+    audit(req.user.id, 'UPDATE_EVENT', 'EVENT', event.id, event.title)
+    res.json(updated)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// POST /:id/close — 행사 마감 (UC-03)
+router.post('/:id/close', authMiddleware, async (req, res, next) => {
+  try {
+    const event = await prisma.event.findUnique({ where: { id: req.params.id } })
+    if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } })
+    if (!canManageEvent(user, event)) return res.status(403).json({ message: '권한이 없습니다.' })
+
+    if (event.status !== 'PUBLISHED') {
+      return res.status(400).json({ message: '공개 중인 행사만 마감할 수 있습니다.' })
+    }
+
+    const updated = await prisma.event.update({
+      where: { id: event.id },
+      data: { status: 'CLOSED', closedAt: new Date() },
+    })
+    audit(req.user.id, 'CLOSE_EVENT', 'EVENT', event.id, event.title)
+    res.json(updated)
+  } catch (err) {
+    next(err)
+  }
+})
+
 // DELETE /:id — 행사 삭제 (UC-P05, soft delete + 자동 환불 큐 등록)
 router.delete('/:id', authMiddleware, async (req, res, next) => {
   try {

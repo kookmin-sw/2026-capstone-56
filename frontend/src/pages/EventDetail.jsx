@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getEvent, publishEvent } from '../api/events'
+import { getEvent, publishEvent, closeEvent } from '../api/events'
 import { createFreeRegistration, cancelFreeRegistration } from '../api/registrations'
 import { useAuth } from '../hooks/useAuth'
 import EventWhitelistManager from '../components/EventWhitelistManager'
@@ -167,6 +167,12 @@ export default function EventDetail() {
     mutationFn: () => publishEvent(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['event', id] }),
     onError: (err) => alert(err.response?.data?.message ?? '공개에 실패했습니다.'),
+  })
+
+  const closeMutation = useMutation({
+    mutationFn: () => closeEvent(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['event', id] }),
+    onError: (err) => alert(err.response?.data?.message ?? '마감에 실패했습니다.'),
   })
 
   const copyLink = async () => {
@@ -349,14 +355,37 @@ export default function EventDetail() {
                 </div>
               )}
               {event.status === 'PUBLISHED' && (
+                <div className="flex gap-2 flex-wrap">
+                  <Link
+                    to={`/events/${id}/checkin`}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl text-sm font-semibold transition"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.243m-4.243 0L9.757 9.757M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    QR 체크인 관리
+                  </Link>
+                  <button
+                    onClick={() => { if (confirm('신청을 마감하시겠습니까? 더 이상 신청을 받지 않습니다.')) closeMutation.mutate() }}
+                    disabled={closeMutation.isPending}
+                    className="flex items-center gap-2 px-4 py-2.5 border border-orange-200 text-orange-600 hover:bg-orange-50 rounded-2xl text-sm font-semibold transition"
+                  >
+                    {closeMutation.isPending ? '마감 중...' : '신청 마감'}
+                  </button>
+                  <Link
+                    to={`/events/${id}/edit`}
+                    className="flex items-center gap-2 px-4 py-2.5 border border-blue-200 text-blue-600 hover:bg-blue-50 rounded-2xl text-sm font-semibold transition"
+                  >
+                    행사 수정
+                  </Link>
+                </div>
+              )}
+              {event.status === 'DRAFT' && (
                 <Link
-                  to={`/events/${id}/checkin`}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl text-sm font-semibold transition w-fit"
+                  to={`/events/${id}/edit`}
+                  className="flex items-center gap-2 px-4 py-2.5 border border-blue-200 text-blue-600 hover:bg-blue-50 rounded-2xl text-sm font-semibold transition w-fit"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.243m-4.243 0L9.757 9.757M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  QR 체크인 관리
+                  행사 수정
                 </Link>
               )}
               <EventWhitelistManager eventId={id} />

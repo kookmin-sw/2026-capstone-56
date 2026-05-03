@@ -64,6 +64,7 @@ model Event {
   registrationDeadline    DateTime?
   imageUrl                String?
   publishAt               DateTime?
+  closedAt                DateTime?
   releaseIntervalMinutes  Int?
   refundContact           String?
   refundDeadlineType      RefundDeadlineType @default(NONE)
@@ -142,6 +143,7 @@ enum Role {
 enum EventStatus {
   DRAFT
   PUBLISHED
+  CLOSED
   CANCELLED
 }
 
