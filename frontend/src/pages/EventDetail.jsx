@@ -102,6 +102,17 @@ function RegistrationCard({ event, user, myReg, activeCount, navigate, applyMuta
               </button>
             )}
           </>
+        ) : event.status === 'CLOSED' ? (
+          <>
+            <button disabled className="btn w-full py-3.5 rounded-2xl bg-gray-100 text-gray-400 text-base font-bold cursor-not-allowed">
+              신청 마감
+            </button>
+            <p className="text-xs text-center text-gray-400">
+              {event.closedAt
+                ? '호스트에 의해 조기 마감된 행사입니다.'
+                : '신청 기간이 종료된 행사입니다.'}
+            </p>
+          </>
         ) : event.status !== 'PUBLISHED' ? (
           <button disabled className="btn w-full py-3.5 rounded-2xl bg-gray-100 text-gray-400 text-base cursor-not-allowed">
             신청 불가
