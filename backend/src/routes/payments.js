@@ -5,6 +5,7 @@ const authMiddleware = require('../middleware/auth')
 const { requireRole } = authMiddleware
 const { confirmPayment, cancelPayment } = require('../services/toss')
 const audit = require('../utils/audit')
+const { sendRegistrationConfirmEmail } = require('../services/mailer')
 
 const prisma = new PrismaClient()
 
@@ -90,7 +91,10 @@ paymentRouter.post('/confirm', authMiddleware, async (req, res, next) => {
 
     const registration = await prisma.registration.findUnique({
       where: { orderId },
-      include: { event: true },
+      include: {
+        event: true,
+        user: { select: { name: true, email: true } },
+      },
     })
 
     if (!registration) return res.status(404).json({ message: '신청 정보를 찾을 수 없습니다.' })
@@ -110,6 +114,10 @@ paymentRouter.post('/confirm', authMiddleware, async (req, res, next) => {
     })
 
     audit(userId, 'PAYMENT_CONFIRM', 'REGISTRATION', updated.id, `${registration.event.title} · ${amount.toLocaleString()}원`)
+    sendRegistrationConfirmEmail({
+      to: registration.user.email, name: registration.user.name,
+      event: registration.event, registrationId: updated.id,
+    }).catch(e => console.error('[mail]', e.message))
     res.json({ message: '결제가 완료되었습니다.', registrationId: updated.id })
   } catch (err) {
     const tossCode = err.response?.data?.code
