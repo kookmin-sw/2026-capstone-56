@@ -14,6 +14,7 @@ const ACTION_META = {
   CREATE_EVENT:   { label: '행사 생성',  color: 'bg-indigo-100 text-indigo-700' },
   PUBLISH_EVENT:  { label: '행사 공개',  color: 'bg-green-100 text-green-700' },
   DELETE_EVENT:   { label: '행사 삭제',  color: 'bg-red-100 text-red-600' },
+  CLOSE_EVENT:    { label: '행사 마감',  color: 'bg-gray-100 text-gray-600' },
   CHANGE_ROLE:    { label: '역할 변경',  color: 'bg-blue-100 text-blue-700' },
   CHECKIN:        { label: '체크인',     color: 'bg-purple-100 text-purple-700' },
 }
