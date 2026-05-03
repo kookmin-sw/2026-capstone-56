@@ -17,6 +17,8 @@ import SchoolAdminDashboard from './pages/SchoolAdminDashboard'
 import Home from './pages/Home'
 import EventDetail from './pages/EventDetail'
 import EventCreate from './pages/EventCreate'
+import EventEdit from './pages/EventEdit'
+import EventManage from './pages/EventManage'
 import MyTickets from './pages/MyTickets'
 import MyEvents from './pages/MyEvents'
 import CheckIn from './pages/CheckIn'
@@ -39,6 +41,8 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><Home /></div></PrivateRoute>} />
         <Route path="/events/create" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><EventCreate /></div></PrivateRoute>} />
+        <Route path="/events/:id/edit" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><EventEdit /></div></PrivateRoute>} />
+        <Route path="/events/:id/manage" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><EventManage /></div></PrivateRoute>} />
         <Route path="/events/:id" element={<div className="max-w-6xl mx-auto px-4 py-6"><EventDetail /></div>} />
         {/* UC-05 BR-01: 비로그인 방문자도 행사 목록·상세 조회 가능 */}
         <Route path="/" element={<div className="max-w-6xl mx-auto px-4 py-6"><Home /></div>} />

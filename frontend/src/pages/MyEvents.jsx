@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getMyEvents, publishEvent, deleteEvent } from '../api/events'
+import { getMyEvents, publishEvent, closeEvent, deleteEvent } from '../api/events'
 
 function fmtDate(iso) {
   if (!iso) return ''
@@ -14,8 +14,9 @@ function fmtTime(iso) {
 }
 
 const STATUS_CONFIG = {
-  DRAFT:     { label: '초안', color: 'bg-amber-100 text-amber-700' },
+  DRAFT:     { label: '초안',   color: 'bg-amber-100 text-amber-700' },
   PUBLISHED: { label: '공개중', color: 'bg-green-100 text-green-700' },
+  CLOSED:    { label: '마감됨', color: 'bg-gray-100 text-gray-600' },
   CANCELLED: { label: '취소됨', color: 'bg-red-100 text-red-500' },
 }
 
@@ -23,6 +24,7 @@ const TABS = [
   { value: 'all',       label: '전체' },
   { value: 'DRAFT',     label: '초안' },
   { value: 'PUBLISHED', label: '공개중' },
+  { value: 'CLOSED',    label: '마감됨' },
   { value: 'CANCELLED', label: '취소됨' },
 ]
 
@@ -40,6 +42,12 @@ export default function MyEvents() {
     mutationFn: publishEvent,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['my-events'] }),
     onError: (err) => alert(err.response?.data?.message ?? '공개 실패'),
+  })
+
+  const closeMutation = useMutation({
+    mutationFn: closeEvent,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['my-events'] }),
+    onError: (err) => alert(err.response?.data?.message ?? '마감 실패'),
   })
 
   const deleteMutation = useMutation({
@@ -99,12 +107,16 @@ export default function MyEvents() {
               onPublish={() => {
                 if (confirm('이 행사를 공개하시겠습니까?')) publishMutation.mutate(event.id)
               }}
+              onClose={() => {
+                if (confirm(`"${event.title}" 행사를 마감하시겠습니까?\n더 이상 신청을 받지 않습니다.`)) closeMutation.mutate(event.id)
+              }}
               onDelete={() => {
                 if (confirm(`"${event.title}" 행사를 삭제하시겠습니까?\n신청자가 있으면 자동 취소 처리됩니다.`)) {
                   deleteMutation.mutate(event.id)
                 }
               }}
               isPublishing={publishMutation.isPending && publishMutation.variables === event.id}
+              isClosing={closeMutation.isPending && closeMutation.variables === event.id}
               isDeleting={deleteMutation.isPending && deleteMutation.variables === event.id}
             />
           ))}
@@ -114,7 +126,7 @@ export default function MyEvents() {
   )
 }
 
-function EventRow({ event, onPublish, onDelete, isPublishing, isDeleting }) {
+function EventRow({ event, onPublish, onClose, onDelete, isPublishing, isClosing, isDeleting }) {
   const cfg = STATUS_CONFIG[event.status] ?? { label: event.status, color: 'bg-gray-100 text-gray-500' }
   const attendees = event._count?.registrations ?? 0
   const remaining = event.capacity - attendees
@@ -166,11 +178,20 @@ function EventRow({ event, onPublish, onDelete, isPublishing, isDeleting }) {
       {/* 액션 버튼 */}
       <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100 flex-wrap">
         <Link
-          to={`/events/${event.id}`}
+          to={`/events/${event.id}/manage`}
           className="btn text-xs border border-gray-200 text-gray-600 hover:bg-gray-50 px-3 py-1.5 rounded-lg"
         >
-          상세 보기
+          관리
         </Link>
+
+        {!['CANCELLED', 'CLOSED'].includes(event.status) && (
+          <Link
+            to={`/events/${event.id}/edit`}
+            className="btn text-xs border border-blue-200 text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-lg"
+          >
+            수정
+          </Link>
+        )}
 
         {event.status === 'DRAFT' && (
           <button
@@ -183,15 +204,24 @@ function EventRow({ event, onPublish, onDelete, isPublishing, isDeleting }) {
         )}
 
         {event.status === 'PUBLISHED' && (
-          <Link
-            to={`/events/${event.id}/checkin`}
-            className="btn text-xs border border-primary-200 text-primary-600 hover:bg-primary-50 px-3 py-1.5 rounded-lg"
-          >
-            QR 체크인
-          </Link>
+          <>
+            <Link
+              to={`/events/${event.id}/checkin`}
+              className="btn text-xs border border-primary-200 text-primary-600 hover:bg-primary-50 px-3 py-1.5 rounded-lg"
+            >
+              QR 체크인
+            </Link>
+            <button
+              onClick={onClose}
+              disabled={isClosing}
+              className="btn text-xs border border-orange-200 text-orange-600 hover:bg-orange-50 px-3 py-1.5 rounded-lg disabled:opacity-50"
+            >
+              {isClosing ? '마감 중...' : '신청 마감'}
+            </button>
+          </>
         )}
 
-        {event.status !== 'CANCELLED' && (
+        {!['CANCELLED', 'CLOSED'].includes(event.status) && (
           <button
             onClick={onDelete}
             disabled={isDeleting}

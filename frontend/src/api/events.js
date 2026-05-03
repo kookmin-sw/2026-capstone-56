@@ -30,6 +30,11 @@ export const publishEvent = async (id) => {
   return res.data
 }
 
+export const closeEvent = async (id) => {
+  const res = await api.post(`/v1/events/${id}/close`)
+  return res.data
+}
+
 export const deleteEvent = async (id) => {
   const res = await api.delete(`/v1/events/${id}`)
   return res.data
@@ -42,6 +47,11 @@ export const getAttendees = async (id) => {
 
 export const getEventRegistrations = async (id) => {
   const res = await api.get(`/v1/events/${id}/registrations`)
+  return res.data
+}
+
+export const approveRefund = async (eventId, regId, reason) => {
+  const res = await api.post(`/v1/events/${eventId}/registrations/${regId}/refund`, { cancelReason: reason })
   return res.data
 }
 

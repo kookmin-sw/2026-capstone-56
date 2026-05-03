@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getEvent, publishEvent } from '../api/events'
+import { getEvent, publishEvent, closeEvent } from '../api/events'
 import { createFreeRegistration, cancelFreeRegistration } from '../api/registrations'
 import { useAuth } from '../hooks/useAuth'
 import EventWhitelistManager from '../components/EventWhitelistManager'
+import EventParticipantManager from '../components/EventParticipantManager'
 
 // ── 날짜 포맷 ────────────────────────────────────────────────────────────────
 function fmtDate(iso) {
@@ -16,6 +17,16 @@ function fmtDate(iso) {
 function fmtTime(iso) {
   if (!iso) return ''
   return new Date(iso).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+}
+function fmtPublishAt(iso) {
+  const d = new Date(iso)
+  const month = d.getMonth() + 1
+  const day = d.getDate()
+  const h = d.getHours()
+  const m = d.getMinutes()
+  const ampm = h < 12 ? '오전' : '오후'
+  const h12 = h % 12 || 12
+  return `${month}월 ${day}일 ${ampm} ${h12}시 ${m.toString().padStart(2, '0')}분`
 }
 
 // ── 신청 상태 표시 ────────────────────────────────────────────────────────────
@@ -32,6 +43,7 @@ function RegistrationCard({ event, user, myReg, activeCount, navigate, applyMuta
   const remaining = event.capacity - activeCount
   const isFull = remaining <= 0
   const ratio = Math.min(100, Math.round((activeCount / event.capacity) * 100))
+  const isUpcoming = event.publishAt && new Date(event.publishAt) > new Date()
 
   return (
     <div className="bg-white rounded-3xl shadow-card p-5 space-y-4">
@@ -59,7 +71,16 @@ function RegistrationCard({ event, user, myReg, activeCount, navigate, applyMuta
 
       {/* 신청 버튼 */}
       <div className="space-y-2">
-        {!user ? (
+        {isUpcoming ? (
+          <>
+            <button disabled className="btn w-full py-3.5 rounded-2xl bg-gray-100 text-gray-400 text-base font-bold cursor-not-allowed">
+              오픈 예정
+            </button>
+            <p className="text-xs text-center text-gray-400">
+              오픈 예정: {fmtPublishAt(event.publishAt)}
+            </p>
+          </>
+        ) : !user ? (
           <button
             onClick={() => navigate('/login')}
             className="btn btn-primary w-full py-3.5 rounded-2xl text-base font-bold"
@@ -81,6 +102,17 @@ function RegistrationCard({ event, user, myReg, activeCount, navigate, applyMuta
                 신청 취소
               </button>
             )}
+          </>
+        ) : event.status === 'CLOSED' ? (
+          <>
+            <button disabled className="btn w-full py-3.5 rounded-2xl bg-gray-100 text-gray-400 text-base font-bold cursor-not-allowed">
+              신청 마감
+            </button>
+            <p className="text-xs text-center text-gray-400">
+              {event.closedAt
+                ? '호스트에 의해 조기 마감된 행사입니다.'
+                : '신청 기간이 종료된 행사입니다.'}
+            </p>
           </>
         ) : event.status !== 'PUBLISHED' ? (
           <button disabled className="btn w-full py-3.5 rounded-2xl bg-gray-100 text-gray-400 text-base cursor-not-allowed">
@@ -147,6 +179,12 @@ export default function EventDetail() {
     mutationFn: () => publishEvent(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['event', id] }),
     onError: (err) => alert(err.response?.data?.message ?? '공개에 실패했습니다.'),
+  })
+
+  const closeMutation = useMutation({
+    mutationFn: () => closeEvent(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['event', id] }),
+    onError: (err) => alert(err.response?.data?.message ?? '마감에 실패했습니다.'),
   })
 
   const copyLink = async () => {
@@ -315,31 +353,17 @@ export default function EventDetail() {
 
           {/* 호스트 전용 섹션 */}
           {isHost && (
-            <div className="border-t pt-4 space-y-3">
-              {event.status === 'DRAFT' && (
-                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between">
-                  <span className="text-sm text-amber-700 font-medium">아직 공개되지 않은 행사입니다.</span>
-                  <button
-                    onClick={() => { if (confirm('행사를 공개하시겠습니까?')) publishMutation.mutate() }}
-                    disabled={publishMutation.isPending}
-                    className="btn btn-primary text-sm px-4 py-2 rounded-xl"
-                  >
-                    {publishMutation.isPending ? '공개 중...' : '공개하기'}
-                  </button>
-                </div>
-              )}
-              {event.status === 'PUBLISHED' && (
-                <Link
-                  to={`/events/${id}/checkin`}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl text-sm font-semibold transition w-fit"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.243m-4.243 0L9.757 9.757M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  QR 체크인 관리
-                </Link>
-              )}
-              <EventWhitelistManager eventId={id} />
+            <div className="border-t pt-4">
+              <Link
+                to={`/events/${id}/manage`}
+                className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-2xl text-sm font-semibold transition w-fit"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                행사 관리
+              </Link>
             </div>
           )}
         </div>
