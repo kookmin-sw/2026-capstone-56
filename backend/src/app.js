@@ -14,6 +14,7 @@ const whitelistRoutes = require('./routes/whitelist')
 const registrationDomainRoutes = require('./routes/registrations')
 const checkinRoutes = require('./routes/checkin')
 const { start: startRefundWorker } = require('./workers/refundWorker')
+const { start: startReleaseWorker } = require('./workers/releaseWorker')
 
 const app = express()
 
@@ -45,4 +46,5 @@ const PORT = process.env.PORT || 4000
 app.listen(PORT, () => {
   console.log(`Auth server running on port ${PORT}`)
   startRefundWorker()
+  startReleaseWorker()
 })
