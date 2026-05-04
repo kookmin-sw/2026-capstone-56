@@ -177,6 +177,19 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
       where: { eventId: event.id, status: { in: ['CANCELLED', 'EXPIRED'] } },
     })
 
+    // BR-17: 릴리즈 대기 중인 잠긴 자리 수 — 프론트가 실제 가용 좌석 계산에 사용
+    let lockedCount = 0
+    if (event.releaseIntervalMinutes) {
+      const since = event.lastReleaseAt ?? new Date(0)
+      lockedCount = await prisma.registration.count({
+        where: {
+          eventId: event.id,
+          status: { in: ['CANCELLED', 'EXPIRED'] },
+          updatedAt: { gt: since },
+        },
+      })
+    }
+
     // 본인 활성 신청 상태(로그인 시)
     let myRegistration = null
     if (req.user) {
@@ -186,7 +199,7 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
       })
     }
 
-    res.json({ ...event, cancelledCount, myRegistration })
+    res.json({ ...event, cancelledCount, lockedCount, myRegistration })
   } catch (err) {
     next(err)
   }

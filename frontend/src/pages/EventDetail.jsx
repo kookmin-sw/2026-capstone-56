@@ -66,9 +66,10 @@ function ReleaseCountdown({ nextReleaseAt, pendingRange }) {
 
 // ── 우측 신청 카드 ────────────────────────────────────────────────────────────
 function RegistrationCard({ event, user, myReg, activeCount, navigate, applyMutation, cancelMutation, cancelPaidMutation, cancelPendingMutation, onPaidRegister, isPaying, nextRelease }) {
-  const remaining = event.capacity - activeCount
+  const lockedCount = event.lockedCount ?? 0
+  const remaining = event.capacity - activeCount - lockedCount
   const isFull = remaining <= 0
-  const ratio = Math.min(100, Math.round((activeCount / event.capacity) * 100))
+  const ratio = Math.min(100, Math.round(((activeCount + lockedCount) / event.capacity) * 100))
   const isUpcoming = event.publishAt && new Date(event.publishAt) > new Date()
 
   return (
