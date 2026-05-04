@@ -25,6 +25,8 @@ import CheckIn from './pages/CheckIn'
 import Profile from './pages/Profile'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import PaymentSuccess from './pages/PaymentSuccess'
+import PaymentFail from './pages/PaymentFail'
 import Header from './components/Header'
 
 export default function App() {
@@ -59,6 +61,8 @@ export default function App() {
         <Route path="/admin/users" element={<OperatorRoute><div className="max-w-6xl mx-auto px-4 py-6"><AdminUsers /></div></OperatorRoute>} />
         <Route path="/admin/schools" element={<OperatorRoute><SchoolManage /></OperatorRoute>} />
         <Route path="/admin/schools/:schoolId" element={<OperatorRoute><SchoolDetail /></OperatorRoute>} />
+        <Route path="/payment/success" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><PaymentSuccess /></div></PrivateRoute>} />
+        <Route path="/payment/fail" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><PaymentFail /></div></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/school-admin" element={<SchoolAdminRoute><SchoolAdminDashboard /></SchoolAdminRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />

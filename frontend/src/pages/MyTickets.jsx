@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { QRCodeSVG } from 'qrcode.react'
 import { getMyRegistrations, cancelFreeRegistration } from '../api/registrations'
+import { cancelPaidRegistration, cancelPendingPayment } from '../api/payments'
 
 function fmtDateTime(iso) {
   if (!iso) return ''
@@ -37,6 +38,24 @@ export default function MyTickets() {
     onError: (err) => alert(err.response?.data?.message ?? '취소 실패'),
   })
 
+  const cancelPaidMutation = useMutation({
+    mutationFn: cancelPaidRegistration,
+    onSuccess: () => {
+      alert('환불 요청이 처리되었습니다.')
+      queryClient.invalidateQueries({ queryKey: ['my-registrations'] })
+    },
+    onError: (err) => alert(err.response?.data?.message ?? '환불 요청 실패'),
+  })
+
+  const cancelPendingMutation = useMutation({
+    mutationFn: cancelPendingPayment,
+    onSuccess: () => {
+      alert('신청이 취소되었습니다.')
+      queryClient.invalidateQueries({ queryKey: ['my-registrations'] })
+    },
+    onError: (err) => alert(err.response?.data?.message ?? '취소 실패'),
+  })
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">내 티켓</h1>
@@ -53,7 +72,12 @@ export default function MyTickets() {
       ) : (
         <ul className="space-y-3">
           {regs.map(r => (
-            <TicketItem key={r.id} r={r} tab={tab} onCancel={(id) => cancelMutation.mutate(id)} />
+            <TicketItem
+              key={r.id} r={r} tab={tab}
+              onCancel={(id) => cancelMutation.mutate(id)}
+              onRefund={(id) => cancelPaidMutation.mutate(id)}
+              onCancelPending={(orderId) => cancelPendingMutation.mutate(orderId)}
+            />
           ))}
         </ul>
       )}
@@ -61,9 +85,11 @@ export default function MyTickets() {
   )
 }
 
-function TicketItem({ r, tab, onCancel }) {
+function TicketItem({ r, tab, onCancel, onRefund, onCancelPending }) {
   const [showQR, setShowQR] = useState(false)
   const canCancel = tab === 'active' && r.status === 'CONFIRMED' && !r.event.isPaid
+  const canRefund = tab === 'active' && r.status === 'CONFIRMED' && r.event.isPaid
+  const canCancelPending = tab === 'active' && r.status === 'PENDING_PAYMENT'
   const showQRBtn = r.status === 'CONFIRMED' || r.status === 'CHECKED_IN'
 
   return (
@@ -100,6 +126,22 @@ function TicketItem({ r, tab, onCancel }) {
               className="btn text-xs border border-red-200 text-red-600 hover:bg-red-50 px-3 py-1.5"
             >
               취소
+            </button>
+          )}
+          {canRefund && (
+            <button
+              onClick={() => { if (confirm('환불 신청 시 즉시 처리됩니다. 환불하시겠습니까?')) onRefund(r.id) }}
+              className="btn text-xs border border-red-200 text-red-600 hover:bg-red-50 px-3 py-1.5"
+            >
+              환불 신청
+            </button>
+          )}
+          {canCancelPending && (
+            <button
+              onClick={() => { if (confirm('결제 대기를 취소하시겠습니까?')) onCancelPending(r.orderId) }}
+              className="btn text-xs border border-gray-200 text-gray-500 hover:bg-gray-50 px-3 py-1.5"
+            >
+              신청 취소
             </button>
           )}
         </div>

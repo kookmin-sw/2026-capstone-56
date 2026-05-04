@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getEvent, publishEvent, closeEvent } from '../api/events'
 import { createFreeRegistration, cancelFreeRegistration } from '../api/registrations'
+import { preparePayment, cancelPaidRegistration, cancelPendingPayment } from '../api/payments'
 import { useAuth } from '../hooks/useAuth'
 import EventWhitelistManager from '../components/EventWhitelistManager'
 import EventParticipantManager from '../components/EventParticipantManager'
@@ -39,7 +40,7 @@ const STATUS_LABEL = {
 }
 
 // ── 우측 신청 카드 ────────────────────────────────────────────────────────────
-function RegistrationCard({ event, user, myReg, activeCount, navigate, applyMutation, cancelMutation }) {
+function RegistrationCard({ event, user, myReg, activeCount, navigate, applyMutation, cancelMutation, cancelPaidMutation, cancelPendingMutation, onPaidRegister, isPaying }) {
   const remaining = event.capacity - activeCount
   const isFull = remaining <= 0
   const ratio = Math.min(100, Math.round((activeCount / event.capacity) * 100))
@@ -102,6 +103,24 @@ function RegistrationCard({ event, user, myReg, activeCount, navigate, applyMuta
                 신청 취소
               </button>
             )}
+            {myReg.status === 'PENDING_PAYMENT' && (
+              <button
+                onClick={() => { if (confirm('결제 대기를 취소하시겠습니까?')) cancelPendingMutation.mutate(myReg.orderId) }}
+                disabled={cancelPendingMutation.isPending}
+                className="btn w-full py-2.5 rounded-2xl border border-gray-200 text-gray-500 text-sm hover:bg-gray-50 transition"
+              >
+                {cancelPendingMutation.isPending ? '처리 중...' : '신청 취소'}
+              </button>
+            )}
+            {event.isPaid && myReg.status === 'CONFIRMED' && (
+              <button
+                onClick={() => { if (confirm('환불 신청 시 즉시 처리됩니다. 환불하시겠습니까?')) cancelPaidMutation.mutate(myReg.id) }}
+                disabled={cancelPaidMutation.isPending}
+                className="btn w-full py-2.5 rounded-2xl border border-red-200 text-red-500 text-sm hover:bg-red-50 transition"
+              >
+                {cancelPaidMutation.isPending ? '처리 중...' : '환불 신청'}
+              </button>
+            )}
           </>
         ) : event.status === 'CLOSED' ? (
           <>
@@ -123,8 +142,12 @@ function RegistrationCard({ event, user, myReg, activeCount, navigate, applyMuta
             정원 마감
           </button>
         ) : event.isPaid ? (
-          <button disabled className="btn btn-primary w-full py-3.5 rounded-2xl text-base font-bold opacity-50 cursor-not-allowed">
-            유료 결제 신청 (준비 중)
+          <button
+            onClick={onPaidRegister}
+            disabled={isPaying}
+            className={`btn btn-primary w-full py-3.5 rounded-2xl text-base font-bold${isPaying ? ' opacity-50 cursor-not-allowed' : ''}`}
+          >
+            {isPaying ? '준비 중...' : `${event.price?.toLocaleString()}원 결제하기`}
           </button>
         ) : (
           <button
@@ -149,6 +172,7 @@ export default function EventDetail() {
   const queryClient = useQueryClient()
   const { user } = useAuth()
   const [copied, setCopied] = useState(false)
+  const [isPaying, setIsPaying] = useState(false)
 
   const { data: event, isLoading, isError, error } = useQuery({
     queryKey: ['event', id],
@@ -186,6 +210,55 @@ export default function EventDetail() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['event', id] }),
     onError: (err) => alert(err.response?.data?.message ?? '마감에 실패했습니다.'),
   })
+
+  const cancelPendingMutation = useMutation({
+    mutationFn: (orderId) => cancelPendingPayment(orderId),
+    onSuccess: () => {
+      alert('신청이 취소되었습니다.')
+      queryClient.invalidateQueries({ queryKey: ['event', id] })
+      queryClient.invalidateQueries({ queryKey: ['my-registrations'] })
+    },
+    onError: (err) => alert(err.response?.data?.message ?? '취소에 실패했습니다.'),
+  })
+
+  const cancelPaidMutation = useMutation({
+    mutationFn: (regId) => cancelPaidRegistration(regId),
+    onSuccess: () => {
+      alert('환불 요청이 처리되었습니다.')
+      queryClient.invalidateQueries({ queryKey: ['event', id] })
+      queryClient.invalidateQueries({ queryKey: ['my-registrations'] })
+    },
+    onError: (err) => alert(err.response?.data?.message ?? '환불 요청에 실패했습니다.'),
+  })
+
+  const handlePaidRegistration = async () => {
+    setIsPaying(true)
+    try {
+      const { orderId, amount, eventTitle } = await preparePayment(event.id)
+
+      await new Promise((resolve, reject) => {
+        if (window.TossPayments) return resolve()
+        const script = document.createElement('script')
+        script.src = 'https://js.tosspayments.com/v1'
+        script.onload = resolve
+        script.onerror = reject
+        document.head.appendChild(script)
+      })
+
+      const tossPayments = window.TossPayments(import.meta.env.VITE_TOSS_CLIENT_KEY)
+      await tossPayments.requestPayment('카드', {
+        amount,
+        orderId,
+        orderName: eventTitle,
+        customerName: user.name,
+        successUrl: `${window.location.origin}/payment/success`,
+        failUrl: `${window.location.origin}/payment/fail`,
+      })
+    } catch (err) {
+      alert(err.response?.data?.message ?? err.message ?? '결제 준비에 실패했습니다.')
+      setIsPaying(false)
+    }
+  }
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(window.location.href)
@@ -378,6 +451,10 @@ export default function EventDetail() {
             navigate={navigate}
             applyMutation={applyMutation}
             cancelMutation={cancelMutation}
+            cancelPaidMutation={cancelPaidMutation}
+            cancelPendingMutation={cancelPendingMutation}
+            onPaidRegister={handlePaidRegistration}
+            isPaying={isPaying}
           />
         </div>
 
