@@ -29,6 +29,8 @@ model User {
   registrations          Registration[] @relation("Registrant")
   auditLogs              AuditLog[]     @relation("AuditAdmin")
   school                 School?        @relation(fields: [schoolId], references: [id])
+  notices                Notice[]       @relation("NoticeAuthor")
+  notifications          Notification[] @relation("NotificationReceiver")
 
   @@unique([studentId, schoolId])
 }
@@ -42,6 +44,7 @@ model School {
   deletedAt DateTime?
   events    Event[]
   users     User[]
+  notices   Notice[]
 }
 
 model Event {
@@ -133,6 +136,37 @@ model AuditLog {
   createdAt  DateTime @default(now())
 }
 
+model Notice {
+  id          String       @id @default(cuid())
+  title       String
+  content     String
+  scope       NoticeScope
+  status      NoticeStatus @default(DRAFT)
+  schoolId    String?
+  school      School?      @relation(fields: [schoolId], references: [id])
+  authorId    String
+  author      User         @relation("NoticeAuthor", fields: [authorId], references: [id])
+  publishedAt DateTime?
+  deletedAt   DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Notification {
+  id              String    @id @default(cuid())
+  receiverId      String
+  receiver        User      @relation("NotificationReceiver", fields: [receiverId], references: [id])
+  type            String
+  title           String
+  content         String?
+  relatedTargetId String?
+  isRead          Boolean   @default(false)
+  readAt          DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@unique([receiverId, type, relatedTargetId])
+}
+
 enum Role {
   ATTENDEE     // 일반사용자
   CERTIFIED    // 인증사용자(주최자)
@@ -161,4 +195,15 @@ enum RegistrationStatus {
   CANCELLED
   REFUND_FAILED
   CHECKED_IN
+}
+
+enum NoticeScope {
+  GLOBAL
+  SCHOOL
+}
+
+enum NoticeStatus {
+  DRAFT
+  PUBLISHED
+  DELETED
 }

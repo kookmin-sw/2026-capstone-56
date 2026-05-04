@@ -28,6 +28,11 @@ import ResetPassword from './pages/ResetPassword'
 import PaymentSuccess from './pages/PaymentSuccess'
 import PaymentFail from './pages/PaymentFail'
 import Header from './components/Header'
+import Notices from './pages/Notices'
+import NoticeDetail from './pages/NoticeDetail'
+import AdminNotices from './pages/AdminNotices'
+import SchoolAdminNotices from './pages/SchoolAdminNotices'
+import Notifications from './pages/Notifications'
 
 export default function App() {
   return (
@@ -65,6 +70,11 @@ export default function App() {
         <Route path="/payment/fail" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><PaymentFail /></div></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/school-admin" element={<SchoolAdminRoute><SchoolAdminDashboard /></SchoolAdminRoute>} />
+        <Route path="/school-admin/notices" element={<SchoolAdminRoute><div className="max-w-6xl mx-auto px-4 py-6"><SchoolAdminNotices /></div></SchoolAdminRoute>} />
+        <Route path="/notices" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><Notices /></div></PrivateRoute>} />
+        <Route path="/notices/:id" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><NoticeDetail /></div></PrivateRoute>} />
+        <Route path="/admin/notices" element={<OperatorRoute><div className="max-w-6xl mx-auto px-4 py-6"><AdminNotices /></div></OperatorRoute>} />
+        <Route path="/notifications" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><Notifications /></div></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
