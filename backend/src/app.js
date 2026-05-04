@@ -13,6 +13,8 @@ const eventRoutes = require('./routes/events')
 const whitelistRoutes = require('./routes/whitelist')
 const registrationDomainRoutes = require('./routes/registrations')
 const checkinRoutes = require('./routes/checkin')
+const noticeRoutes = require('./routes/notices')
+const notificationRoutes = require('./routes/notifications')
 const { start: startRefundWorker } = require('./workers/refundWorker')
 
 const app = express()
@@ -35,6 +37,8 @@ app.use('/api/v1/admin', adminRefundRouter)
 app.use('/api/v1/events', eventRoutes)
 app.use('/api/v1/events/:eventId/whitelist', whitelistRoutes)
 app.use('/api/v1/checkin', checkinRoutes)
+app.use('/api/notices', noticeRoutes)
+app.use('/api/notifications', notificationRoutes)
 
 app.use((err, req, res, next) => {
   console.error(err)
