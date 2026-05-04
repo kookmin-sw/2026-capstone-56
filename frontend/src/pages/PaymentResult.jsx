@@ -1,44 +1,42 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { confirmPayment, cancelPendingPayment } from '../api/payments'
 
 export default function PaymentResult() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const [status, setStatus] = useState('processing')
-  const [message, setMessage] = useState('')
+
+  const paymentKey = searchParams.get('paymentKey')
+  const orderId = searchParams.get('orderId')
+  const amount = Number(searchParams.get('amount'))
+  const isSuccess = !!(paymentKey && orderId && amount)
+
+  // URL 파라미터로 초기 상태 즉시 결정 — 스피너 없이 바로 렌더링
+  const [status, setStatus] = useState(isSuccess ? 'success' : 'fail')
+  const [message, setMessage] = useState(
+    isSuccess ? '' : (searchParams.get('message') ?? '결제가 취소되었습니다.')
+  )
+
+  const called = useRef(false)
 
   useEffect(() => {
-    const paymentKey = searchParams.get('paymentKey')
-    const orderId = searchParams.get('orderId')
-    const amount = Number(searchParams.get('amount'))
+    if (called.current) return
+    called.current = true
 
-    if (paymentKey && orderId && amount) {
+    if (isSuccess) {
       confirmPayment({ paymentKey, orderId, amount })
-        .then(() => {
-          setStatus('success')
-          setTimeout(() => navigate('/my-tickets', { replace: true }), 2000)
-        })
+        .then(() => setTimeout(() => navigate('/my-tickets', { replace: true }), 2000))
         .catch((err) => {
           setStatus('error')
           setMessage(err.response?.data?.message ?? '결제 승인에 실패했습니다.')
         })
     } else {
-      const orderId = searchParams.get('orderId')
       if (orderId) cancelPendingPayment(orderId).catch(() => {})
-      setStatus('fail')
-      setMessage(searchParams.get('message') ?? '결제가 취소되었습니다.')
     }
   }, [])
 
   return (
     <div className="max-w-md mx-auto mt-20 text-center space-y-4 px-4">
-      {status === 'processing' && (
-        <>
-          <div className="w-14 h-14 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-gray-600 font-medium">결제를 처리하는 중입니다...</p>
-        </>
-      )}
       {status === 'success' && (
         <>
           <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
