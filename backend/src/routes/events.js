@@ -7,6 +7,7 @@ const { requireRole, optionalAuth } = authMiddleware
 const { cancelPayment } = require('../services/toss')
 const supabase = require('../services/supabase')
 const audit = require('../utils/audit')
+const { releaseAll, getNextReleaseInfo } = require('../services/releaseService')
 
 const STORAGE_BUCKET = 'event-images'
 
@@ -99,6 +100,21 @@ router.get('/mine', authMiddleware, async (req, res, next) => {
   }
 })
 
+// POST /release-all — 취소표 일괄 릴리즈 (UC-14, 시스템 토큰 전용)
+// 주의: /:id 보다 앞에 정의
+router.post('/release-all', async (req, res, next) => {
+  try {
+    const token = req.headers['x-system-token']
+    if (!token || token !== process.env.SYSTEM_TOKEN) {
+      return res.status(401).json({ message: '시스템 토큰 인증 실패' })
+    }
+    const result = await releaseAll()
+    res.json(result)
+  } catch (err) {
+    next(err)
+  }
+})
+
 // GET / — 행사 목록 조회 (UC-05, BR-01 비로그인 허용)
 // 일반사용자: 본인 학교만(BR-02). 비로그인/SCHOOL_ADMIN/OPERATOR: schoolId 쿼리 우선, 없으면 전체.
 router.get('/', optionalAuth, async (req, res, next) => {
@@ -161,6 +177,19 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
       where: { eventId: event.id, status: { in: ['CANCELLED', 'EXPIRED'] } },
     })
 
+    // BR-17: 릴리즈 대기 중인 잠긴 자리 수 — 프론트가 실제 가용 좌석 계산에 사용
+    let lockedCount = 0
+    if (event.releaseIntervalMinutes) {
+      const since = event.lastReleaseAt ?? new Date(0)
+      lockedCount = await prisma.registration.count({
+        where: {
+          eventId: event.id,
+          status: { in: ['CANCELLED', 'EXPIRED'] },
+          updatedAt: { gt: since },
+        },
+      })
+    }
+
     // 본인 활성 신청 상태(로그인 시)
     let myRegistration = null
     if (req.user) {
@@ -170,7 +199,18 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
       })
     }
 
-    res.json({ ...event, cancelledCount, myRegistration })
+    res.json({ ...event, cancelledCount, lockedCount, myRegistration })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// GET /:id/next-release — 다음 취소표 릴리즈 시각 조회 (UC-15, 비로그인 허용)
+router.get('/:id/next-release', optionalAuth, async (req, res, next) => {
+  try {
+    const info = await getNextReleaseInfo(req.params.id)
+    if (!info) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
+    res.json(info)
   } catch (err) {
     next(err)
   }

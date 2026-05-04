@@ -61,9 +61,14 @@ export default function OperatorDashboard() {
           <h1 className="text-2xl font-bold text-gray-900">운영자 대시보드</h1>
           <p className="text-sm text-gray-400 mt-0.5">플랫폼 전체 현황</p>
         </div>
-        <Link to="/admin/schools" className="btn-primary text-sm px-4 py-2 rounded-xl">
-          학교 관리
-        </Link>
+        <div className="flex gap-2">
+          <Link to="/admin/notices" className="btn-secondary text-sm px-4 py-2 rounded-xl">
+            공지 관리
+          </Link>
+          <Link to="/admin/schools" className="btn-primary text-sm px-4 py-2 rounded-xl">
+            학교 관리
+          </Link>
+        </div>
       </div>
 
       {/* 통계 카드 */}

@@ -50,6 +50,11 @@ export const getEventRegistrations = async (id) => {
   return res.data
 }
 
+export const getNextRelease = async (id) => {
+  const res = await api.get(`/v1/events/${id}/next-release`)
+  return res.data
+}
+
 export const approveRefund = async (eventId, regId, reason) => {
   const res = await api.post(`/v1/events/${eventId}/registrations/${regId}/refund`, { cancelReason: reason })
   return res.data

@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getEvent, publishEvent, closeEvent } from '../api/events'
+import { getEvent, publishEvent, closeEvent, getNextRelease } from '../api/events'
 import { createFreeRegistration, cancelFreeRegistration } from '../api/registrations'
 import { preparePayment, cancelPaidRegistration, cancelPendingPayment } from '../api/payments'
 import { useAuth } from '../hooks/useAuth'
@@ -39,11 +39,37 @@ const STATUS_LABEL = {
   CHECKED_IN: '입장 완료',
 }
 
+// ── 취소표 카운트다운 ─────────────────────────────────────────────────────────
+function ReleaseCountdown({ nextReleaseAt, pendingRange }) {
+  const [secs, setSecs] = useState(() => Math.max(0, Math.floor((new Date(nextReleaseAt) - Date.now()) / 1000)))
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSecs(Math.max(0, Math.floor((new Date(nextReleaseAt) - Date.now()) / 1000)))
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [nextReleaseAt])
+
+  const mm = String(Math.floor(secs / 60)).padStart(2, '0')
+  const ss = String(secs % 60).padStart(2, '0')
+
+  return (
+    <div className="text-center p-3 bg-amber-50 rounded-2xl border border-amber-100">
+      <p className="text-xs font-semibold text-amber-700">다음 취소표 오픈까지</p>
+      <p className="text-xl font-black text-amber-600 tracking-widest">{mm}:{ss}</p>
+      <p className="text-xs text-amber-500 mt-0.5">
+        예상 {pendingRange[0]}~{pendingRange[1]}자리
+      </p>
+    </div>
+  )
+}
+
 // ── 우측 신청 카드 ────────────────────────────────────────────────────────────
-function RegistrationCard({ event, user, myReg, activeCount, navigate, applyMutation, cancelMutation, cancelPaidMutation, cancelPendingMutation, onPaidRegister, isPaying }) {
-  const remaining = event.capacity - activeCount
+function RegistrationCard({ event, user, myReg, activeCount, navigate, applyMutation, cancelMutation, cancelPaidMutation, cancelPendingMutation, onPaidRegister, isPaying, nextRelease }) {
+  const lockedCount = event.lockedCount ?? 0
+  const remaining = event.capacity - activeCount - lockedCount
   const isFull = remaining <= 0
-  const ratio = Math.min(100, Math.round((activeCount / event.capacity) * 100))
+  const ratio = Math.min(100, Math.round(((activeCount + lockedCount) / event.capacity) * 100))
   const isUpcoming = event.publishAt && new Date(event.publishAt) > new Date()
 
   return (
@@ -138,9 +164,14 @@ function RegistrationCard({ event, user, myReg, activeCount, navigate, applyMuta
             신청 불가
           </button>
         ) : isFull ? (
-          <button disabled className="btn w-full py-3.5 rounded-2xl bg-gray-100 text-gray-500 text-base cursor-not-allowed">
-            정원 마감
-          </button>
+          <>
+            <button disabled className="btn w-full py-3.5 rounded-2xl bg-gray-100 text-gray-500 text-base cursor-not-allowed">
+              정원 마감
+            </button>
+            {nextRelease?.enabled && (
+              <ReleaseCountdown nextReleaseAt={nextRelease.nextReleaseAt} pendingRange={nextRelease.pendingRange} />
+            )}
+          </>
         ) : event.isPaid ? (
           <button
             onClick={onPaidRegister}
@@ -229,6 +260,14 @@ export default function EventDetail() {
       queryClient.invalidateQueries({ queryKey: ['my-registrations'] })
     },
     onError: (err) => alert(err.response?.data?.message ?? '환불 요청에 실패했습니다.'),
+  })
+
+  // UC-15: 다음 취소표 릴리즈 시각 (행사가 releaseIntervalMinutes 설정된 경우만)
+  const { data: nextRelease } = useQuery({
+    queryKey: ['next-release', id],
+    queryFn: () => getNextRelease(id),
+    enabled: !!event && event.status === 'PUBLISHED' && !!event.releaseIntervalMinutes,
+    refetchInterval: 30_000,
   })
 
   const handlePaidRegistration = async () => {
@@ -455,6 +494,7 @@ export default function EventDetail() {
             cancelPendingMutation={cancelPendingMutation}
             onPaidRegister={handlePaidRegistration}
             isPaying={isPaying}
+            nextRelease={nextRelease}
           />
         </div>
 
