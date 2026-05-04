@@ -46,12 +46,6 @@ paymentRouter.post('/prepare', authMiddleware, async (req, res, next) => {
     })
     if (activeReg) return res.status(409).json({ message: '이미 신청한 행사입니다.' })
 
-    // BR-09: 재신청 누적 횟수 3회 미만
-    const cancelledCount = await prisma.registration.count({
-      where: { eventId, userId, status: { in: ['CANCELLED', 'EXPIRED'] } },
-    })
-    if (cancelledCount >= 3) return res.status(400).json({ message: '재신청 가능 횟수를 초과했습니다. (최대 3회)' })
-
     // 정원 확인 + PENDING_PAYMENT 생성 (트랜잭션, BR-33)
     const registration = await prisma.$transaction(async (tx) => {
       const activeCount = await tx.registration.count({
