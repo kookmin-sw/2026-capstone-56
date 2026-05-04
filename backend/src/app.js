@@ -16,6 +16,7 @@ const checkinRoutes = require('./routes/checkin')
 const noticeRoutes = require('./routes/notices')
 const notificationRoutes = require('./routes/notifications')
 const { start: startRefundWorker } = require('./workers/refundWorker')
+const { start: startReleaseWorker } = require('./workers/releaseWorker')
 
 const app = express()
 
@@ -49,4 +50,5 @@ const PORT = process.env.PORT || 4000
 app.listen(PORT, () => {
   console.log(`Auth server running on port ${PORT}`)
   startRefundWorker()
+  startReleaseWorker()
 })

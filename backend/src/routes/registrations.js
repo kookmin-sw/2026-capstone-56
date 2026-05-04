@@ -70,7 +70,22 @@ router.post('/', authMiddleware, async (req, res, next) => {
         const activeCount = await tx.registration.count({
           where: { eventId, status: { in: ACTIVE_STATUSES } },
         })
-        if (activeCount >= event.capacity) {
+
+        // BR-17 Option A: 취소표 릴리즈 기능이 설정된 경우, lastReleaseAt 이후
+        // 발생한 CANCELLED/EXPIRED 자리는 다음 릴리즈까지 사용 불가로 처리
+        let lockedCount = 0
+        if (event.releaseIntervalMinutes) {
+          const since = event.lastReleaseAt ?? new Date(0)
+          lockedCount = await tx.registration.count({
+            where: {
+              eventId,
+              status: { in: ['CANCELLED', 'EXPIRED'] },
+              updatedAt: { gt: since },
+            },
+          })
+        }
+
+        if (activeCount + lockedCount >= event.capacity) {
           const err = new Error('CAPACITY_EXCEEDED')
           err.statusCode = 409
           throw err

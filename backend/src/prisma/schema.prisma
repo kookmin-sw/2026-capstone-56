@@ -69,6 +69,7 @@ model Event {
   publishAt               DateTime?
   closedAt                DateTime?
   releaseIntervalMinutes  Int?
+  lastReleaseAt           DateTime?
   refundContact           String?
   refundDeadlineType      RefundDeadlineType @default(NONE)
   refundDeadlineValue     Int?
