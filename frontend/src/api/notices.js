@@ -3,6 +3,13 @@ import api from './axios'
 export const getNotices = () => api.get('/notices').then(r => r.data)
 export const getNotice = (id) => api.get(`/notices/${id}`).then(r => r.data)
 
+export const uploadNoticeImage = async (file) => {
+  const fd = new FormData()
+  fd.append('image', file)
+  const res = await api.post('/notices/upload-image', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+  return res.data.imageUrl
+}
+
 // 운영자
 export const getAdminGlobalNotices = () => api.get('/notices/admin/global').then(r => r.data)
 export const createGlobalNotice = (data) => api.post('/notices/admin/global', data).then(r => r.data)

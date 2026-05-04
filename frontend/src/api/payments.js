@@ -24,3 +24,13 @@ export const getPaymentHistory = async () => {
   const res = await api.get('/v1/payments/history')
   return res.data
 }
+
+export const getRefundQueue = async () => {
+  const res = await api.get('/v1/admin/refund-queue')
+  return res.data
+}
+
+export const retryRefund = async (id) => {
+  const res = await api.post(`/v1/admin/refund-queue/${id}/retry`)
+  return res.data
+}

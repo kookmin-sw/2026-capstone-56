@@ -1,14 +1,52 @@
 const express = require('express')
+const path = require('path')
+const multer = require('multer')
 const { PrismaClient } = require('@prisma/client')
 const authMiddleware = require('../middleware/auth')
 const { requireRole } = require('../middleware/auth')
 const { createNotifications } = require('../services/notificationService')
+const supabase = require('../services/supabase')
 
 const router = express.Router()
 const prisma = new PrismaClient()
 
 const OPERATOR = requireRole('OPERATOR')
 const SCHOOL_ADMIN = requireRole('SCHOOL_ADMIN')
+
+const STORAGE_BUCKET = 'notice-images'
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    cb(null, /image\/(jpeg|png|webp|gif)/.test(file.mimetype))
+  },
+})
+
+// POST /api/notices/upload-image — 공지 이미지 업로드 (OPERATOR, SCHOOL_ADMIN)
+router.post('/upload-image',
+  authMiddleware,
+  requireRole('OPERATOR', 'SCHOOL_ADMIN'),
+  upload.single('image'),
+  async (req, res) => {
+    if (!req.file) return res.status(400).json({ message: '이미지 파일이 필요합니다. (JPG·PNG·WEBP·GIF, 최대 5MB)' })
+
+    const ext = path.extname(req.file.originalname).toLowerCase() || '.jpg'
+    const storagePath = `notices/${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`
+
+    const { error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(storagePath, req.file.buffer, { contentType: req.file.mimetype, upsert: false })
+
+    if (error) {
+      console.error('[notice upload]', error)
+      return res.status(500).json({ message: '이미지 업로드에 실패했습니다.', detail: error.message })
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(storagePath)
+    res.json({ imageUrl: publicUrl })
+  }
+)
 
 // ──────────────────────────────────────────────
 // UC-NT07: 공지 목록 조회
@@ -95,7 +133,7 @@ router.get('/admin/global', authMiddleware, OPERATOR, async (req, res, next) => 
 // BR-NT01: OPERATOR만 | BR-NT09: scope=GLOBAL
 router.post('/admin/global', authMiddleware, OPERATOR, async (req, res, next) => {
   try {
-    const { title, content } = req.body
+    const { title, content, imageUrls } = req.body
     if (!title || !content) {
       return res.status(400).json({ message: '제목과 내용을 입력해주세요.' })
     }
@@ -104,6 +142,7 @@ router.post('/admin/global', authMiddleware, OPERATOR, async (req, res, next) =>
       data: {
         title,
         content,
+        imageUrls: Array.isArray(imageUrls) ? imageUrls : [],
         scope: 'GLOBAL',
         status: 'DRAFT',
         authorId: req.user.id,
@@ -211,7 +250,7 @@ router.post('/school/:schoolId', authMiddleware, SCHOOL_ADMIN, async (req, res, 
       return res.status(403).json({ message: '자신의 학교 공지만 작성할 수 있습니다.' })
     }
 
-    const { title, content } = req.body
+    const { title, content, imageUrls } = req.body
     if (!title || !content) {
       return res.status(400).json({ message: '제목과 내용을 입력해주세요.' })
     }
@@ -220,6 +259,7 @@ router.post('/school/:schoolId', authMiddleware, SCHOOL_ADMIN, async (req, res, 
       data: {
         title,
         content,
+        imageUrls: Array.isArray(imageUrls) ? imageUrls : [],
         scope: 'SCHOOL',
         status: 'DRAFT',
         schoolId,
