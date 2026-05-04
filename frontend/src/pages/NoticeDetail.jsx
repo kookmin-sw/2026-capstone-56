@@ -64,6 +64,19 @@ export default function NoticeDetail() {
         </div>
 
         <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">{notice.content}</div>
+
+        {notice.imageUrls?.length > 0 && (
+          <div className="space-y-3 pt-4 border-t border-gray-100">
+            {notice.imageUrls.map((url, idx) => (
+              <img
+                key={idx}
+                src={url}
+                alt={`첨부 이미지 ${idx + 1}`}
+                className="w-full rounded-2xl object-contain max-h-[600px] bg-gray-50"
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

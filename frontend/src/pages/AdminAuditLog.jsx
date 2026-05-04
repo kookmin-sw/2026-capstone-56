@@ -17,6 +17,9 @@ const ACTION_META = {
   CLOSE_EVENT:    { label: '행사 마감',  color: 'bg-gray-100 text-gray-600' },
   CHANGE_ROLE:    { label: '역할 변경',  color: 'bg-blue-100 text-blue-700' },
   CHECKIN:        { label: '체크인',     color: 'bg-purple-100 text-purple-700' },
+  DELETE_SCHOOL:  { label: '학교 삭제',  color: 'bg-red-100 text-red-600' },
+  ANSWER_INQUIRY: { label: '문의 답변',  color: 'bg-cyan-100 text-cyan-700' },
+  DELETE_INQUIRY: { label: '문의 삭제',  color: 'bg-gray-100 text-gray-500' },
 }
 
 const ROLE_LABEL = { ATTENDEE: '일반', CERTIFIED: '인증주최자', SCHOOL_ADMIN: '학교관리자', OPERATOR: '운영자' }

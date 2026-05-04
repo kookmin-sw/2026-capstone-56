@@ -31,6 +31,7 @@ model User {
   school                 School?        @relation(fields: [schoolId], references: [id])
   notices                Notice[]       @relation("NoticeAuthor")
   notifications          Notification[] @relation("NotificationReceiver")
+  inquiries              Inquiry[]      @relation("UserInquiries")
 
   @@unique([studentId, schoolId])
 }
@@ -147,6 +148,7 @@ model Notice {
   school      School?      @relation(fields: [schoolId], references: [id])
   authorId    String
   author      User         @relation("NoticeAuthor", fields: [authorId], references: [id])
+  imageUrls   String[]
   publishedAt DateTime?
   deletedAt   DateTime?
   createdAt   DateTime     @default(now())
@@ -207,4 +209,20 @@ enum NoticeStatus {
   DRAFT
   PUBLISHED
   DELETED
+}
+
+model Inquiry {
+  id         String        @id @default(cuid())
+  body       String
+  userId     String
+  user       User          @relation("UserInquiries", fields: [userId], references: [id])
+  status     InquiryStatus @default(PENDING)
+  adminReply String?
+  repliedAt  DateTime?
+  createdAt  DateTime      @default(now())
+}
+
+enum InquiryStatus {
+  PENDING
+  ANSWERED
 }

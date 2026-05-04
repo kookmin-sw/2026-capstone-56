@@ -15,6 +15,7 @@ const registrationDomainRoutes = require('./routes/registrations')
 const checkinRoutes = require('./routes/checkin')
 const noticeRoutes = require('./routes/notices')
 const notificationRoutes = require('./routes/notifications')
+const inquiryRoutes = require('./routes/inquiries')
 const { start: startRefundWorker } = require('./workers/refundWorker')
 const { start: startReleaseWorker } = require('./workers/releaseWorker')
 
@@ -40,6 +41,7 @@ app.use('/api/v1/events/:eventId/whitelist', whitelistRoutes)
 app.use('/api/v1/checkin', checkinRoutes)
 app.use('/api/notices', noticeRoutes)
 app.use('/api/notifications', notificationRoutes)
+app.use('/api/inquiries', inquiryRoutes)
 
 app.use((err, req, res, next) => {
   console.error(err)

@@ -11,6 +11,7 @@ import OperatorDashboard from './pages/OperatorDashboard'
 import AdminEvents from './pages/AdminEvents'
 import AdminAuditLog from './pages/AdminAuditLog'
 import AdminUsers from './pages/AdminUsers'
+import AdminRefundQueue from './pages/AdminRefundQueue'
 import SchoolManage from './pages/SchoolManage'
 import SchoolDetail from './pages/SchoolDetail'
 import SchoolAdminDashboard from './pages/SchoolAdminDashboard'
@@ -33,6 +34,8 @@ import NoticeDetail from './pages/NoticeDetail'
 import AdminNotices from './pages/AdminNotices'
 import SchoolAdminNotices from './pages/SchoolAdminNotices'
 import Notifications from './pages/Notifications'
+import AdminInquiries from './pages/AdminInquiries'
+import Footer from './components/Footer'
 
 export default function App() {
   return (
@@ -64,6 +67,7 @@ export default function App() {
         <Route path="/admin/events" element={<OperatorRoute><div className="max-w-6xl mx-auto px-4 py-6"><AdminEvents /></div></OperatorRoute>} />
         <Route path="/admin/audit-logs" element={<OperatorRoute><div className="max-w-6xl mx-auto px-4 py-6"><AdminAuditLog /></div></OperatorRoute>} />
         <Route path="/admin/users" element={<OperatorRoute><div className="max-w-6xl mx-auto px-4 py-6"><AdminUsers /></div></OperatorRoute>} />
+        <Route path="/admin/refund-queue" element={<OperatorRoute><div className="max-w-6xl mx-auto px-4 py-6"><AdminRefundQueue /></div></OperatorRoute>} />
         <Route path="/admin/schools" element={<OperatorRoute><SchoolManage /></OperatorRoute>} />
         <Route path="/admin/schools/:schoolId" element={<OperatorRoute><SchoolDetail /></OperatorRoute>} />
         <Route path="/payment/success" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><PaymentSuccess /></div></PrivateRoute>} />
@@ -74,9 +78,11 @@ export default function App() {
         <Route path="/notices" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><Notices /></div></PrivateRoute>} />
         <Route path="/notices/:id" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><NoticeDetail /></div></PrivateRoute>} />
         <Route path="/admin/notices" element={<OperatorRoute><div className="max-w-6xl mx-auto px-4 py-6"><AdminNotices /></div></OperatorRoute>} />
+        <Route path="/admin/inquiries" element={<OperatorRoute><div className="max-w-6xl mx-auto px-4 py-6"><AdminInquiries /></div></OperatorRoute>} />
         <Route path="/notifications" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><Notifications /></div></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <Footer />
     </div>
   )
 }

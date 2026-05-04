@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getAdminGlobalNotices, createGlobalNotice, publishGlobalNotice, deleteGlobalNotice } from '../api/notices'
 import { useToast } from '../components/Toast'
+import NoticeImageUploader from '../components/NoticeImageUploader'
 
 function fmtDate(iso) {
   if (!iso) return ''
@@ -14,7 +15,7 @@ const STATUS_COLOR = { DRAFT: 'bg-amber-100 text-amber-700', PUBLISHED: 'bg-gree
 export default function AdminNotices() {
   const qc = useQueryClient()
   const toast = useToast()
-  const [form, setForm] = useState({ title: '', content: '' })
+  const [form, setForm] = useState({ title: '', content: '', imageUrls: [] })
   const [showForm, setShowForm] = useState(false)
 
   const { data: notices = [], isLoading } = useQuery({
@@ -26,7 +27,7 @@ export default function AdminNotices() {
     mutationFn: createGlobalNotice,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-notices-global'] })
-      setForm({ title: '', content: '' })
+      setForm({ title: '', content: '', imageUrls: [] })
       setShowForm(false)
       toast('공지 초안이 생성되었습니다.', 'success')
     },
@@ -83,6 +84,10 @@ export default function AdminNotices() {
             value={form.content}
             onChange={e => setForm(v => ({ ...v, content: e.target.value }))}
           />
+          <NoticeImageUploader
+            imageUrls={form.imageUrls}
+            onChange={urls => setForm(v => ({ ...v, imageUrls: urls }))}
+          />
           <div className="flex gap-2 justify-end">
             <button type="button" onClick={() => setShowForm(false)} className="btn-secondary text-sm">취소</button>
             <button type="submit" disabled={createMut.isPending} className="btn-primary text-sm">
@@ -107,6 +112,9 @@ export default function AdminNotices() {
                   {STATUS_LABEL[notice.status]}
                 </span>
                 <span className="font-semibold text-gray-800 truncate">{notice.title}</span>
+                {notice.imageUrls?.length > 0 && (
+                  <span className="text-xs text-gray-400 shrink-0">🖼 {notice.imageUrls.length}</span>
+                )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-xs text-gray-400">{fmtDate(notice.createdAt)}</span>
