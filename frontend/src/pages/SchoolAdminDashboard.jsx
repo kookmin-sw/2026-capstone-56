@@ -130,6 +130,9 @@ export default function SchoolAdminDashboard() {
           <h1 className="text-2xl font-bold text-gray-900">{school?.name ?? '내 학교'} 관리</h1>
           <p className="text-sm text-gray-400 mt-0.5">{me?.name} · 학교 총 관리자</p>
         </div>
+        <Link to="/school-admin/notices" className="btn-primary text-sm px-4 py-2 rounded-xl">
+          공지 관리
+        </Link>
       </div>
 
       {/* 통계 카드 */}

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import NotificationBell from './NotificationBell'
 
 const ROLE_LABEL = {
   ATTENDEE: '일반',
@@ -40,6 +41,15 @@ export default function Header() {
         <Link to="/" className="font-black text-primary-600 text-lg tracking-tight">
           페스티켓
         </Link>
+
+        <div className="flex items-center gap-1">
+          {user && <NotificationBell />}
+          <Link
+            to="/notices"
+            className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-xl hover:bg-gray-50 transition"
+          >
+            공지사항
+          </Link>
 
         <div ref={ref} className="relative">
           {user ? (
@@ -147,6 +157,7 @@ export default function Header() {
               <Link to="/register" className="btn-primary py-1.5 text-sm">회원가입</Link>
             </div>
           )}
+        </div>
         </div>
       </div>
     </header>
