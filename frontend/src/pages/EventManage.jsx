@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getEvent, getEventRegistrations, approveRefund, publishEvent, closeEvent } from '../api/events'
+import { getEvent, getEventRegistrations, approveRefund, publishEvent, closeEvent, downloadReport } from '../api/events'
 import { getReviews } from '../api/reviews'
 import { useAuth } from '../hooks/useAuth'
 
@@ -184,6 +184,18 @@ export default function EventManage() {
             행사 수정
           </Link>
         )}
+        <button
+          onClick={() => downloadReport(id, 'csv')}
+          className="btn text-sm border border-purple-200 text-purple-600 hover:bg-purple-50 px-4 py-2 rounded-xl"
+        >
+          CSV
+        </button>
+        <button
+          onClick={() => downloadReport(id, 'xlsx')}
+          className="btn text-sm border border-purple-200 text-purple-600 hover:bg-purple-50 px-4 py-2 rounded-xl"
+        >
+          Excel
+        </button>
       </div>
 
       {/* 행사 정보 */}
