@@ -22,6 +22,7 @@ router.get('/stats', authMiddleware, OPERATOR, async (req, res, next) => {
       recentEvents,
       refundPending,
       refundFailed,
+      pendingInquiries,
     ] = await Promise.all([
       prisma.school.count({ where: { deletedAt: null } }),
       prisma.user.count({ where: { deletedAt: null } }),
@@ -47,6 +48,7 @@ router.get('/stats', authMiddleware, OPERATOR, async (req, res, next) => {
       }),
       prisma.registration.count({ where: { status: 'CANCELLATION_REQUESTED' } }),
       prisma.registration.count({ where: { status: 'REFUND_FAILED' } }),
+      prisma.inquiry.count({ where: { status: 'PENDING' } }),
     ])
 
     const roles = Object.fromEntries(usersByRole.map(r => [r.role, r._count.role]))
@@ -57,6 +59,7 @@ router.get('/stats', authMiddleware, OPERATOR, async (req, res, next) => {
       users: { total: totalUsers, ...roles },
       events: { total: totalEvents, ...statuses },
       refundQueue: { pending: refundPending, failed: refundFailed },
+      pendingInquiries,
       recentUsers,
       recentEvents,
     })
