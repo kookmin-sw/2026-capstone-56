@@ -83,6 +83,7 @@ router.post('/events/:id/questions', authMiddleware, async (req, res, next) => {
         receiverIds: [event.hostId],
         title: `[${event.title}] 새 질문이 등록되었습니다`,
         content: body.trim().slice(0, 80),
+        relatedTargetId: req.params.id,
       }).catch(e => console.error('[notify new-question]', e.message))
     }
   } catch (err) {
@@ -200,6 +201,7 @@ router.post('/events/:id/questions/:qid/answer', authMiddleware, requireRole('CE
         receiverIds: [question.authorId],
         title: `[${event.title}] 질문에 답변이 달렸습니다`,
         content: body.trim().slice(0, 80),
+        relatedTargetId: req.params.id,
       }).catch(e => console.error('[notify answer]', e.message))
     }
   } catch (err) {

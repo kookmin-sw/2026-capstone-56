@@ -76,15 +76,18 @@ export default function Notifications() {
                   <span className="text-xs text-gray-400">{fmtDate(n.createdAt)}</span>
                 </div>
               </div>
-              {n.relatedTargetId && (
-                <Link
-                  to={`/notices/${n.relatedTargetId}`}
-                  onClick={e => e.stopPropagation()}
-                  className="text-xs text-primary-600 hover:underline mt-1 inline-block"
-                >
-                  공지 보기 →
-                </Link>
-              )}
+              {n.relatedTargetId && (() => {
+                const isQA = ['NEW_QUESTION', 'QUESTION_ANSWERED'].includes(n.type)
+                return (
+                  <Link
+                    to={isQA ? `/events/${n.relatedTargetId}` : `/notices/${n.relatedTargetId}`}
+                    onClick={e => e.stopPropagation()}
+                    className="text-xs text-primary-600 hover:underline mt-1 inline-block"
+                  >
+                    {isQA ? '행사 Q&A 보기 →' : '공지 보기 →'}
+                  </Link>
+                )
+              })()}
             </div>
           ))}
         </div>
