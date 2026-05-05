@@ -8,6 +8,7 @@ import { useAuth } from '../hooks/useAuth'
 import EventWhitelistManager from '../components/EventWhitelistManager'
 import EventParticipantManager from '../components/EventParticipantManager'
 import EventQnA from '../components/EventQnA'
+import EventReview from '../components/EventReview'
 
 // ── 날짜 포맷 ────────────────────────────────────────────────────────────────
 function fmtDate(iso) {
@@ -467,6 +468,16 @@ export default function EventDetail() {
           {/* Q&A 섹션 */}
           <div className="border-t pt-4">
             <EventQnA eventId={id} user={user} isHost={isHost} />
+          </div>
+
+          {/* 리뷰 섹션 */}
+          <div className="border-t pt-4">
+            <EventReview
+              eventId={id}
+              user={user}
+              checkedIn={myReg?.status === 'CHECKED_IN'}
+              eventEnded={event.endAt ? new Date(event.endAt) < new Date() : false}
+            />
           </div>
 
           {/* 호스트 전용 섹션 */}
