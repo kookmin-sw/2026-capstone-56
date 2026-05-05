@@ -32,6 +32,8 @@ model User {
   notices                Notice[]       @relation("NoticeAuthor")
   notifications          Notification[] @relation("NotificationReceiver")
   inquiries              Inquiry[]      @relation("UserInquiries")
+  questions              EventQuestion[] @relation("QuestionAuthor")
+  answers                QuestionAnswer[] @relation("AnswerAuthor")
 
   @@unique([studentId, schoolId])
 }
@@ -80,6 +82,7 @@ model Event {
   contactPhone            String?
   registrations           Registration[]
   whitelist               EventWhitelist?
+  questions               EventQuestion[]
   createdAt               DateTime           @default(now())
   updatedAt               DateTime           @updatedAt
   deletedAt               DateTime?
@@ -225,4 +228,29 @@ model Inquiry {
 enum InquiryStatus {
   PENDING
   ANSWERED
+}
+
+model EventQuestion {
+  id          String          @id @default(cuid())
+  eventId     String
+  event       Event           @relation(fields: [eventId], references: [id])
+  authorId    String
+  author      User            @relation("QuestionAuthor", fields: [authorId], references: [id])
+  body        String
+  isAnonymous Boolean         @default(false)
+  answer      QuestionAnswer?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  deletedAt   DateTime?
+}
+
+model QuestionAnswer {
+  id         String        @id @default(cuid())
+  questionId String        @unique
+  question   EventQuestion @relation(fields: [questionId], references: [id])
+  authorId   String
+  author     User          @relation("AnswerAuthor", fields: [authorId], references: [id])
+  body       String
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
 }

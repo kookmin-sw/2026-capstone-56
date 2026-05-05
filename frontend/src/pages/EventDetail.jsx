@@ -7,6 +7,7 @@ import { preparePayment, cancelPaidRegistration, cancelPendingPayment } from '..
 import { useAuth } from '../hooks/useAuth'
 import EventWhitelistManager from '../components/EventWhitelistManager'
 import EventParticipantManager from '../components/EventParticipantManager'
+import EventQnA from '../components/EventQnA'
 
 // ── 날짜 포맷 ────────────────────────────────────────────────────────────────
 function fmtDate(iso) {
@@ -462,6 +463,11 @@ export default function EventDetail() {
               )}
             </div>
           )}
+
+          {/* Q&A 섹션 */}
+          <div className="border-t pt-4">
+            <EventQnA eventId={id} user={user} isHost={isHost} />
+          </div>
 
           {/* 호스트 전용 섹션 */}
           {isHost && (
