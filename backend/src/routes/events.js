@@ -1,6 +1,7 @@
 const express = require('express')
 const path = require('path')
 const multer = require('multer')
+const XLSX = require('xlsx')
 const { PrismaClient } = require('@prisma/client')
 const authMiddleware = require('../middleware/auth')
 const { requireRole, optionalAuth } = authMiddleware
@@ -673,6 +674,124 @@ router.post('/:eventId/registrations/:regId/refund', authMiddleware, async (req,
       })
       res.json({ message: '환불 요청이 접수되었습니다. 처리 중입니다.' })
     }
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─── 레포트 다운로드 ───────────────────────────────────────────────────────────
+// GET /:eventId/report?format=csv|xlsx — 호스트(권한 회수 후에도), SCHOOL_ADMIN, OPERATOR (BR-06, BR-44)
+router.get('/:eventId/report', authMiddleware, async (req, res, next) => {
+  try {
+    const { eventId } = req.params
+    const format = req.query.format === 'xlsx' ? 'xlsx' : 'csv'
+
+    const event = await prisma.event.findFirst({
+      where: { id: eventId },
+      include: { host: { select: { name: true } } },
+    })
+    if (!event) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
+
+    // BR-06: 호스트는 권한 회수 여부와 무관하게 접근 가능 — hostId로만 판정
+    const isHost = event.hostId === req.user.id
+    const isSchoolAdmin = req.user.role === 'SCHOOL_ADMIN' && req.user.schoolId === event.schoolId
+    const isOperator = req.user.role === 'OPERATOR'
+    if (!isHost && !isSchoolAdmin && !isOperator) {
+      return res.status(403).json({ message: '레포트 다운로드 권한이 없습니다.' })
+    }
+
+    const [registrations, reviews] = await Promise.all([
+      prisma.registration.findMany({
+        where: { eventId },
+        include: { user: { select: { name: true, email: true, studentId: true } } },
+        orderBy: { createdAt: 'asc' },
+      }),
+      prisma.review.findMany({ where: { eventId }, select: { rating: true } }),
+    ])
+
+    // 통계 계산
+    const ACTIVE = ['CONFIRMED', 'CHECKED_IN', 'CANCELLATION_REQUESTED', 'REFUND_FAILED']
+    const totalReg = registrations.filter(r => ACTIVE.includes(r.status)).length
+    const checkedIn = registrations.filter(r => r.status === 'CHECKED_IN').length
+    const noShow = registrations.filter(r => r.status === 'CONFIRMED').length
+    const cancelled = registrations.filter(r => ['CANCELLED', 'EXPIRED'].includes(r.status)).length
+    const totalPaid = registrations.reduce((s, r) => s + (r.paidAmount ?? 0), 0)
+    const totalRefunded = registrations.reduce((s, r) => s + (r.refundedAmount ?? 0), 0)
+    const avgRating = reviews.length > 0
+      ? Math.round(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length * 10) / 10
+      : null
+
+    const fmt = (iso) => iso ? new Date(iso).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) : '-'
+
+    // 행사 정보 섹션
+    const infoRows = [
+      ['행사명', event.title],
+      ['주최자', event.hostNameSnapshot ?? event.host?.name ?? '-'],
+      ['시작일시', fmt(event.startAt)],
+      ['종료일시', fmt(event.endAt)],
+      ['장소', event.location ?? '-'],
+      ['정원', event.capacity],
+      ['총 신청자', totalReg],
+      ['체크인', checkedIn],
+      ['노쇼', noShow],
+      ['취소', cancelled],
+      ['총 결제액', totalPaid],
+      ['총 환불액', totalRefunded],
+      ['평균 평점', avgRating ?? '리뷰 없음'],
+    ]
+
+    // 신청자 명단 헤더 + 행
+    const listHeader = ['이름', '이메일', '학번', '신청시각', '상태', '체크인시각', '결제금액', '환불금액']
+    const listRows = registrations.map(r => [
+      r.user.name,
+      r.user.email,
+      r.user.studentId ?? '-',
+      fmt(r.createdAt),
+      r.status,
+      fmt(r.checkedInAt),
+      r.paidAmount ?? 0,
+      r.refundedAmount ?? 0,
+    ])
+
+    // BR-44: 다운로드 로그 기록
+    audit(req.user.id, 'DOWNLOAD_REPORT', 'EVENT', event.id, `${event.title} (${format})`)
+
+    if (format === 'xlsx') {
+      const wb = XLSX.utils.book_new()
+
+      const ws1 = XLSX.utils.aoa_to_sheet([['항목', '값'], ...infoRows])
+      XLSX.utils.book_append_sheet(wb, ws1, '행사정보')
+
+      const ws2 = XLSX.utils.aoa_to_sheet([listHeader, ...listRows])
+      XLSX.utils.book_append_sheet(wb, ws2, '신청자명단')
+
+      const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+      res.setHeader('Content-Disposition', `attachment; filename="report_${eventId}.xlsx"`)
+      return res.send(buffer)
+    }
+
+    // CSV: 두 섹션을 빈 줄로 구분
+    const escape = (v) => {
+      const s = String(v ?? '')
+      return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const toRow = (arr) => arr.map(escape).join(',')
+
+    const csvLines = [
+      '# 행사 정보',
+      toRow(['항목', '값']),
+      ...infoRows.map(toRow),
+      '',
+      '# 신청자 명단',
+      toRow(listHeader),
+      ...listRows.map(toRow),
+    ]
+
+    const BOM = '﻿' // UTF-8 BOM for Excel compatibility
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+    res.setHeader('Content-Disposition', `attachment; filename="report_${eventId}.csv"`)
+    return res.send(BOM + csvLines.join('\r\n'))
   } catch (err) {
     next(err)
   }

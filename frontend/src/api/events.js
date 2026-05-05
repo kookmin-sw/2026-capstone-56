@@ -60,6 +60,21 @@ export const approveRefund = async (eventId, regId, reason) => {
   return res.data
 }
 
+export const downloadReport = async (eventId, format) => {
+  const res = await api.get(`/v1/events/${eventId}/report`, {
+    params: { format },
+    responseType: 'blob',
+  })
+  const url = window.URL.createObjectURL(new Blob([res.data]))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `report_${eventId}.${format}`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  window.URL.revokeObjectURL(url)
+}
+
 export const uploadEventImage = async (file) => {
   const form = new FormData()
   form.append('image', file)
