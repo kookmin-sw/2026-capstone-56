@@ -152,7 +152,7 @@ router.get('/me', authMiddleware, async (req, res, next) => {
       where: { id: req.user.id },
       select: {
         id: true, name: true, email: true, role: true, emailVerified: true,
-        schoolId: true, kakaoId: true, school: { select: { id: true, name: true, domain: true } }
+        studentId: true, schoolId: true, kakaoId: true, school: { select: { id: true, name: true, domain: true } }
       }
     })
     res.json({ ...user, isKakaoUser: !!user.kakaoId })

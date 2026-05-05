@@ -26,6 +26,7 @@ const EVENT_STATUS = {
   PUBLISHED: { label: '공개중', color: 'bg-green-100 text-green-700' },
   CLOSED:    { label: '마감됨', color: 'bg-gray-200 text-gray-600' },
   CANCELLED: { label: '취소됨', color: 'bg-red-100 text-red-500' },
+  ENDED:     { label: '종료됨', color: 'bg-slate-100 text-slate-500' },
 }
 
 const REG_STATUS = {
@@ -111,7 +112,8 @@ export default function EventManage() {
   )
   if (!isHost) return <div className="card p-12 text-center text-gray-400">접근 권한이 없습니다.</div>
 
-  const statusCfg = EVENT_STATUS[event.status] ?? { label: event.status, color: 'bg-gray-100 text-gray-500' }
+  const displayStatus = isEnded ? 'ENDED' : event.status
+  const statusCfg = EVENT_STATUS[displayStatus] ?? { label: event.status, color: 'bg-gray-100 text-gray-500' }
 
   // 체크인 현황 통계
   const totalParticipants = registrations.filter(r => ['CONFIRMED', 'CHECKED_IN'].includes(r.status)).length

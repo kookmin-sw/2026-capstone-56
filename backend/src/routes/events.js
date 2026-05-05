@@ -92,16 +92,17 @@ router.get('/mine', authMiddleware, async (req, res, next) => {
           select: { registrations: { where: { status: { in: ACTIVE_STATUSES } } } },
         },
         reviews: { select: { rating: true } },
+        registrations: { where: { status: 'CHECKED_IN' }, select: { id: true } },
       },
       orderBy: { createdAt: 'desc' },
     })
 
-    const result = events.map(({ reviews, ...e }) => {
+    const result = events.map(({ reviews, registrations: checkedInRegs, ...e }) => {
       const reviewCount = reviews.length
       const reviewAvg = reviewCount > 0
         ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviewCount) * 10) / 10
         : null
-      return { ...e, reviewAvg, reviewCount }
+      return { ...e, reviewAvg, reviewCount, checkedInCount: checkedInRegs.length }
     })
 
     res.json(result)
