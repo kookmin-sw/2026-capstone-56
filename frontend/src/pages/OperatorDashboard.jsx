@@ -223,8 +223,15 @@ export default function OperatorDashboard() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                 </svg>
               </div>
-              <div>
-                <div className="text-sm font-semibold text-gray-800">{item.label}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-gray-800">{item.label}</span>
+                  {item.to === '/admin/inquiries' && (stats?.pendingInquiries ?? 0) > 0 && (
+                    <span className="text-[10px] font-bold bg-red-500 text-white px-1.5 py-0.5 rounded-full leading-none">
+                      {stats.pendingInquiries}
+                    </span>
+                  )}
+                </div>
                 <div className="text-xs text-gray-400">{item.desc}</div>
               </div>
             </Link>
