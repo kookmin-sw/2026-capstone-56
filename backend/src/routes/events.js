@@ -482,6 +482,12 @@ router.delete('/:id', authMiddleware, async (req, res, next) => {
     await prisma.$transaction(async (tx) => {
       await tx.event.update({ where: { id: event.id }, data: { deletedAt: new Date() } })
 
+      // Q&A 소프트 딜리트 (행사 삭제 시 함께 처리)
+      await tx.eventQuestion.updateMany({
+        where: { eventId: event.id, deletedAt: null },
+        data: { deletedAt: new Date() },
+      })
+
       if (event.isPaid) {
         // PENDING_PAYMENT → EXPIRED (실제 결제 없음)
         await tx.registration.updateMany({
