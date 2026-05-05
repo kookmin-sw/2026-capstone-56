@@ -91,10 +91,21 @@ router.get('/mine', authMiddleware, async (req, res, next) => {
         _count: {
           select: { registrations: { where: { status: { in: ACTIVE_STATUSES } } } },
         },
+        reviews: { select: { rating: true } },
+        registrations: { where: { status: 'CHECKED_IN' }, select: { id: true } },
       },
       orderBy: { createdAt: 'desc' },
     })
-    res.json(events)
+
+    const result = events.map(({ reviews, registrations: checkedInRegs, ...e }) => {
+      const reviewCount = reviews.length
+      const reviewAvg = reviewCount > 0
+        ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviewCount) * 10) / 10
+        : null
+      return { ...e, reviewAvg, reviewCount, checkedInCount: checkedInRegs.length }
+    })
+
+    res.json(result)
   } catch (err) {
     next(err)
   }
@@ -481,6 +492,12 @@ router.delete('/:id', authMiddleware, async (req, res, next) => {
 
     await prisma.$transaction(async (tx) => {
       await tx.event.update({ where: { id: event.id }, data: { deletedAt: new Date() } })
+
+      // Q&A 소프트 딜리트 (행사 삭제 시 함께 처리)
+      await tx.eventQuestion.updateMany({
+        where: { eventId: event.id, deletedAt: null },
+        data: { deletedAt: new Date() },
+      })
 
       if (event.isPaid) {
         // PENDING_PAYMENT → EXPIRED (실제 결제 없음)

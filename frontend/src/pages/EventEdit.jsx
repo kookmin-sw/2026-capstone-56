@@ -134,6 +134,7 @@ export default function EventEdit() {
   }, [event, form])
 
   const isStarted = event ? new Date(event.startAt) <= new Date() : false
+  const isClosed = event?.status === 'CLOSED'
 
   const canManage = user && event && (
     user.id === event.host?.id ||
@@ -273,14 +274,15 @@ export default function EventEdit() {
             </Section>
 
             <Section icon="💳" title="결제 설정">
-              <label className="flex items-center gap-3 cursor-pointer">
+              <label className={`flex items-center gap-3 ${isClosed ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                 <div
-                  onClick={() => setForm(f => ({ ...f, isPaid: !f.isPaid }))}
+                  onClick={() => !isClosed && setForm(f => ({ ...f, isPaid: !f.isPaid }))}
                   className={`w-10 h-6 rounded-full transition-colors relative ${form.isPaid ? 'bg-primary-600' : 'bg-gray-200'}`}
                 >
                   <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${form.isPaid ? 'left-5' : 'left-1'}`} />
                 </div>
                 <span className="text-sm font-medium text-gray-700">유료 행사</span>
+                {isClosed && <span className="text-xs text-gray-400">(신청 마감 후 변경 불가)</span>}
               </label>
 
               {form.isPaid && (
