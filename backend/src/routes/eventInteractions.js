@@ -2,6 +2,7 @@ const express = require('express')
 const { PrismaClient } = require('@prisma/client')
 const authMiddleware = require('../middleware/auth')
 const { requireRole, optionalAuth } = authMiddleware
+const { createNotifications } = require('../services/notificationService')
 
 const router = express.Router()
 const prisma = new PrismaClient()
@@ -73,6 +74,16 @@ router.post('/events/:id/questions', authMiddleware, async (req, res, next) => {
       createdAt: question.createdAt,
       answer: null,
     })
+
+    // 호스트에게 새 질문 알림 (본인이 직접 질문한 경우 제외)
+    if (event.hostId !== req.user.id) {
+      createNotifications({
+        type: 'NEW_QUESTION',
+        receiverIds: [event.hostId],
+        title: `[${event.title}] 새 질문이 등록되었습니다`,
+        content: body.trim().slice(0, 80),
+      }).catch(e => console.error('[notify new-question]', e.message))
+    }
   } catch (err) {
     next(err)
   }
@@ -151,8 +162,9 @@ router.post('/events/:id/questions/:qid/answer', authMiddleware, requireRole('CE
     })
     if (!question) return res.status(404).json({ message: '질문을 찾을 수 없습니다.' })
 
+    const isNewAnswer = !question.answer
     let answer
-    if (question.answer) {
+    if (!isNewAnswer) {
       // 이미 답변이 있으면 수정 (BR-36: 한 질문에 답변 1개)
       answer = await prisma.questionAnswer.update({
         where: { id: question.answer.id },
@@ -170,13 +182,23 @@ router.post('/events/:id/questions/:qid/answer', authMiddleware, requireRole('CE
       })
     }
 
-    res.status(question.answer ? 200 : 201).json({
+    res.status(isNewAnswer ? 201 : 200).json({
       id: answer.id,
       body: answer.body,
       authorName: answer.author.name,
       createdAt: answer.createdAt,
       updatedAt: answer.updatedAt,
     })
+
+    // 신규 답변 등록 시에만 질문자에게 알림 (수정 시 재알림 없음, 본인 질문 답변 제외)
+    if (isNewAnswer && question.authorId !== req.user.id) {
+      createNotifications({
+        type: 'QUESTION_ANSWERED',
+        receiverIds: [question.authorId],
+        title: `[${event.title}] 질문에 답변이 달렸습니다`,
+        content: body.trim().slice(0, 80),
+      }).catch(e => console.error('[notify answer]', e.message))
+    }
   } catch (err) {
     next(err)
   }
