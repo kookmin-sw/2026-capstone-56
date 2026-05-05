@@ -18,6 +18,12 @@ const STATUS_CONFIG = {
   PUBLISHED: { label: '공개중', color: 'bg-green-100 text-green-700' },
   CLOSED:    { label: '마감됨', color: 'bg-gray-100 text-gray-600' },
   CANCELLED: { label: '취소됨', color: 'bg-red-100 text-red-500' },
+  ENDED:     { label: '종료됨', color: 'bg-slate-100 text-slate-500' },
+}
+
+function getDisplayStatus(event) {
+  if (event.status === 'PUBLISHED' && event.endAt && new Date(event.endAt) < new Date()) return 'ENDED'
+  return event.status
 }
 
 const TABS = [
@@ -126,8 +132,21 @@ export default function MyEvents() {
   )
 }
 
+function StarDisplay({ avg, count }) {
+  if (avg === null || avg === undefined) return null
+  return (
+    <div className="flex items-center gap-1">
+      <span className="text-amber-400 text-sm">{'★'.repeat(Math.round(avg))}{'☆'.repeat(5 - Math.round(avg))}</span>
+      <span className="text-xs text-gray-500 font-semibold">{avg.toFixed(1)}</span>
+      <span className="text-xs text-gray-400">({count}개)</span>
+    </div>
+  )
+}
+
 function EventRow({ event, onPublish, onClose, onDelete, isPublishing, isClosing, isDeleting }) {
-  const cfg = STATUS_CONFIG[event.status] ?? { label: event.status, color: 'bg-gray-100 text-gray-500' }
+  const displayStatus = getDisplayStatus(event)
+  const cfg = STATUS_CONFIG[displayStatus] ?? { label: event.status, color: 'bg-gray-100 text-gray-500' }
+  const isEnded = displayStatus === 'ENDED'
   const attendees = event._count?.registrations ?? 0
   const remaining = event.capacity - attendees
 
@@ -172,6 +191,7 @@ function EventRow({ event, onPublish, onClose, onDelete, isPublishing, isClosing
             {remaining > 0 && <span className="ml-1 text-emerald-600">({remaining}석 남음)</span>}
             {remaining <= 0 && <span className="ml-1 text-red-500">(마감)</span>}
           </div>
+          {isEnded && <StarDisplay avg={event.reviewAvg} count={event.reviewCount} />}
         </div>
       </div>
 
@@ -184,7 +204,7 @@ function EventRow({ event, onPublish, onClose, onDelete, isPublishing, isClosing
           관리
         </Link>
 
-        {!['CANCELLED', 'CLOSED'].includes(event.status) && (
+        {!['CANCELLED', 'CLOSED'].includes(event.status) && !isEnded && (
           <Link
             to={`/events/${event.id}/edit`}
             className="btn text-xs border border-blue-200 text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-lg"
@@ -203,7 +223,7 @@ function EventRow({ event, onPublish, onClose, onDelete, isPublishing, isClosing
           </button>
         )}
 
-        {event.status === 'PUBLISHED' && (
+        {event.status === 'PUBLISHED' && !isEnded && (
           <>
             <Link
               to={`/events/${event.id}/checkin`}
@@ -221,7 +241,7 @@ function EventRow({ event, onPublish, onClose, onDelete, isPublishing, isClosing
           </>
         )}
 
-        {!['CANCELLED', 'CLOSED'].includes(event.status) && (
+        {!['CANCELLED', 'CLOSED'].includes(event.status) && !isEnded && (
           <button
             onClick={onDelete}
             disabled={isDeleting}
