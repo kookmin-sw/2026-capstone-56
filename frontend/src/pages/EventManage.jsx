@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getEvent, getEventRegistrations, approveRefund, publishEvent, closeEvent } from '../api/events'
+import { getReviews } from '../api/reviews'
 import { useAuth } from '../hooks/useAuth'
 
 // ── 날짜 포맷 ────────────────────────────────────────────────────────────────
@@ -68,6 +69,14 @@ export default function EventManage() {
     queryFn: () => getEventRegistrations(id),
     enabled: !!event,
     refetchInterval: 10000,
+  })
+
+  const isEnded = event?.endAt && new Date(event.endAt) < new Date()
+
+  const { data: reviews = [], isLoading: reviewLoading } = useQuery({
+    queryKey: ['reviews', id],
+    queryFn: () => getReviews(id),
+    enabled: !!isEnded,
   })
 
   const publishMutation = useMutation({
@@ -320,6 +329,73 @@ export default function EventManage() {
           </div>
         )}
       </div>
+
+      {/* 리뷰 섹션 — 행사 종료 후에만 표시 */}
+      {isEnded && (
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-card p-5">
+          <h2 className="text-sm font-bold text-gray-800 mb-4">
+            리뷰
+            <span className="text-gray-400 font-normal ml-1">({reviews.length}개)</span>
+          </h2>
+
+          {reviewLoading ? (
+            <p className="text-sm text-gray-400 text-center py-6">불러오는 중...</p>
+          ) : reviews.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-6">아직 리뷰가 없습니다.</p>
+          ) : (
+            <>
+              {/* 평점 요약 */}
+              {(() => {
+                const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
+                const rounded = Math.round(avg * 10) / 10
+                return (
+                  <div className="flex items-center gap-4 mb-4 pb-4 border-b border-gray-100">
+                    <div className="text-center">
+                      <div className="text-4xl font-black text-amber-500">{rounded.toFixed(1)}</div>
+                      <div className="text-xs text-gray-400 mt-0.5">{reviews.length}개 리뷰</div>
+                    </div>
+                    <div className="space-y-1">
+                      {[5, 4, 3, 2, 1].map((star) => {
+                        const cnt = reviews.filter(r => r.rating === star).length
+                        const pct = reviews.length > 0 ? (cnt / reviews.length) * 100 : 0
+                        return (
+                          <div key={star} className="flex items-center gap-2">
+                            <span className="text-xs text-amber-400 w-5 shrink-0">{star}★</span>
+                            <div className="w-28 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-amber-400 rounded-full" style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className="text-xs text-gray-400 w-4 shrink-0">{cnt}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {/* 리뷰 목록 */}
+              <div className="space-y-3">
+                {reviews.map((r) => (
+                  <div key={r.id} className="border border-gray-100 rounded-2xl p-4 space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-gray-700">{r.authorName}</span>
+                        <span className="text-amber-400 text-sm leading-none">
+                          {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                        </span>
+                      </div>
+                      <span className="text-xs text-gray-400">
+                        {new Date(r.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{r.body}</p>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* 환불 모달 */}
       {refundTarget && (
