@@ -16,6 +16,7 @@ const checkinRoutes = require('./routes/checkin')
 const noticeRoutes = require('./routes/notices')
 const notificationRoutes = require('./routes/notifications')
 const inquiryRoutes = require('./routes/inquiries')
+const eventInteractionRoutes = require('./routes/eventInteractions')
 const { start: startRefundWorker } = require('./workers/refundWorker')
 const { start: startReleaseWorker } = require('./workers/releaseWorker')
 
@@ -42,6 +43,7 @@ app.use('/api/v1/checkin', checkinRoutes)
 app.use('/api/notices', noticeRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/inquiries', inquiryRoutes)
+app.use('/api/v1', eventInteractionRoutes)
 
 app.use((err, req, res, next) => {
   console.error(err)
