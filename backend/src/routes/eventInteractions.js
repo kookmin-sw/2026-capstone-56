@@ -53,6 +53,7 @@ router.post('/events/:id/questions', authMiddleware, async (req, res, next) => {
   try {
     const { body, isAnonymous = false } = req.body
     if (!body || !body.trim()) return res.status(400).json({ message: '질문 내용을 입력해주세요.' })
+    if (body.trim().length > 200) return res.status(400).json({ message: '질문은 200자 이내로 입력해주세요.' })
 
     const event = await prisma.event.findFirst({ where: { id: req.params.id, deletedAt: null } })
     if (!event) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
@@ -95,6 +96,7 @@ router.put('/events/:id/questions/:qid', authMiddleware, async (req, res, next) 
   try {
     const { body } = req.body
     if (!body || !body.trim()) return res.status(400).json({ message: '질문 내용을 입력해주세요.' })
+    if (body.trim().length > 200) return res.status(400).json({ message: '질문은 200자 이내로 입력해주세요.' })
 
     const question = await prisma.eventQuestion.findFirst({
       where: { id: req.params.qid, eventId: req.params.id, deletedAt: null },
@@ -144,6 +146,7 @@ router.post('/events/:id/questions/:qid/answer', authMiddleware, requireRole('CE
   try {
     const { body } = req.body
     if (!body || !body.trim()) return res.status(400).json({ message: '답변 내용을 입력해주세요.' })
+    if (body.trim().length > 200) return res.status(400).json({ message: '답변은 200자 이내로 입력해주세요.' })
 
     const event = await prisma.event.findFirst({ where: { id: req.params.id, deletedAt: null } })
     if (!event) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
