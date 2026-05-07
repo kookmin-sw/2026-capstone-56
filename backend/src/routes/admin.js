@@ -82,7 +82,7 @@ router.get('/users', authMiddleware, OPERATOR, async (req, res, next) => {
       where,
       select: {
         id: true, name: true, email: true, role: true,
-        emailVerified: true, studentId: true, createdAt: true,
+        emailVerified: true, studentId: true, roleMemo: true, createdAt: true,
         school: { select: { id: true, name: true } },
       },
       orderBy: [{ createdAt: 'desc' }],
@@ -114,7 +114,7 @@ router.get('/schools/:schoolId/users', authMiddleware, OPERATOR, async (req, res
       },
       select: {
         id: true, name: true, email: true, role: true,
-        emailVerified: true, studentId: true, createdAt: true,
+        emailVerified: true, studentId: true, roleMemo: true, createdAt: true,
       },
       orderBy: [{ role: 'asc' }, { createdAt: 'asc' }],
     })
@@ -184,7 +184,7 @@ router.patch('/users/:userId', authMiddleware, OPERATOR, async (req, res, next) 
 // PUT /api/admin/users/:userId/role — 역할 변경 (운영자)
 router.put('/users/:userId/role', authMiddleware, OPERATOR, async (req, res, next) => {
   try {
-    const { role } = req.body
+    const { role, memo } = req.body
     const VALID_ROLES = ['ATTENDEE', 'CERTIFIED', 'SCHOOL_ADMIN', 'OPERATOR']
 
     if (!VALID_ROLES.includes(role)) {
@@ -210,10 +210,13 @@ router.put('/users/:userId/role', authMiddleware, OPERATOR, async (req, res, nex
 
     const updated = await prisma.user.update({
       where: { id: req.params.userId },
-      data: { role },
-      select: { id: true, name: true, email: true, role: true }
+      data: { role, roleMemo: memo?.trim() || null },
+      select: { id: true, name: true, email: true, role: true, roleMemo: true }
     })
-    audit(req.user.id, 'CHANGE_ROLE', 'USER', req.params.userId, `${target.role} → ${role} (${target.name})`)
+    const detail = memo?.trim()
+      ? `${target.role} → ${role} (${target.name}) · ${memo.trim()}`
+      : `${target.role} → ${role} (${target.name})`
+    audit(req.user.id, 'CHANGE_ROLE', 'USER', req.params.userId, detail)
     res.json(updated)
   } catch (err) { next(err) }
 })
