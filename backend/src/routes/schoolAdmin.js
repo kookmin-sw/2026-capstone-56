@@ -33,7 +33,7 @@ router.get('/users', authMiddleware, SCHOOL_ADMIN, async (req, res, next) => {
         },
         select: {
           id: true, name: true, email: true, role: true,
-          emailVerified: true, studentId: true, createdAt: true,
+          emailVerified: true, studentId: true, roleMemo: true, createdAt: true,
         },
         orderBy: [{ role: 'asc' }, { createdAt: 'asc' }],
       })
@@ -71,7 +71,7 @@ router.put('/users/:userId/role', authMiddleware, SCHOOL_ADMIN, async (req, res,
     const schoolId = req.user.schoolId
     if (!schoolId) return res.status(403).json({ message: '소속 학교가 없습니다.' })
 
-    const { role } = req.body
+    const { role, memo } = req.body
     if (!ALLOWED_ROLES.includes(role)) {
       return res.status(400).json({ message: '학교 관리자는 일반/인증주최자 역할만 변경할 수 있습니다.' })
     }
@@ -99,10 +99,13 @@ router.put('/users/:userId/role', authMiddleware, SCHOOL_ADMIN, async (req, res,
 
     const updated = await prisma.user.update({
       where: { id: req.params.userId },
-      data: { role },
-      select: { id: true, name: true, email: true, role: true }
+      data: { role, roleMemo: memo?.trim() || null },
+      select: { id: true, name: true, email: true, role: true, roleMemo: true }
     })
-    audit(req.user.id, 'CHANGE_ROLE', 'USER', req.params.userId, `${target.role} → ${role} (${target.name})`)
+    const detail = memo?.trim()
+      ? `${target.role} → ${role} (${target.name}) · ${memo.trim()}`
+      : `${target.role} → ${role} (${target.name})`
+    audit(req.user.id, 'CHANGE_ROLE', 'USER', req.params.userId, detail)
     res.json(updated)
   } catch (err) { next(err) }
 })
