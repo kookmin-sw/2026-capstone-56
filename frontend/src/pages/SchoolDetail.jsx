@@ -143,11 +143,18 @@ export default function SchoolDetail() {
                     }
                   </td>
                   <td className="px-5 py-4">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${ROLE_BADGE[user.role]}`}>
-                        {ROLES.find(r => r.value === user.role)?.label ?? user.role}
-                      </span>
-                      {user.role !== 'OPERATOR' && <RoleSelect user={user} schoolId={schoolId} />}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${ROLE_BADGE[user.role]}`}>
+                          {ROLES.find(r => r.value === user.role)?.label ?? user.role}
+                        </span>
+                        {user.role !== 'OPERATOR' && <RoleSelect user={user} schoolId={schoolId} />}
+                      </div>
+                      {user.roleMemo && (
+                        <span className="text-xs text-gray-400 truncate max-w-[180px]" title={user.roleMemo}>
+                          {user.roleMemo}
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-5 py-4 text-right">

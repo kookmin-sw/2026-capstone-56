@@ -71,6 +71,9 @@ function ProfileCard({ user, events }) {
         <span className="inline-block text-xs px-2 py-0.5 rounded-full bg-primary-50 text-primary-600 font-semibold mt-1">
           {ROLE_LABEL[user?.role] ?? user?.role}
         </span>
+        {user?.roleMemo && (
+          <div className="text-xs text-gray-400 mt-0.5">{user.roleMemo}</div>
+        )}
       </div>
 
       <div className="border-t border-gray-50" />

@@ -21,6 +21,7 @@ model User {
   resetToken             String?        @unique
   resetTokenExpiry       DateTime?
   schoolId               String?
+  roleMemo               String?
   createdAt              DateTime       @default(now())
   deletedAt              DateTime?
   verifyTokenExpiry      DateTime?

@@ -1,9 +1,13 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getEvent, getEventRegistrations, approveRefund, publishEvent, closeEvent, downloadReport } from '../api/events'
 import { getReviews } from '../api/reviews'
 import { useAuth } from '../hooks/useAuth'
+import {
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+} from 'recharts'
 
 // ── 날짜 포맷 ────────────────────────────────────────────────────────────────
 function fmtDateTime(iso) {
@@ -123,6 +127,40 @@ export default function EventManage() {
 
   // 참가자 명단 (취소자 제외)
   const visibleRegs = registrations.filter(r => !HIDDEN_STATUSES.includes(r.status))
+
+  // 시각화 데이터
+  const statusChartData = useMemo(() => {
+    const map = {
+      CONFIRMED:              { label: '발권완료',     color: '#22c55e' },
+      CHECKED_IN:             { label: '체크인',       color: '#6366f1' },
+      PENDING_PAYMENT:        { label: '결제대기',     color: '#f59e0b' },
+      CANCELLATION_REQUESTED: { label: '환불대기',     color: '#3b82f6' },
+      REFUND_FAILED:          { label: '환불실패',     color: '#ef4444' },
+      CANCELLED:              { label: '취소',         color: '#d1d5db' },
+      EXPIRED:                { label: '만료',         color: '#e5e7eb' },
+    }
+    return Object.entries(
+      registrations.reduce((acc, r) => {
+        acc[r.status] = (acc[r.status] || 0) + 1
+        return acc
+      }, {})
+    )
+      .map(([status, count]) => ({ name: map[status]?.label ?? status, value: count, color: map[status]?.color ?? '#ccc' }))
+      .filter(d => d.value > 0)
+  }, [registrations])
+
+  const trendData = useMemo(() => {
+    if (!registrations.length) return []
+    const byDate = registrations.reduce((acc, r) => {
+      const d = new Date(r.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
+      acc[d] = (acc[d] || 0) + 1
+      return acc
+    }, {})
+    let cum = 0
+    return Object.entries(byDate)
+      .sort((a, b) => new Date(a[0]) - new Date(b[0]))
+      .map(([date, count]) => ({ date, count, cumulative: (cum += count) }))
+  }, [registrations])
 
   const lastUpdated = dataUpdatedAt
     ? new Date(dataUpdatedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -274,6 +312,65 @@ export default function EventManage() {
           </div>
         </div>
       </div>
+
+      {/* 시각화 */}
+      {registrations.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+          {/* 신청 상태 분포 */}
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-card p-5">
+            <h2 className="text-sm font-bold text-gray-800 mb-4">신청 상태 분포</h2>
+            <div className="flex items-center gap-4">
+              <ResponsiveContainer width="50%" height={160}>
+                <PieChart>
+                  <Pie data={statusChartData} dataKey="value" innerRadius={45} outerRadius={70} paddingAngle={2}>
+                    {statusChartData.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(v, n) => [`${v}명`, n]} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex-1 space-y-1.5">
+                {statusChartData.map((d, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: d.color }} />
+                      <span className="text-gray-600">{d.name}</span>
+                    </div>
+                    <span className="font-semibold text-gray-800">{d.value}명</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 시간대별 신청 추이 */}
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-card p-5">
+            <h2 className="text-sm font-bold text-gray-800 mb-4">신청 추이 (누적)</h2>
+            {trendData.length < 2 ? (
+              <div className="flex items-center justify-center h-40 text-xs text-gray-400">데이터가 부족합니다.</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={160}>
+                <AreaChart data={trendData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9ca3af' }} />
+                  <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} allowDecimals={false} />
+                  <Tooltip formatter={(v) => [`${v}명`]} />
+                  <Area type="monotone" dataKey="cumulative" stroke="#6366f1" strokeWidth={2} fill="url(#areaGrad)" name="누적 신청" />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+        </div>
+      )}
 
       {/* 참가자 명단 */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-card p-5">
