@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import NotificationBell from './NotificationBell'
 import InquiryModal from './InquiryModal'
+import CertRequestModal from './CertRequestModal'
 
 const ROLE_LABEL = {
   ATTENDEE: '일반',
@@ -23,6 +24,7 @@ export default function Header() {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [inquiryOpen, setInquiryOpen] = useState(false)
+  const [certOpen, setCertOpen] = useState(false)
   const ref = useRef(null)
 
   useEffect(() => {
@@ -131,6 +133,18 @@ export default function Header() {
                     내 티켓
                   </Link>
 
+                  {user.role === 'ATTENDEE' && user.schoolId && (
+                    <button
+                      onClick={() => { setOpen(false); setCertOpen(true) }}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-blue-600 hover:bg-blue-50 transition"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                      </svg>
+                      인증주최자 신청
+                    </button>
+                  )}
+
                   <button
                     onClick={() => { setOpen(false); setInquiryOpen(true) }}
                     className="w-full flex items-center gap-2 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition"
@@ -189,6 +203,7 @@ export default function Header() {
     )}
 
     {inquiryOpen && <InquiryModal onClose={() => setInquiryOpen(false)} />}
+    {certOpen && <CertRequestModal onClose={() => setCertOpen(false)} />}
     </>
   )
 }
