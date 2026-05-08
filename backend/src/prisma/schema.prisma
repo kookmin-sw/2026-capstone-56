@@ -38,6 +38,8 @@ model User {
   reviews                Review[]         @relation("ReviewAuthor")
   hostRating             Float?
   ratingCount            Int              @default(0)
+  certRequests           CertificationRequest[] @relation("CertRequests")
+  certReviewed           CertificationRequest[] @relation("CertReqReviewer")
 
   @@unique([studentId, schoolId])
 }
@@ -49,9 +51,10 @@ model School {
   address   String?
   createdAt DateTime  @default(now())
   deletedAt DateTime?
-  events    Event[]
-  users     User[]
-  notices   Notice[]
+  events       Event[]
+  users        User[]
+  notices      Notice[]
+  certRequests CertificationRequest[]
 }
 
 model Event {
@@ -233,6 +236,27 @@ model Inquiry {
 enum InquiryStatus {
   PENDING
   ANSWERED
+}
+
+model CertificationRequest {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation("CertRequests", fields: [userId], references: [id])
+  schoolId     String
+  school       School        @relation(fields: [schoolId], references: [id])
+  message      String?
+  status       CertReqStatus @default(PENDING)
+  reviewNote   String?
+  reviewedById String?
+  reviewedBy   User?         @relation("CertReqReviewer", fields: [reviewedById], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+enum CertReqStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model EventQuestion {
