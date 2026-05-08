@@ -80,7 +80,7 @@ function RoleChangeModal({ user, onClose }) {
           <button onClick={onClose} className="flex-1 btn-secondary text-sm py-2.5 rounded-xl">취소</button>
           <button
             onClick={() => mutation.mutate()}
-            disabled={mutation.isPending || role === user.role}
+            disabled={mutation.isPending || (role === user.role && memo === (user.roleMemo || ''))}
             className="flex-1 btn-primary text-sm py-2.5 rounded-xl disabled:opacity-50"
           >
             {mutation.isPending ? '변경 중...' : '변경'}
