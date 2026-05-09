@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { createEvent, uploadEventImage } from '../api/events'
@@ -13,15 +13,7 @@ const PALETTES = [
   { from: '#ec4899', to: '#a855f7' },
   { from: '#3b82f6', to: '#06b6d4' },
 ]
-// 제목으로 팔레트 결정 (ID 없으므로 임시)
-function getPalette(seed) {
-  const s = seed || 'preview'
-  const sum = s.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
-  return PALETTES[sum % PALETTES.length]
-}
-
-function EventPreviewCard({ form, imagePreview, openMode }) {
-  const palette = getPalette(form.title)
+function EventPreviewCard({ form, imagePreview, openMode, palette }) {
   const startDate = form.startAt ? new Date(form.startAt) : new Date()
   const isValidDate = !isNaN(startDate)
   const day = isValidDate ? startDate.getDate() : '--'
@@ -243,6 +235,7 @@ export default function EventCreate() {
   })
   const [imagePreview, setImagePreview] = useState(null)
   const [uploading, setUploading] = useState(false)
+  const palette = useMemo(() => PALETTES[Math.floor(Math.random() * PALETTES.length)], [])
 
   const canCreate = user && ['CERTIFIED', 'SCHOOL_ADMIN', 'OPERATOR'].includes(user.role)
 
@@ -515,7 +508,7 @@ export default function EventCreate() {
                 </div>
                 <span className="text-[11px] text-gray-400">실시간 반영</span>
               </div>
-              <EventPreviewCard form={form} imagePreview={imagePreview} openMode={form.openMode} />
+              <EventPreviewCard form={form} imagePreview={imagePreview} openMode={form.openMode} palette={palette} />
               <p className="text-[11px] text-gray-400 text-center mt-3">
                 행사 ID 기반 테마 색상이 자동 배정됩니다
               </p>
