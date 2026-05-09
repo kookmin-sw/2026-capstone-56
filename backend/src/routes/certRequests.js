@@ -9,7 +9,9 @@ const prisma = new PrismaClient()
 // POST /api/cert-requests — 인증주최자 신청
 router.post('/', authMiddleware, async (req, res, next) => {
   try {
-    const { message } = req.body
+    const { message, organization, contact } = req.body
+    if (!organization?.trim()) return res.status(400).json({ message: '소속 단체/직책을 입력해주세요.' })
+    if (!contact?.trim()) return res.status(400).json({ message: '연락처를 입력해주세요.' })
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
       select: { id: true, name: true, role: true, schoolId: true }
@@ -37,7 +39,13 @@ router.post('/', authMiddleware, async (req, res, next) => {
     }
 
     const request = await prisma.certificationRequest.create({
-      data: { userId: req.user.id, schoolId: user.schoolId, message: message?.trim() || null }
+      data: {
+        userId: req.user.id,
+        schoolId: user.schoolId,
+        message: message?.trim() || null,
+        organization: organization?.trim() || null,
+        contact: contact?.trim() || null,
+      }
     })
 
     createNotifications({
@@ -60,7 +68,8 @@ router.get('/mine', authMiddleware, async (req, res, next) => {
       orderBy: { createdAt: 'desc' },
       take: 5,
       select: {
-        id: true, status: true, message: true, reviewNote: true, createdAt: true,
+        id: true, status: true, message: true, organization: true, contact: true,
+        reviewNote: true, createdAt: true,
         reviewedBy: { select: { name: true } }
       }
     })

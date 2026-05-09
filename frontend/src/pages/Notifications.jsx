@@ -76,15 +76,23 @@ export default function Notifications() {
                   <span className="text-xs text-gray-400">{fmtDate(n.createdAt)}</span>
                 </div>
               </div>
-              {n.relatedTargetId && (() => {
-                const isQA = ['NEW_QUESTION', 'QUESTION_ANSWERED'].includes(n.type)
+              {(() => {
+                if (!n.relatedTargetId && n.type !== 'CERT_REQUEST') return null
+                const linkMap = {
+                  NEW_QUESTION:      { to: `/events/${n.relatedTargetId}`,     label: '행사 Q&A 보기 →' },
+                  QUESTION_ANSWERED: { to: `/events/${n.relatedTargetId}`,     label: '행사 Q&A 보기 →' },
+                  NOTICE_PUBLISHED:  { to: `/notices/${n.relatedTargetId}`,    label: '공지 보기 →' },
+                  CERT_REQUEST:      { to: `/school-admin`,                    label: '인증 신청 확인 →' },
+                }
+                const link = linkMap[n.type]
+                if (!link) return null
                 return (
                   <Link
-                    to={isQA ? `/events/${n.relatedTargetId}` : `/notices/${n.relatedTargetId}`}
+                    to={link.to}
                     onClick={e => e.stopPropagation()}
                     className="text-xs text-primary-600 hover:underline mt-1 inline-block"
                   >
-                    {isQA ? '행사 Q&A 보기 →' : '공지 보기 →'}
+                    {link.label}
                   </Link>
                 )
               })()}

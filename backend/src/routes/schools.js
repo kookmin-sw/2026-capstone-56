@@ -54,6 +54,7 @@ router.post('/', authMiddleware, OPERATOR, async (req, res, next) => {
       data: { name, domain, address: address || null },
       select: { id: true, name: true, domain: true, address: true, createdAt: true },
     })
+    audit(req.user.id, 'CREATE_SCHOOL', 'SCHOOL', school.id, school.name)
     res.status(201).json(school)
   } catch (err) { next(err) }
 })
@@ -83,6 +84,7 @@ router.put('/:id', authMiddleware, OPERATOR, async (req, res, next) => {
       },
       select: { id: true, name: true, domain: true, address: true, createdAt: true },
     })
+    audit(req.user.id, 'UPDATE_SCHOOL', 'SCHOOL', req.params.id, updated.name)
     res.json(updated)
   } catch (err) { next(err) }
 })

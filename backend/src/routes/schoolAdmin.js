@@ -20,7 +20,7 @@ router.get('/users', authMiddleware, SCHOOL_ADMIN, async (req, res, next) => {
     const { search } = req.query
 
     const [school, users] = await Promise.all([
-      prisma.school.findFirst({ where: { id: schoolId, deletedAt: null } }),
+      prisma.school.findFirst({ where: { id: schoolId, deletedAt: null }, select: { id: true, name: true, domain: true, address: true, adminContact: true } }),
       prisma.user.findMany({
         where: {
           schoolId,
@@ -100,13 +100,31 @@ router.put('/users/:userId/role', authMiddleware, SCHOOL_ADMIN, async (req, res,
 
     const updated = await prisma.user.update({
       where: { id: req.params.userId },
-      data: { role, roleMemo: memo?.trim() || null },
+      data: { role, roleMemo: role === 'ATTENDEE' ? null : (memo?.trim() || null) },
       select: { id: true, name: true, email: true, role: true, roleMemo: true }
     })
     const detail = memo?.trim()
       ? `${target.role} → ${role} (${target.name}) · ${memo.trim()}`
       : `${target.role} → ${role} (${target.name})`
     audit(req.user.id, 'CHANGE_ROLE', 'USER', req.params.userId, detail)
+    res.json(updated)
+  } catch (err) { next(err) }
+})
+
+// PUT /api/school-admin/contact — 학교 연락처 설정
+router.put('/contact', authMiddleware, SCHOOL_ADMIN, async (req, res, next) => {
+  try {
+    const schoolId = req.user.schoolId
+    if (!schoolId) return res.status(403).json({ message: '소속 학교가 없습니다.' })
+
+    const { adminContact } = req.body
+    const updated = await prisma.school.update({
+      where: { id: schoolId },
+      data: { adminContact: adminContact?.trim() || null },
+      select: { id: true, adminContact: true }
+    })
+    audit(req.user.id, 'UPDATE_SCHOOL_CONTACT', 'SCHOOL', schoolId,
+      adminContact?.trim() ? `연락처 설정: ${adminContact.trim()}` : '연락처 삭제')
     res.json(updated)
   } catch (err) { next(err) }
 })
@@ -133,6 +151,7 @@ router.post('/cert-requests/:id/approve', authMiddleware, SCHOOL_ADMIN, async (r
   try {
     const schoolId = req.user.schoolId
     const { memo } = req.body
+    if (!memo?.trim()) return res.status(400).json({ message: '승인 메모를 입력해주세요.' })
 
     const request = await prisma.certificationRequest.findFirst({
       where: { id: req.params.id, schoolId },

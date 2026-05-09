@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getMySchoolUsers, updateMySchoolUserRole, getSchoolUserRegistrations } from '../api/schoolAdmin'
+import { getMySchoolUsers, updateMySchoolUserRole, getSchoolUserRegistrations, updateSchoolContact } from '../api/schoolAdmin'
 import { getSchoolCertRequests, approveCertRequest, rejectCertRequest } from '../api/certRequests'
 import { getMyEvents, publishEvent, deleteEvent } from '../api/events'
 import { useToast } from '../components/Toast'
@@ -73,19 +74,21 @@ function RoleChangeModal({ user, onClose }) {
           </select>
         </div>
 
-        <div className="space-y-1">
-          <label className="text-xs font-semibold text-gray-600">
-            메모 <span className="text-gray-400 font-normal">(선택)</span>
-          </label>
-          <input
-            type="text"
-            value={memo}
-            onChange={e => setMemo(e.target.value)}
-            placeholder="예) 동아리 연합 주최자 인증, 학생회 임원 확인 등"
-            maxLength={100}
-            className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary-400 placeholder:text-gray-300"
-          />
-        </div>
+        {role !== 'ATTENDEE' && (
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-gray-600">
+              메모 <span className="text-gray-400 font-normal">(선택)</span>
+            </label>
+            <input
+              type="text"
+              value={memo}
+              onChange={e => setMemo(e.target.value)}
+              placeholder="예) 동아리 연합 주최자 인증, 학생회 임원 확인 등"
+              maxLength={100}
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary-400 placeholder:text-gray-300"
+            />
+          </div>
+        )}
 
         <div className="flex gap-2 pt-1">
           <button onClick={onClose} className="flex-1 btn-secondary text-sm py-2.5 rounded-xl">취소</button>
@@ -121,8 +124,11 @@ function RoleChangeButton({ user }) {
 
 export default function SchoolAdminDashboard() {
   const { user: me } = useAuth()
+  const toast = useToast()
   const queryClient = useQueryClient()
   const [tab, setTab] = useState('users')
+  const [contactInput, setContactInput] = useState('')
+  const [contactEditing, setContactEditing] = useState(false)
   const [certActions, setCertActions] = useState({}) // { [id]: { type: 'approve'|'reject', value: '' } }
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
@@ -137,6 +143,16 @@ export default function SchoolAdminDashboard() {
   })
   const school = data?.school
   const users = data?.users ?? []
+
+  const contactMutation = useMutation({
+    mutationFn: (val) => updateSchoolContact(val),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-school-users'] })
+      toast('연락처가 저장되었습니다.', 'success')
+      setContactEditing(false)
+    },
+    onError: (err) => toast(err.response?.data?.message || '저장에 실패했습니다.', 'error'),
+  })
 
   // 행사 조회 (getMyEvents → SCHOOL_ADMIN이면 학교 전체 행사 반환)
   const { data: events = [], isLoading: eventsLoading } = useQuery({
@@ -205,6 +221,54 @@ export default function SchoolAdminDashboard() {
         <Link to="/school-admin/notices" className="btn-primary text-sm px-4 py-2 rounded-xl">
           공지 관리
         </Link>
+      </div>
+
+      {/* 학교 관리자 연락처 설정 */}
+      <div className="card px-5 py-4 flex items-center gap-4">
+        <div className="w-9 h-9 rounded-xl bg-primary-50 flex items-center justify-center shrink-0">
+          <svg className="w-5 h-5 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          </svg>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-gray-500 mb-0.5">학교 관리자 연락처</p>
+          {contactEditing ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="url"
+                value={contactInput}
+                onChange={e => setContactInput(e.target.value)}
+                placeholder="https://open.kakao.com/... 또는 링크 입력"
+                className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-400 placeholder:text-gray-300"
+                autoFocus
+              />
+              <button
+                onClick={() => contactMutation.mutate(contactInput)}
+                disabled={contactMutation.isPending}
+                className="text-xs font-semibold px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition"
+              >저장</button>
+              <button
+                onClick={() => { setContactEditing(false); setContactInput(school?.adminContact || '') }}
+                className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1.5"
+              >취소</button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              {school?.adminContact ? (
+                <a href={school.adminContact} target="_blank" rel="noreferrer"
+                  className="text-sm text-primary-600 hover:underline truncate max-w-xs">
+                  {school.adminContact}
+                </a>
+              ) : (
+                <span className="text-sm text-gray-300">연락처 링크를 등록해주세요</span>
+              )}
+              <button
+                onClick={() => { setContactInput(school?.adminContact || ''); setContactEditing(true) }}
+                className="text-xs text-gray-400 hover:text-gray-600 shrink-0"
+              >수정</button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 통계 카드 */}
@@ -443,97 +507,163 @@ export default function SchoolAdminDashboard() {
       {tab === 'cert' && (
         <>
           {certLoading ? (
-            <div className="card p-12 text-center text-gray-400">불러오는 중...</div>
+            <div className="card p-12 text-center">
+              <div className="w-8 h-8 border-4 border-primary-400 border-t-transparent rounded-full animate-spin mx-auto" />
+            </div>
           ) : certRequests.length === 0 ? (
-            <div className="card p-12 text-center text-gray-400 text-sm">대기 중인 인증 신청이 없습니다.</div>
+            <div className="card p-16 text-center space-y-3">
+              <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                <svg className="w-7 h-7 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                </svg>
+              </div>
+              <p className="text-sm text-gray-400">대기 중인 인증 신청이 없습니다.</p>
+            </div>
           ) : (
             <div className="space-y-3">
-              {certRequests.map(req => {
-                const action = certActions[req.id]
-                return (
-                  <div key={req.id} className="card p-5 space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-semibold text-gray-900">{req.user.name}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{req.user.email}{req.user.studentId ? ` · ${req.user.studentId}` : ''}</p>
-                        <p className="text-xs text-gray-400">{new Date(req.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'short', day: 'numeric' })} 신청</p>
-                      </div>
-                      {!action && (
-                        <div className="flex gap-2 shrink-0">
-                          <button
-                            onClick={() => setCertActions(v => ({ ...v, [req.id]: { type: 'approve', value: '' } }))}
-                            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition"
-                          >
-                            승인
-                          </button>
-                          <button
-                            onClick={() => setCertActions(v => ({ ...v, [req.id]: { type: 'reject', value: '' } }))}
-                            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition"
-                          >
-                            거절
-                          </button>
+              <p className="text-sm text-gray-500">총 <span className="font-semibold text-gray-700">{certRequests.length}건</span>의 인증 신청이 대기 중입니다.</p>
+              <AnimatePresence initial={false}>
+                {certRequests.map(req => {
+                  const action = certActions[req.id]
+                  const initials = req.user.name.slice(0, 1)
+                  return (
+                    <motion.div
+                      key={req.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.97 }}
+                      transition={{ duration: 0.2 }}
+                      className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden"
+                    >
+                      {/* 신청자 정보 */}
+                      <div className="flex items-center gap-4 px-5 py-4">
+                        <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-700 font-bold text-base flex items-center justify-center shrink-0">
+                          {initials}
                         </div>
-                      )}
-                    </div>
-
-                    {req.message && (
-                      <p className="text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">{req.message}</p>
-                    )}
-
-                    {action?.type === 'approve' && (
-                      <div className="space-y-2 pt-1 border-t border-gray-100">
-                        <input
-                          type="text"
-                          value={action.value}
-                          onChange={e => setCertActions(v => ({ ...v, [req.id]: { ...v[req.id], value: e.target.value } }))}
-                          placeholder="승인 사유(예 : 학생회이름, 동아리이름)"
-                          maxLength={100}
-                          className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-green-400 placeholder:text-gray-300"
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setCertActions(v => { const n = {...v}; delete n[req.id]; return n })}
-                            className="btn-secondary text-xs py-2 px-3 rounded-lg"
-                          >취소</button>
-                          <button
-                            onClick={() => approveMutation.mutate({ id: req.id, memo: action.value })}
-                            disabled={approveMutation.isPending}
-                            className="flex-1 text-xs font-semibold py-2 px-3 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 transition"
-                          >
-                            {approveMutation.isPending ? '처리 중...' : '승인 확정'}
-                          </button>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-gray-900">{req.user.name}</p>
+                            {req.user.studentId && (
+                              <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-md">{req.user.studentId}</span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-400 truncate mt-0.5">{req.user.email}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-xs text-gray-400">
+                            {new Date(req.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                          </p>
+                          <span className="inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">검토 대기</span>
                         </div>
                       </div>
-                    )}
 
-                    {action?.type === 'reject' && (
-                      <div className="space-y-2 pt-1 border-t border-gray-100">
-                        <input
-                          type="text"
-                          value={action.value}
-                          onChange={e => setCertActions(v => ({ ...v, [req.id]: { ...v[req.id], value: e.target.value } }))}
-                          placeholder="거절 사유 (필수)"
-                          maxLength={100}
-                          className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-400 placeholder:text-gray-300"
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setCertActions(v => { const n = {...v}; delete n[req.id]; return n })}
-                            className="btn-secondary text-xs py-2 px-3 rounded-lg"
-                          >취소</button>
-                          <button
-                            onClick={() => rejectMutation.mutate({ id: req.id, reason: action.value })}
-                            disabled={rejectMutation.isPending || !action.value.trim()}
-                            className="flex-1 text-xs font-semibold py-2 px-3 rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition"
-                          >
-                            {rejectMutation.isPending ? '처리 중...' : '거절 확정'}
-                          </button>
+                      {/* 신청 내용 */}
+                      <div className="px-5 pb-4 space-y-2">
+                        {(req.organization || req.contact) && (
+                          <div className="grid grid-cols-2 gap-2">
+                            {req.organization && (
+                              <div className="bg-gray-50 rounded-xl px-3 py-2.5">
+                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">소속 · 직책</p>
+                                <p className="text-sm text-gray-700 font-medium truncate">{req.organization}</p>
+                              </div>
+                            )}
+                            {req.contact && (
+                              <div className="bg-gray-50 rounded-xl px-3 py-2.5">
+                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">연락처</p>
+                                <p className="text-sm text-gray-700 font-medium truncate">{req.contact}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {req.message && (
+                          <div className="bg-blue-50 rounded-xl px-3 py-2.5">
+                            <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-wide mb-0.5">신청 사유</p>
+                            <p className="text-sm text-blue-800">{req.message}</p>
+                          </div>
+                        )}
+
+                        {/* 액션 */}
+                        <div className="pt-1">
+                          {!action ? (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setCertActions(v => ({ ...v, [req.id]: { type: 'reject', value: '' } }))}
+                                className="flex-1 text-sm font-semibold py-2.5 rounded-xl border border-red-200 text-red-500 hover:bg-red-50 transition"
+                              >
+                                거절
+                              </button>
+                              <button
+                                onClick={() => setCertActions(v => ({ ...v, [req.id]: { type: 'approve', value: '' } }))}
+                                className="flex-[2] text-sm font-semibold py-2.5 rounded-xl bg-green-600 text-white hover:bg-green-700 transition"
+                              >
+                                승인하기
+                              </button>
+                            </div>
+                          ) : action.type === 'approve' ? (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              className="space-y-2 bg-green-50 rounded-xl p-3"
+                            >
+                              <p className="text-xs font-semibold text-green-700">승인 메모 <span className="text-green-500">*</span></p>
+                              <input
+                                type="text"
+                                value={action.value}
+                                onChange={e => setCertActions(v => ({ ...v, [req.id]: { ...v[req.id], value: e.target.value } }))}
+                                placeholder="예) OO학생회 임원, OO동아리 대표"
+                                maxLength={100}
+                                className="w-full text-sm bg-white border border-green-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400 placeholder:text-gray-300"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => setCertActions(v => { const n = {...v}; delete n[req.id]; return n })}
+                                  className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-white transition"
+                                >취소</button>
+                                <button
+                                  onClick={() => approveMutation.mutate({ id: req.id, memo: action.value })}
+                                  disabled={approveMutation.isPending || !action.value.trim()}
+                                  className="flex-1 text-sm font-semibold py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 transition"
+                                >
+                                  {approveMutation.isPending ? '처리 중...' : '승인 확정'}
+                                </button>
+                              </div>
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              className="space-y-2 bg-red-50 rounded-xl p-3"
+                            >
+                              <p className="text-xs font-semibold text-red-700">거절 사유 <span className="text-red-400">*</span></p>
+                              <input
+                                type="text"
+                                value={action.value}
+                                onChange={e => setCertActions(v => ({ ...v, [req.id]: { ...v[req.id], value: e.target.value } }))}
+                                placeholder="거절 사유를 입력해주세요"
+                                maxLength={100}
+                                className="w-full text-sm bg-white border border-red-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400 placeholder:text-gray-300"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => setCertActions(v => { const n = {...v}; delete n[req.id]; return n })}
+                                  className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-white transition"
+                                >취소</button>
+                                <button
+                                  onClick={() => rejectMutation.mutate({ id: req.id, reason: action.value })}
+                                  disabled={rejectMutation.isPending || !action.value.trim()}
+                                  className="flex-1 text-sm font-semibold py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition"
+                                >
+                                  {rejectMutation.isPending ? '처리 중...' : '거절 확정'}
+                                </button>
+                              </div>
+                            </motion.div>
+                          )}
                         </div>
                       </div>
-                    )}
-                  </div>
-                )
-              })}
+                    </motion.div>
+                  )
+                })}
+              </AnimatePresence>
             </div>
           )}
         </>
