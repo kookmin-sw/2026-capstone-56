@@ -26,11 +26,12 @@ const prisma = new PrismaClient()
 
 const ACTIVE_STATUSES = ['PENDING_PAYMENT', 'CONFIRMED', 'CANCELLATION_REQUESTED', 'REFUND_FAILED', 'CHECKED_IN']
 
-// 관리 권한 헬퍼: 호스트 본인, 같은 학교 SCHOOL_ADMIN, OPERATOR
+// 관리 권한 헬퍼: 호스트 본인, 공동호스트, 같은 학교 SCHOOL_ADMIN, OPERATOR
 function canManageEvent(user, event) {
   if (user.role === 'OPERATOR') return true
   if (user.role === 'SCHOOL_ADMIN' && user.schoolId === event.schoolId) return true
   if (event.hostId === user.id) return true
+  if (event.coHosts?.some(ch => ch.userId === user.id)) return true
   return false
 }
 
@@ -72,17 +73,18 @@ router.post('/upload-image', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_AD
 // 주의: /:id 보다 앞에 정의해야 'mine'이 :id로 매칭되지 않음
 router.get('/mine', authMiddleware, async (req, res, next) => {
   try {
-    const where = { deletedAt: null }
+    const userId = req.user.id
+    let where = { deletedAt: null }
 
     if (req.user.role === 'SCHOOL_ADMIN') {
-      const me = await prisma.user.findUnique({ where: { id: req.user.id }, select: { schoolId: true } })
+      const me = await prisma.user.findUnique({ where: { id: userId }, select: { schoolId: true } })
       if (!me?.schoolId) return res.json([])
       where.schoolId = me.schoolId
     } else if (req.user.role === 'OPERATOR') {
-      // 운영자는 전체 중 본인 주최 행사만
-      where.hostId = req.user.id
+      where.hostId = userId
     } else {
-      where.hostId = req.user.id
+      // CERTIFIED 등: 본인이 주최하거나 공동호스트인 행사
+      where = { deletedAt: null, OR: [{ hostId: userId }, { coHosts: { some: { userId } } }] }
     }
 
     const events = await prisma.event.findMany({
@@ -94,19 +96,47 @@ router.get('/mine', authMiddleware, async (req, res, next) => {
         },
         reviews: { select: { rating: true } },
         registrations: { where: { status: 'CHECKED_IN' }, select: { id: true } },
+        coHosts: { select: { userId: true } },
       },
       orderBy: { createdAt: 'desc' },
     })
 
-    const result = events.map(({ reviews, registrations: checkedInRegs, ...e }) => {
+    const result = events.map(({ reviews, registrations: checkedInRegs, coHosts, ...e }) => {
       const reviewCount = reviews.length
       const reviewAvg = reviewCount > 0
         ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviewCount) * 10) / 10
         : null
-      return { ...e, reviewAvg, reviewCount, checkedInCount: checkedInRegs.length }
+      const isCoHost = e.hostId !== userId && coHosts.some(ch => ch.userId === userId)
+      return { ...e, reviewAvg, reviewCount, checkedInCount: checkedInRegs.length, isCoHost }
     })
 
     res.json(result)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// GET /cohost-candidates — 공동호스트 후보 검색 (/:id 보다 앞에 정의해야 함)
+router.get('/cohost-candidates', authMiddleware, async (req, res, next) => {
+  try {
+    const { schoolId, q } = req.query
+    if (!schoolId) return res.status(400).json({ message: 'schoolId가 필요합니다.' })
+
+    const users = await prisma.user.findMany({
+      where: {
+        schoolId,
+        role: { in: ['CERTIFIED', 'SCHOOL_ADMIN'] },
+        deletedAt: null,
+        id: { not: req.user.id },
+        ...(q ? { OR: [
+          { name: { contains: q, mode: 'insensitive' } },
+          { email: { contains: q, mode: 'insensitive' } },
+        ]} : {}),
+      },
+      select: { id: true, name: true, email: true, role: true },
+      take: 20,
+    })
+    res.json(users)
   } catch (err) {
     next(err)
   }
@@ -172,6 +202,7 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
         _count: {
           select: { registrations: { where: { status: { in: ACTIVE_STATUSES } } } },
         },
+        coHosts: { include: { user: { select: { id: true, name: true, email: true, role: true } } } },
       },
     })
     if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
@@ -239,7 +270,8 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
       imageUrl,
       publishAt,
       refundContact,
-      refundDeadlineType = 'NONE', refundDeadlineValue,
+      refundDeadlineAt: refundDeadlineAtRaw,
+      releaseDeadline: releaseDeadlineRaw,
       refundPolicyText, contactEmail, contactPhone,
     } = req.body
 
@@ -290,14 +322,8 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
     const targetSchoolId = schoolId || user.schoolId
     if (!targetSchoolId) return res.status(400).json({ message: '학교 정보가 없습니다.' })
 
-    // 환불 마감 절대 시각 자동 계산 (payment 도메인이 BR-P01에서 사용)
-    let refundDeadlineAt = null
-    if (refundDeadlineType !== 'NONE' && refundDeadlineValue) {
-      const ms = refundDeadlineType === 'MINUTES'
-        ? refundDeadlineValue * 60 * 1000
-        : refundDeadlineValue * 60 * 60 * 1000
-      refundDeadlineAt = new Date(startDate.getTime() - ms)
-    }
+    const refundDeadlineAt = refundDeadlineAtRaw ? new Date(refundDeadlineAtRaw) : null
+    const releaseDeadline  = releaseDeadlineRaw  ? new Date(releaseDeadlineRaw)  : null
 
     const event = await prisma.event.create({
       data: {
@@ -306,7 +332,6 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
         location,
         schoolId: targetSchoolId,
         hostId: req.user.id,
-        // BR-05: 호스트 스냅샷 (권한 변경과 무관하게 영구 보존)
         hostNameSnapshot: user.name,
         hostAffiliationSnapshot: user.school?.name ?? null,
         imageUrl: imageUrl ?? null,
@@ -319,9 +344,8 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
         registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
         releaseIntervalMinutes: releaseIntervalMinutes ?? null,
         refundContact: refundContact ?? null,
-        refundDeadlineType,
-        refundDeadlineValue: refundDeadlineValue || null,
         refundDeadlineAt,
+        releaseDeadline,
         refundPolicyText,
         contactEmail,
         contactPhone,
@@ -339,7 +363,7 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
 // PUT /:id/publish — 행사 공개
 router.put('/:id/publish', authMiddleware, async (req, res, next) => {
   try {
-    const event = await prisma.event.findUnique({ where: { id: req.params.id } })
+    const event = await prisma.event.findUnique({ where: { id: req.params.id }, include: { coHosts: { select: { userId: true } } } })
     if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
 
     const user = await prisma.user.findUnique({ where: { id: req.user.id } })
@@ -359,7 +383,7 @@ router.put('/:id/publish', authMiddleware, async (req, res, next) => {
 // PUT /:id — 행사 수정 (UC-02)
 router.put('/:id', authMiddleware, async (req, res, next) => {
   try {
-    const event = await prisma.event.findUnique({ where: { id: req.params.id } })
+    const event = await prisma.event.findUnique({ where: { id: req.params.id }, include: { coHosts: { select: { userId: true } } } })
     if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
 
     const user = await prisma.user.findUnique({ where: { id: req.user.id } })
@@ -373,7 +397,9 @@ router.put('/:id', authMiddleware, async (req, res, next) => {
       startAt, endAt, registrationDeadline,
       capacity, isPaid, price,
       releaseIntervalMinutes, imageUrl, publishAt,
-      refundContact, refundDeadlineType, refundDeadlineValue,
+      refundContact,
+      refundDeadlineAt: refundDeadlineAtRaw,
+      releaseDeadline: releaseDeadlineRaw,
     } = req.body
 
     // BR-26: 행사 시작 후에는 종료 시각만 수정 가능
@@ -412,20 +438,7 @@ router.put('/:id', authMiddleware, async (req, res, next) => {
       return res.status(400).json({ message: '신청 마감은 행사 시작 이전이어야 합니다.' })
     }
 
-    // 환불 마감 절대 시각 재계산
-    const effectiveType = refundDeadlineType ?? event.refundDeadlineType
-    const effectiveValue = refundDeadlineValue ?? event.refundDeadlineValue
-    let refundDeadlineAt = event.refundDeadlineAt
-    if (refundDeadlineType !== undefined || refundDeadlineValue !== undefined || startAt) {
-      if (effectiveType !== 'NONE' && effectiveValue) {
-        const ms = effectiveType === 'MINUTES' ? effectiveValue * 60 * 1000 : effectiveValue * 60 * 60 * 1000
-        refundDeadlineAt = new Date(newStartAt.getTime() - ms)
-      } else {
-        refundDeadlineAt = null
-      }
-    }
-
-    const data = { refundDeadlineAt }
+    const data = {}
     if (title !== undefined) data.title = title
     if (description !== undefined) data.description = description
     if (location !== undefined) data.location = location
@@ -438,8 +451,8 @@ router.put('/:id', authMiddleware, async (req, res, next) => {
     if (imageUrl !== undefined) data.imageUrl = imageUrl || null
     if (publishAt !== undefined) data.publishAt = publishAt ? new Date(publishAt) : null
     if (refundContact !== undefined) data.refundContact = refundContact
-    if (refundDeadlineType !== undefined) data.refundDeadlineType = refundDeadlineType
-    if (refundDeadlineValue !== undefined) data.refundDeadlineValue = refundDeadlineValue
+    if (refundDeadlineAtRaw !== undefined) data.refundDeadlineAt = refundDeadlineAtRaw ? new Date(refundDeadlineAtRaw) : null
+    if (releaseDeadlineRaw !== undefined) data.releaseDeadline = releaseDeadlineRaw ? new Date(releaseDeadlineRaw) : null
 
     const updated = await prisma.event.update({ where: { id: event.id }, data })
     audit(req.user.id, 'UPDATE_EVENT', 'EVENT', event.id, event.title)
@@ -452,7 +465,7 @@ router.put('/:id', authMiddleware, async (req, res, next) => {
 // POST /:id/close — 행사 마감 (UC-03)
 router.post('/:id/close', authMiddleware, async (req, res, next) => {
   try {
-    const event = await prisma.event.findUnique({ where: { id: req.params.id } })
+    const event = await prisma.event.findUnique({ where: { id: req.params.id }, include: { coHosts: { select: { userId: true } } } })
     if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
 
     const user = await prisma.user.findUnique({ where: { id: req.user.id } })
@@ -480,7 +493,11 @@ router.delete('/:id', authMiddleware, async (req, res, next) => {
     if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
 
     const user = await prisma.user.findUnique({ where: { id: req.user.id } })
-    if (!canManageEvent(user, event)) return res.status(403).json({ message: '권한이 없습니다.' })
+    // 삭제는 주 호스트·SCHOOL_ADMIN·OPERATOR만 가능 (공동호스트 제외)
+    const canDelete = user.role === 'OPERATOR' ||
+      (user.role === 'SCHOOL_ADMIN' && user.schoolId === event.schoolId) ||
+      event.hostId === user.id
+    if (!canDelete) return res.status(403).json({ message: '삭제 권한이 없습니다.' })
 
     const [freeCount, paidCount] = await Promise.all([
       event.isPaid ? Promise.resolve(0) : prisma.registration.count({
@@ -553,7 +570,7 @@ router.delete('/:id', authMiddleware, async (req, res, next) => {
 // GET /:eventId/registrations — 참여자 목록 조회 (호스트/관리자, UC-P07)
 router.get('/:eventId/registrations', authMiddleware, async (req, res, next) => {
   try {
-    const event = await prisma.event.findFirst({ where: { id: req.params.eventId } })
+    const event = await prisma.event.findFirst({ where: { id: req.params.eventId }, include: { coHosts: { select: { userId: true } } } })
     if (!event) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
 
     const user = await prisma.user.findUnique({ where: { id: req.user.id } })
@@ -611,7 +628,7 @@ router.post('/:eventId/registrations/:regId/refund', authMiddleware, async (req,
     const { cancelReason } = req.body
 
     const [event, registration, user] = await Promise.all([
-      prisma.event.findUnique({ where: { id: eventId } }),
+      prisma.event.findUnique({ where: { id: eventId }, include: { coHosts: { select: { userId: true } } } }),
       prisma.registration.findUnique({ where: { id: regId } }),
       prisma.user.findUnique({ where: { id: req.user.id } }),
     ])
@@ -679,6 +696,58 @@ router.post('/:eventId/registrations/:regId/refund', authMiddleware, async (req,
   }
 })
 
+// ─── 공동호스트 관리 ───────────────────────────────────────────────────────────
+
+// POST /:id/cohosts — 공동호스트 추가 (주 호스트만)
+router.post('/:id/cohosts', authMiddleware, async (req, res, next) => {
+  try {
+    const event = await prisma.event.findUnique({
+      where: { id: req.params.id },
+      include: { coHosts: { select: { userId: true } } },
+    })
+    if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
+    if (event.hostId !== req.user.id) return res.status(403).json({ message: '주 호스트만 공동호스트를 추가할 수 있습니다.' })
+
+    const { userId } = req.body
+    if (!userId) return res.status(400).json({ message: 'userId가 필요합니다.' })
+    if (userId === req.user.id) return res.status(400).json({ message: '본인을 공동호스트로 추가할 수 없습니다.' })
+
+    const candidate = await prisma.user.findUnique({ where: { id: userId } })
+    if (!candidate || candidate.deletedAt) return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' })
+    if (candidate.schoolId !== event.schoolId) return res.status(400).json({ message: '같은 학교 소속만 공동호스트로 추가할 수 있습니다.' })
+    if (!['CERTIFIED', 'SCHOOL_ADMIN'].includes(candidate.role)) {
+      return res.status(400).json({ message: '인증주최자 또는 학교총관리자만 공동호스트로 추가할 수 있습니다.' })
+    }
+    if (event.coHosts.some(ch => ch.userId === userId)) {
+      return res.status(409).json({ message: '이미 공동호스트로 등록된 사용자입니다.' })
+    }
+
+    const coHost = await prisma.eventCoHost.create({
+      data: { eventId: event.id, userId },
+      include: { user: { select: { id: true, name: true, email: true, role: true } } },
+    })
+    res.status(201).json(coHost)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// DELETE /:id/cohosts/:userId — 공동호스트 제거 (주 호스트만)
+router.delete('/:id/cohosts/:userId', authMiddleware, async (req, res, next) => {
+  try {
+    const event = await prisma.event.findUnique({ where: { id: req.params.id } })
+    if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
+    if (event.hostId !== req.user.id) return res.status(403).json({ message: '주 호스트만 공동호스트를 제거할 수 있습니다.' })
+
+    await prisma.eventCoHost.deleteMany({
+      where: { eventId: event.id, userId: req.params.userId },
+    })
+    res.json({ message: '공동호스트가 제거되었습니다.' })
+  } catch (err) {
+    next(err)
+  }
+})
+
 // ─── 레포트 다운로드 ───────────────────────────────────────────────────────────
 // GET /:eventId/report?format=csv|xlsx — 호스트(권한 회수 후에도), SCHOOL_ADMIN, OPERATOR (BR-06, BR-44)
 router.get('/:eventId/report', authMiddleware, async (req, res, next) => {
@@ -688,7 +757,10 @@ router.get('/:eventId/report', authMiddleware, async (req, res, next) => {
 
     const event = await prisma.event.findFirst({
       where: { id: eventId },
-      include: { host: { select: { name: true } } },
+      include: {
+        host: { select: { name: true } },
+        coHosts: { include: { user: { select: { name: true, role: true } } } },
+      },
     })
     if (!event) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
 
@@ -717,9 +789,18 @@ router.get('/:eventId/report', authMiddleware, async (req, res, next) => {
     const cancelled = registrations.filter(r => ['CANCELLED', 'EXPIRED'].includes(r.status)).length
     const totalPaid = registrations.reduce((s, r) => s + (r.paidAmount ?? 0), 0)
     const totalRefunded = registrations.reduce((s, r) => s + (r.refundedAmount ?? 0), 0)
+    const attended = checkedIn + noShow  // 발권 완료 기준 (체크인 + 미체크인)
+    const noShowRate = attended > 0 ? Math.round((noShow / attended) * 1000) / 10 : null
+    const totalAll = registrations.length
+    const cancelRate = totalAll > 0 ? Math.round((cancelled / totalAll) * 1000) / 10 : null
     const avgRating = reviews.length > 0
       ? Math.round(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length * 10) / 10
       : null
+
+    const ROLE_LABEL_KO = { CERTIFIED: '인증주최자', SCHOOL_ADMIN: '학교총관리자', OPERATOR: '운영자', ATTENDEE: '일반사용자' }
+    const coHostNames = (event.coHosts ?? [])
+      .map(ch => `${ch.user?.name ?? '?'} (${ROLE_LABEL_KO[ch.user?.role] ?? ch.user?.role})`)
+      .join(', ')
 
     const fmt = (iso) => iso ? new Date(iso).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) : '-'
 
@@ -727,21 +808,32 @@ router.get('/:eventId/report', authMiddleware, async (req, res, next) => {
     const infoRows = [
       ['행사명', event.title],
       ['주최자', event.hostNameSnapshot ?? event.host?.name ?? '-'],
+      ['공동호스트', coHostNames || '없음'],
       ['시작일시', fmt(event.startAt)],
       ['종료일시', fmt(event.endAt)],
       ['장소', event.location ?? '-'],
       ['정원', event.capacity],
+      ['요금', event.isPaid ? `${event.price?.toLocaleString()}원 (유료)` : '무료'],
+      ['1차 신청마감', fmt(event.registrationDeadline)],
+      ['환불 마감', event.isPaid ? fmt(event.refundDeadlineAt) : '-'],
+      ['2차 신청마감', event.releaseDeadline ? fmt(event.releaseDeadline) : '미설정 (시작 30분 전)'],
+      [''],
       ['총 신청자', totalReg],
       ['체크인', checkedIn],
       ['노쇼', noShow],
       ['취소', cancelled],
-      ['총 결제액', totalPaid],
-      ['총 환불액', totalRefunded],
-      ['평균 평점', avgRating ?? '리뷰 없음'],
+      ['노쇼율', noShowRate !== null ? `${noShowRate}%` : '-'],
+      ['취소율', cancelRate !== null ? `${cancelRate}%` : '-'],
+      ...(event.isPaid ? [
+        ['총 결제액', `${totalPaid.toLocaleString()}원`],
+        ['총 환불액', `${totalRefunded.toLocaleString()}원`],
+      ] : []),
+      ['리뷰 수', reviews.length],
+      ['평균 평점', avgRating !== null ? `${avgRating.toFixed(1)} / 5.0` : '리뷰 없음'],
     ]
 
     // 신청자 명단 헤더 + 행
-    const listHeader = ['이름', '이메일', '학번', '신청시각', '상태', '체크인시각', '결제금액', '환불금액']
+    const listHeader = ['이름', '이메일', '학번', '신청시각', '상태', '체크인시각', '결제금액', '환불금액', '취소·환불 사유']
     const listRows = registrations.map(r => [
       r.user.name,
       r.user.email,
@@ -751,6 +843,7 @@ router.get('/:eventId/report', authMiddleware, async (req, res, next) => {
       fmt(r.checkedInAt),
       r.paidAmount ?? 0,
       r.refundedAmount ?? 0,
+      r.cancelReason ?? '-',
     ])
 
     // BR-44: 다운로드 로그 기록

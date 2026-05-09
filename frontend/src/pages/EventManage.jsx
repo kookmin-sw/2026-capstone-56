@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getEvent, getEventRegistrations, approveRefund, publishEvent, closeEvent, downloadReport } from '../api/events'
+import { getEvent, getEventRegistrations, approveRefund, publishEvent, closeEvent, downloadReport, addCoHost, removeCoHost, searchCoHostCandidates } from '../api/events'
 import { getReviews } from '../api/reviews'
 import { useAuth } from '../hooks/useAuth'
 import {
@@ -54,6 +54,111 @@ function InfoRow({ label, value }) {
   )
 }
 
+const ROLE_LABEL = { CERTIFIED: '인증주최자', SCHOOL_ADMIN: '학교총관리자', OPERATOR: '운영자', ATTENDEE: '일반사용자' }
+
+function CoHostSection({ event, user, isMainHost, queryClient, eventId, coHostQuery, setCoHostQuery, coHostCandidates, setCoHostCandidates }) {
+  const coHosts = event.coHosts ?? []
+
+  const addMut = useMutation({
+    mutationFn: (userId) => addCoHost(eventId, userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['event', eventId] })
+      setCoHostQuery('')
+      setCoHostCandidates([])
+    },
+    onError: (err) => alert(err.response?.data?.message ?? '추가 실패'),
+  })
+
+  const removeMut = useMutation({
+    mutationFn: (userId) => removeCoHost(eventId, userId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['event', eventId] }),
+    onError: (err) => alert(err.response?.data?.message ?? '제거 실패'),
+  })
+
+  const handleSearch = async (q) => {
+    setCoHostQuery(q)
+    if (q.trim().length < 1) return setCoHostCandidates([])
+    try {
+      const results = await searchCoHostCandidates(event.schoolId, q)
+      const existingIds = new Set([event.host?.id, ...coHosts.map(c => c.userId)])
+      setCoHostCandidates(results.filter(r => !existingIds.has(r.id)))
+    } catch {
+      setCoHostCandidates([])
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-3xl border border-gray-100 shadow-card p-5 space-y-4">
+      <div>
+        <h2 className="text-sm font-bold text-gray-700">공동호스트</h2>
+        <p className="text-xs text-gray-400 mt-0.5">공동호스트 추가·제거는 행사 생성자만 가능합니다.</p>
+      </div>
+
+      {/* 현재 공동호스트 목록 */}
+      {coHosts.length === 0 ? (
+        <p className="text-xs text-gray-400">등록된 공동호스트가 없습니다.</p>
+      ) : (
+        <div className="space-y-2">
+          {coHosts.map(ch => (
+            <div key={ch.userId} className="flex items-center justify-between gap-3 py-1.5 border-b border-gray-50 last:border-0">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-primary-100 flex items-center justify-center text-xs font-bold text-primary-600">
+                  {ch.user?.name?.[0] ?? '?'}
+                </div>
+                <span className="text-sm text-gray-800 font-medium">{ch.user?.name}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                  {ROLE_LABEL[ch.user?.role] ?? ch.user?.role}
+                </span>
+              </div>
+              {isMainHost && (
+                <button
+                  onClick={() => { if (confirm(`"${ch.user?.name}"을(를) 공동호스트에서 제거하시겠습니까?`)) removeMut.mutate(ch.userId) }}
+                  className="text-xs text-red-400 hover:text-red-600 transition"
+                >
+                  제거
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 추가 (주 호스트만) */}
+      {isMainHost && (
+        <div className="space-y-2 pt-2 border-t border-gray-50">
+          <div className="relative">
+            <input
+              className="input text-sm pr-8"
+              placeholder="이름 또는 이메일로 검색"
+              value={coHostQuery}
+              onChange={e => handleSearch(e.target.value)}
+            />
+          </div>
+          {coHostCandidates.length > 0 && (
+            <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+              {coHostCandidates.map(c => (
+                <button
+                  key={c.id}
+                  onClick={() => addMut.mutate(c.id)}
+                  className="w-full flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-gray-50 transition text-left border-b border-gray-50 last:border-0"
+                >
+                  <div>
+                    <span className="text-sm font-medium text-gray-800">{c.name}</span>
+                    <span className="ml-2 text-xs text-gray-400">{c.email}</span>
+                  </div>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary-50 text-primary-600 shrink-0">
+                    {ROLE_LABEL[c.role] ?? c.role}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── 메인 ────────────────────────────────────────────────────────────────────
 export default function EventManage() {
   const { id } = useParams()
@@ -63,6 +168,8 @@ export default function EventManage() {
 
   const [refundTarget, setRefundTarget] = useState(null)
   const [refundReason, setRefundReason] = useState('')
+  const [coHostQuery, setCoHostQuery] = useState('')
+  const [coHostCandidates, setCoHostCandidates] = useState([])
 
   const { data: event, isLoading: eventLoading, isError } = useQuery({
     queryKey: ['event', id],
@@ -110,8 +217,10 @@ export default function EventManage() {
   if (eventLoading) return <div className="card p-12 text-center text-gray-400">불러오는 중...</div>
   if (isError || !event) return <div className="card p-12 text-center text-gray-400">행사를 찾을 수 없습니다.</div>
 
+  const isMainHost = user?.id === event.host?.id
+  const isCoHost = !isMainHost && event.coHosts?.some(ch => ch.userId === user?.id)
   const isHost = user && (
-    user.id === event.host?.id ||
+    isMainHost || isCoHost ||
     ['SCHOOL_ADMIN', 'OPERATOR'].includes(user.role)
   )
   if (!isHost) return <div className="card p-12 text-center text-gray-400">접근 권한이 없습니다.</div>
@@ -243,7 +352,11 @@ export default function EventManage() {
           <div>
             <InfoRow label="시작" value={fmtDateTime(event.startAt)} />
             <InfoRow label="종료" value={fmtDateTime(event.endAt)} />
-            <InfoRow label="신청 마감" value={fmtDateTime(event.registrationDeadline)} />
+            <InfoRow label="신청 마감 (1차)" value={fmtDateTime(event.registrationDeadline)} />
+            <InfoRow
+              label="신청 마감 (2차)"
+              value={event.releaseDeadline ? fmtDateTime(event.releaseDeadline) : '미설정 (시작 30분 전)'}
+            />
             <InfoRow label="장소" value={event.location} />
             <InfoRow label="정원" value={`${event.capacity}명`} />
           </div>
@@ -254,7 +367,7 @@ export default function EventManage() {
               <>
                 <InfoRow
                   label="환불 마감"
-                  value={event.refundDeadlineType === 'NONE' ? '제한 없음' : event.refundDeadlineAt ? fmtDateTime(event.refundDeadlineAt) : '-'}
+                  value={event.refundDeadlineAt ? fmtDateTime(event.refundDeadlineAt) : '제한 없음'}
                 />
                 <InfoRow label="환불 문의처" value={event.refundContact} />
               </>
@@ -274,6 +387,19 @@ export default function EventManage() {
           </div>
         )}
       </div>
+
+      {/* 공동호스트 */}
+      <CoHostSection
+        event={event}
+        user={user}
+        isMainHost={isMainHost}
+        queryClient={queryClient}
+        eventId={id}
+        coHostQuery={coHostQuery}
+        setCoHostQuery={setCoHostQuery}
+        coHostCandidates={coHostCandidates}
+        setCoHostCandidates={setCoHostCandidates}
+      />
 
       {/* 체크인 현황 */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-card p-5">

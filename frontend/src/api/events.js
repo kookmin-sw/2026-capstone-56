@@ -60,6 +60,21 @@ export const approveRefund = async (eventId, regId, reason) => {
   return res.data
 }
 
+export const searchCoHostCandidates = async (schoolId, q) => {
+  const res = await api.get('/v1/events/cohost-candidates', { params: { schoolId, q } })
+  return res.data
+}
+
+export const addCoHost = async (eventId, userId) => {
+  const res = await api.post(`/v1/events/${eventId}/cohosts`, { userId })
+  return res.data
+}
+
+export const removeCoHost = async (eventId, userId) => {
+  const res = await api.delete(`/v1/events/${eventId}/cohosts/${userId}`)
+  return res.data
+}
+
 export const downloadReport = async (eventId, format) => {
   const res = await api.get(`/v1/events/${eventId}/report`, {
     params: { format },

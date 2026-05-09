@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { createEvent, uploadEventImage } from '../api/events'
@@ -13,15 +13,7 @@ const PALETTES = [
   { from: '#ec4899', to: '#a855f7' },
   { from: '#3b82f6', to: '#06b6d4' },
 ]
-// 제목으로 팔레트 결정 (ID 없으므로 임시)
-function getPalette(seed) {
-  const s = seed || 'preview'
-  const sum = s.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
-  return PALETTES[sum % PALETTES.length]
-}
-
-function EventPreviewCard({ form, imagePreview, openMode }) {
-  const palette = getPalette(form.title)
+function EventPreviewCard({ form, imagePreview, openMode, palette }) {
   const startDate = form.startAt ? new Date(form.startAt) : new Date()
   const isValidDate = !isNaN(startDate)
   const day = isValidDate ? startDate.getDate() : '--'
@@ -204,7 +196,7 @@ function Section({ icon, title, children }) {
   )
 }
 
-function Field({ label, hint, children }) {
+function Field({ label, hint, desc, children }) {
   return (
     <div>
       <div className="flex items-baseline justify-between mb-1">
@@ -212,6 +204,7 @@ function Field({ label, hint, children }) {
         {hint && <span className="text-xs text-gray-400">{hint}</span>}
       </div>
       {children}
+      {desc && <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">{desc}</p>}
     </div>
   )
 }
@@ -234,8 +227,8 @@ export default function EventCreate() {
     isPaid: false,
     price: '',
     releaseIntervalMinutes: 15,
-    refundDeadlineType: 'MINUTES',
-    refundDeadlineValue: 30,
+    releaseDeadline: '',
+    refundDeadlineAt: '',
     refundContact: '',
     imageUrl: '',
     openMode: 'immediate',
@@ -243,6 +236,7 @@ export default function EventCreate() {
   })
   const [imagePreview, setImagePreview] = useState(null)
   const [uploading, setUploading] = useState(false)
+  const palette = useMemo(() => PALETTES[Math.floor(Math.random() * PALETTES.length)], [])
 
   const canCreate = user && ['CERTIFIED', 'SCHOOL_ADMIN', 'OPERATOR'].includes(user.role)
 
@@ -283,8 +277,8 @@ export default function EventCreate() {
       capacity: Number(form.capacity),
       price: form.isPaid ? Number(form.price) : null,
       releaseIntervalMinutes: Number(form.releaseIntervalMinutes),
-      refundDeadlineValue: form.isPaid && form.refundDeadlineType !== 'NONE' ? Number(form.refundDeadlineValue) : null,
-      refundDeadlineType: form.isPaid ? form.refundDeadlineType : 'NONE',
+      refundDeadlineAt: form.isPaid && form.refundDeadlineAt ? form.refundDeadlineAt : null,
+      releaseDeadline: form.releaseDeadline || null,
       imageUrl: form.imageUrl || null,
       publishAt: form.openMode === 'scheduled' && form.publishAt ? form.publishAt : null,
     }
@@ -366,8 +360,17 @@ export default function EventCreate() {
                   <input type="datetime-local" className="input" required value={form.endAt} onChange={set('endAt')} />
                 </Field>
               </div>
-              <Field label="신청 마감">
+              <Field
+                label="1차 신청마감"
+                desc="대략적인 참가 인원 파악을 위한 마감입니다. 이 시각 이후에는 일반 신청을 받지 않으며, 잔여석은 취소표로 전환되어 릴리즈됩니다."
+              >
                 <input type="datetime-local" className="input" value={form.registrationDeadline} onChange={set('registrationDeadline')} />
+              </Field>
+              <Field
+                label="2차 신청마감"
+                desc="취소표 릴리즈가 종료되는 최종 마감입니다. 이 시각 이후에는 모든 신청이 불가합니다."
+              >
+                <input type="datetime-local" className="input" value={form.releaseDeadline} onChange={set('releaseDeadline')} />
               </Field>
             </Section>
 
@@ -423,25 +426,17 @@ export default function EventCreate() {
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">원</span>
                     </div>
                   </Field>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Field label="환불 마감 기준">
-                      <select className="input" value={form.refundDeadlineType} onChange={set('refundDeadlineType')}>
-                        <option value="NONE">없음 (자유 환불)</option>
-                        <option value="MINUTES">분 전</option>
-                        <option value="HOURS">시간 전</option>
-                      </select>
-                    </Field>
-                    <Field label="환불 마감 값">
-                      <input
-                        type="number"
-                        min={0}
-                        className="input"
-                        value={form.refundDeadlineValue}
-                        onChange={set('refundDeadlineValue')}
-                        disabled={form.refundDeadlineType === 'NONE'}
-                      />
-                    </Field>
-                  </div>
+                  <Field
+                    label="환불 마감"
+                    desc="이 시각 이후 취소표를 구매한 참가자는 환불을 받을 수 없습니다. 노쇼 방지를 위해 1차 신청마감과 2차 신청마감 사이로 설정하는 것을 권장합니다."
+                  >
+                    <input
+                      type="datetime-local"
+                      className="input"
+                      value={form.refundDeadlineAt}
+                      onChange={set('refundDeadlineAt')}
+                    />
+                  </Field>
                   <Field label="환불 마감 이후 문의처">
                     <input
                       className="input"
@@ -515,7 +510,7 @@ export default function EventCreate() {
                 </div>
                 <span className="text-[11px] text-gray-400">실시간 반영</span>
               </div>
-              <EventPreviewCard form={form} imagePreview={imagePreview} openMode={form.openMode} />
+              <EventPreviewCard form={form} imagePreview={imagePreview} openMode={form.openMode} palette={palette} />
               <p className="text-[11px] text-gray-400 text-center mt-3">
                 행사 ID 기반 테마 색상이 자동 배정됩니다
               </p>

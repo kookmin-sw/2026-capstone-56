@@ -40,6 +40,7 @@ model User {
   ratingCount            Int              @default(0)
   certRequests           CertificationRequest[] @relation("CertRequests")
   certReviewed           CertificationRequest[] @relation("CertReqReviewer")
+  coHostedEvents         EventCoHost[]          @relation("CoHostedEvents")
 
   @@unique([studentId, schoolId])
 }
@@ -82,9 +83,8 @@ model Event {
   releaseIntervalMinutes  Int?
   lastReleaseAt           DateTime?
   refundContact           String?
-  refundDeadlineType      RefundDeadlineType @default(NONE)
-  refundDeadlineValue     Int?
   refundDeadlineAt        DateTime?
+  releaseDeadline         DateTime?
   refundPolicyText        String?
   contactEmail            String?
   contactPhone            String?
@@ -92,6 +92,7 @@ model Event {
   whitelist               EventWhitelist?
   questions               EventQuestion[]
   reviews                 Review[]
+  coHosts                 EventCoHost[]
   createdAt               DateTime           @default(now())
   updatedAt               DateTime           @updatedAt
   deletedAt               DateTime?
@@ -196,12 +197,6 @@ enum EventStatus {
   CANCELLED
 }
 
-enum RefundDeadlineType {
-  NONE
-  MINUTES
-  HOURS
-}
-
 enum RegistrationStatus {
   PENDING_PAYMENT
   CONFIRMED
@@ -301,4 +296,15 @@ model Review {
   lockedAt    DateTime?
 
   @@unique([eventId, authorId])
+}
+
+model EventCoHost {
+  id      String   @id @default(cuid())
+  eventId String
+  event   Event    @relation(fields: [eventId], references: [id])
+  userId  String
+  user    User     @relation("CoHostedEvents", fields: [userId], references: [id])
+  addedAt DateTime @default(now())
+
+  @@unique([eventId, userId])
 }
