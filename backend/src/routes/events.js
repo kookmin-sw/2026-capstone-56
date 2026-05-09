@@ -26,11 +26,12 @@ const prisma = new PrismaClient()
 
 const ACTIVE_STATUSES = ['PENDING_PAYMENT', 'CONFIRMED', 'CANCELLATION_REQUESTED', 'REFUND_FAILED', 'CHECKED_IN']
 
-// 관리 권한 헬퍼: 호스트 본인, 같은 학교 SCHOOL_ADMIN, OPERATOR
+// 관리 권한 헬퍼: 호스트 본인, 공동호스트, 같은 학교 SCHOOL_ADMIN, OPERATOR
 function canManageEvent(user, event) {
   if (user.role === 'OPERATOR') return true
   if (user.role === 'SCHOOL_ADMIN' && user.schoolId === event.schoolId) return true
   if (event.hostId === user.id) return true
+  if (event.coHosts?.some(ch => ch.userId === user.id)) return true
   return false
 }
 
@@ -72,17 +73,18 @@ router.post('/upload-image', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_AD
 // 주의: /:id 보다 앞에 정의해야 'mine'이 :id로 매칭되지 않음
 router.get('/mine', authMiddleware, async (req, res, next) => {
   try {
-    const where = { deletedAt: null }
+    const userId = req.user.id
+    let where = { deletedAt: null }
 
     if (req.user.role === 'SCHOOL_ADMIN') {
-      const me = await prisma.user.findUnique({ where: { id: req.user.id }, select: { schoolId: true } })
+      const me = await prisma.user.findUnique({ where: { id: userId }, select: { schoolId: true } })
       if (!me?.schoolId) return res.json([])
       where.schoolId = me.schoolId
     } else if (req.user.role === 'OPERATOR') {
-      // 운영자는 전체 중 본인 주최 행사만
-      where.hostId = req.user.id
+      where.hostId = userId
     } else {
-      where.hostId = req.user.id
+      // CERTIFIED 등: 본인이 주최하거나 공동호스트인 행사
+      where = { deletedAt: null, OR: [{ hostId: userId }, { coHosts: { some: { userId } } }] }
     }
 
     const events = await prisma.event.findMany({
@@ -94,19 +96,47 @@ router.get('/mine', authMiddleware, async (req, res, next) => {
         },
         reviews: { select: { rating: true } },
         registrations: { where: { status: 'CHECKED_IN' }, select: { id: true } },
+        coHosts: { select: { userId: true } },
       },
       orderBy: { createdAt: 'desc' },
     })
 
-    const result = events.map(({ reviews, registrations: checkedInRegs, ...e }) => {
+    const result = events.map(({ reviews, registrations: checkedInRegs, coHosts, ...e }) => {
       const reviewCount = reviews.length
       const reviewAvg = reviewCount > 0
         ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviewCount) * 10) / 10
         : null
-      return { ...e, reviewAvg, reviewCount, checkedInCount: checkedInRegs.length }
+      const isCoHost = e.hostId !== userId && coHosts.some(ch => ch.userId === userId)
+      return { ...e, reviewAvg, reviewCount, checkedInCount: checkedInRegs.length, isCoHost }
     })
 
     res.json(result)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// GET /cohost-candidates — 공동호스트 후보 검색 (/:id 보다 앞에 정의해야 함)
+router.get('/cohost-candidates', authMiddleware, async (req, res, next) => {
+  try {
+    const { schoolId, q } = req.query
+    if (!schoolId) return res.status(400).json({ message: 'schoolId가 필요합니다.' })
+
+    const users = await prisma.user.findMany({
+      where: {
+        schoolId,
+        role: { in: ['CERTIFIED', 'SCHOOL_ADMIN'] },
+        deletedAt: null,
+        id: { not: req.user.id },
+        ...(q ? { OR: [
+          { name: { contains: q, mode: 'insensitive' } },
+          { email: { contains: q, mode: 'insensitive' } },
+        ]} : {}),
+      },
+      select: { id: true, name: true, email: true, role: true },
+      take: 20,
+    })
+    res.json(users)
   } catch (err) {
     next(err)
   }
@@ -172,6 +202,7 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
         _count: {
           select: { registrations: { where: { status: { in: ACTIVE_STATUSES } } } },
         },
+        coHosts: { include: { user: { select: { id: true, name: true, email: true, role: true } } } },
       },
     })
     if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
@@ -332,7 +363,7 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
 // PUT /:id/publish — 행사 공개
 router.put('/:id/publish', authMiddleware, async (req, res, next) => {
   try {
-    const event = await prisma.event.findUnique({ where: { id: req.params.id } })
+    const event = await prisma.event.findUnique({ where: { id: req.params.id }, include: { coHosts: { select: { userId: true } } } })
     if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
 
     const user = await prisma.user.findUnique({ where: { id: req.user.id } })
@@ -352,7 +383,7 @@ router.put('/:id/publish', authMiddleware, async (req, res, next) => {
 // PUT /:id — 행사 수정 (UC-02)
 router.put('/:id', authMiddleware, async (req, res, next) => {
   try {
-    const event = await prisma.event.findUnique({ where: { id: req.params.id } })
+    const event = await prisma.event.findUnique({ where: { id: req.params.id }, include: { coHosts: { select: { userId: true } } } })
     if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
 
     const user = await prisma.user.findUnique({ where: { id: req.user.id } })
@@ -434,7 +465,7 @@ router.put('/:id', authMiddleware, async (req, res, next) => {
 // POST /:id/close — 행사 마감 (UC-03)
 router.post('/:id/close', authMiddleware, async (req, res, next) => {
   try {
-    const event = await prisma.event.findUnique({ where: { id: req.params.id } })
+    const event = await prisma.event.findUnique({ where: { id: req.params.id }, include: { coHosts: { select: { userId: true } } } })
     if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
 
     const user = await prisma.user.findUnique({ where: { id: req.user.id } })
@@ -462,7 +493,11 @@ router.delete('/:id', authMiddleware, async (req, res, next) => {
     if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
 
     const user = await prisma.user.findUnique({ where: { id: req.user.id } })
-    if (!canManageEvent(user, event)) return res.status(403).json({ message: '권한이 없습니다.' })
+    // 삭제는 주 호스트·SCHOOL_ADMIN·OPERATOR만 가능 (공동호스트 제외)
+    const canDelete = user.role === 'OPERATOR' ||
+      (user.role === 'SCHOOL_ADMIN' && user.schoolId === event.schoolId) ||
+      event.hostId === user.id
+    if (!canDelete) return res.status(403).json({ message: '삭제 권한이 없습니다.' })
 
     const [freeCount, paidCount] = await Promise.all([
       event.isPaid ? Promise.resolve(0) : prisma.registration.count({
@@ -535,7 +570,7 @@ router.delete('/:id', authMiddleware, async (req, res, next) => {
 // GET /:eventId/registrations — 참여자 목록 조회 (호스트/관리자, UC-P07)
 router.get('/:eventId/registrations', authMiddleware, async (req, res, next) => {
   try {
-    const event = await prisma.event.findFirst({ where: { id: req.params.eventId } })
+    const event = await prisma.event.findFirst({ where: { id: req.params.eventId }, include: { coHosts: { select: { userId: true } } } })
     if (!event) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
 
     const user = await prisma.user.findUnique({ where: { id: req.user.id } })
@@ -593,7 +628,7 @@ router.post('/:eventId/registrations/:regId/refund', authMiddleware, async (req,
     const { cancelReason } = req.body
 
     const [event, registration, user] = await Promise.all([
-      prisma.event.findUnique({ where: { id: eventId } }),
+      prisma.event.findUnique({ where: { id: eventId }, include: { coHosts: { select: { userId: true } } } }),
       prisma.registration.findUnique({ where: { id: regId } }),
       prisma.user.findUnique({ where: { id: req.user.id } }),
     ])
@@ -656,6 +691,58 @@ router.post('/:eventId/registrations/:regId/refund', authMiddleware, async (req,
       })
       res.json({ message: '환불 요청이 접수되었습니다. 처리 중입니다.' })
     }
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─── 공동호스트 관리 ───────────────────────────────────────────────────────────
+
+// POST /:id/cohosts — 공동호스트 추가 (주 호스트만)
+router.post('/:id/cohosts', authMiddleware, async (req, res, next) => {
+  try {
+    const event = await prisma.event.findUnique({
+      where: { id: req.params.id },
+      include: { coHosts: { select: { userId: true } } },
+    })
+    if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
+    if (event.hostId !== req.user.id) return res.status(403).json({ message: '주 호스트만 공동호스트를 추가할 수 있습니다.' })
+
+    const { userId } = req.body
+    if (!userId) return res.status(400).json({ message: 'userId가 필요합니다.' })
+    if (userId === req.user.id) return res.status(400).json({ message: '본인을 공동호스트로 추가할 수 없습니다.' })
+
+    const candidate = await prisma.user.findUnique({ where: { id: userId } })
+    if (!candidate || candidate.deletedAt) return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' })
+    if (candidate.schoolId !== event.schoolId) return res.status(400).json({ message: '같은 학교 소속만 공동호스트로 추가할 수 있습니다.' })
+    if (!['CERTIFIED', 'SCHOOL_ADMIN'].includes(candidate.role)) {
+      return res.status(400).json({ message: '인증주최자 또는 학교총관리자만 공동호스트로 추가할 수 있습니다.' })
+    }
+    if (event.coHosts.some(ch => ch.userId === userId)) {
+      return res.status(409).json({ message: '이미 공동호스트로 등록된 사용자입니다.' })
+    }
+
+    const coHost = await prisma.eventCoHost.create({
+      data: { eventId: event.id, userId },
+      include: { user: { select: { id: true, name: true, email: true, role: true } } },
+    })
+    res.status(201).json(coHost)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// DELETE /:id/cohosts/:userId — 공동호스트 제거 (주 호스트만)
+router.delete('/:id/cohosts/:userId', authMiddleware, async (req, res, next) => {
+  try {
+    const event = await prisma.event.findUnique({ where: { id: req.params.id } })
+    if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
+    if (event.hostId !== req.user.id) return res.status(403).json({ message: '주 호스트만 공동호스트를 제거할 수 있습니다.' })
+
+    await prisma.eventCoHost.deleteMany({
+      where: { eventId: event.id, userId: req.params.userId },
+    })
+    res.json({ message: '공동호스트가 제거되었습니다.' })
   } catch (err) {
     next(err)
   }

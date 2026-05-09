@@ -152,12 +152,15 @@ router.post('/events/:id/questions/:qid/answer', authMiddleware, requireRole('CE
     const event = await prisma.event.findFirst({ where: { id: req.params.id, deletedAt: null } })
     if (!event) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
 
-    // 호스트 본인 또는 SCHOOL_ADMIN(같은 학교) 또는 OPERATOR만 답변 가능
+    // 호스트·공동호스트·SCHOOL_ADMIN(같은 학교)·OPERATOR만 답변 가능
     const isHost = event.hostId === req.user.id
+    const isCoHost = !isHost && await prisma.eventCoHost.findFirst({
+      where: { eventId: req.params.id, userId: req.user.id },
+    })
     const isSchoolAdmin = req.user.role === 'SCHOOL_ADMIN' && req.user.schoolId === event.schoolId
     const isOperator = req.user.role === 'OPERATOR'
-    if (!isHost && !isSchoolAdmin && !isOperator) {
-      return res.status(403).json({ message: '답변 권한이 없습니다. 호스트만 답변할 수 있습니다.' })
+    if (!isHost && !isCoHost && !isSchoolAdmin && !isOperator) {
+      return res.status(403).json({ message: '답변 권한이 없습니다.' })
     }
 
     const question = await prisma.eventQuestion.findFirst({

@@ -256,6 +256,11 @@ function EventRow({ event, onPublish, onClose, onDelete, isPublishing, isClosing
         <div className="flex-1 min-w-0 space-y-1.5">
           <div className="flex items-center gap-2 flex-wrap">
             <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${cfg.color}`}>{cfg.label}</span>
+            {event.isCoHost && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-50 text-violet-600">
+                공동호스트
+              </span>
+            )}
             {event.isPaid && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
                 유료 {event.price?.toLocaleString()}원
@@ -328,7 +333,7 @@ function EventRow({ event, onPublish, onClose, onDelete, isPublishing, isClosing
           </button>
         )}
 
-        {!['CANCELLED', 'CLOSED'].includes(event.status) && !isEnded && (
+        {!event.isCoHost && !['CANCELLED', 'CLOSED'].includes(event.status) && !isEnded && (
           <button
             onClick={onDelete}
             disabled={isDeleting}
