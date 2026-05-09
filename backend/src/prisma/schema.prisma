@@ -45,12 +45,13 @@ model User {
 }
 
 model School {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  domain    String    @unique
-  address   String?
-  createdAt DateTime  @default(now())
-  deletedAt DateTime?
+  id           String    @id @default(cuid())
+  name         String    @unique
+  domain       String    @unique
+  address      String?
+  adminContact String?
+  createdAt    DateTime  @default(now())
+  deletedAt    DateTime?
   events       Event[]
   users        User[]
   notices      Notice[]
@@ -245,6 +246,8 @@ model CertificationRequest {
   schoolId     String
   school       School        @relation(fields: [schoolId], references: [id])
   message      String?
+  organization String?
+  contact      String?
   status       CertReqStatus @default(PENDING)
   reviewNote   String?
   reviewedById String?

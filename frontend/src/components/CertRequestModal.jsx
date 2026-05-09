@@ -17,7 +17,7 @@ export default function CertRequestModal({ onClose }) {
   const toast = useToast()
   const queryClient = useQueryClient()
   const [tab, setTab] = useState('status')
-  const [message, setMessage] = useState('')
+  const [form, setForm] = useState({ organization: '', contact: '', message: '' })
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ['my-cert-requests'],
@@ -28,11 +28,11 @@ export default function CertRequestModal({ onClose }) {
   const hasEverApplied = requests.length > 0
 
   const submitMutation = useMutation({
-    mutationFn: () => submitCertRequest(message),
+    mutationFn: () => submitCertRequest(form),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-cert-requests'] })
       toast('신청이 완료되었습니다.', 'success')
-      setMessage('')
+      setForm({ organization: '', contact: '', message: '' })
       setTab('status')
     },
     onError: (err) => toast(err.response?.data?.message || '신청에 실패했습니다.', 'error'),
@@ -113,6 +113,12 @@ export default function CertRequestModal({ onClose }) {
                           </span>
                           <span className="text-xs text-gray-400">{fmtDate(r.createdAt)}</span>
                         </div>
+                        {r.organization && (
+                          <p className="text-xs text-gray-500"><span className="font-medium">소속·직책:</span> {r.organization}</p>
+                        )}
+                        {r.contact && (
+                          <p className="text-xs text-gray-500"><span className="font-medium">연락처:</span> {r.contact}</p>
+                        )}
                         {r.message && (
                           <p className="text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">{r.message}</p>
                         )}
@@ -167,21 +173,53 @@ export default function CertRequestModal({ onClose }) {
 
                   <div className="space-y-1.5">
                     <label className="text-sm font-semibold text-gray-700">
+                      소속 단체 / 직책 <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={form.organization}
+                      onChange={e => setForm(v => ({ ...v, organization: e.target.value }))}
+                      placeholder="예) 컴퓨터공학과 동아리 회장, 총학생회 문화부장"
+                      maxLength={100}
+                      className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary-400 placeholder:text-gray-400"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-gray-700">
+                      연락처 <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={form.contact}
+                      onChange={e => setForm(v => ({ ...v, contact: e.target.value }))}
+                      placeholder="예) 010-1234-5678 · 카카오톡 ID: example"
+                      maxLength={50}
+                      className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary-400 placeholder:text-gray-400"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-gray-700">
                       신청 사유 <span className="text-gray-400 font-normal">(선택)</span>
                     </label>
                     <textarea
-                      value={message}
-                      onChange={e => setMessage(e.target.value)}
+                      value={form.message}
+                      onChange={e => setForm(v => ({ ...v, message: e.target.value }))}
                       placeholder="예) 동아리 연합 행사 주최 예정, 학생회 행사 기획 등"
-                      rows={4}
+                      rows={3}
                       maxLength={300}
-                      className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-primary-400 placeholder:text-gray-300"
+                      className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-primary-400 placeholder:text-gray-400"
                     />
-                    <p className="text-xs text-gray-400 text-right">{message.length}/300</p>
+                    <p className="text-xs text-gray-400 text-right">{form.message.length}/300</p>
                   </div>
 
                   <button
-                    onClick={() => submitMutation.mutate()}
+                    onClick={() => {
+                      if (!form.organization.trim()) return toast('소속 단체/직책을 입력해주세요.', 'error')
+                      if (!form.contact.trim()) return toast('연락처를 입력해주세요.', 'error')
+                      submitMutation.mutate()
+                    }}
                     disabled={submitMutation.isPending}
                     className="btn-primary w-full justify-center"
                   >

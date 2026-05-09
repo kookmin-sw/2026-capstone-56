@@ -55,19 +55,21 @@ function RoleChangeModal({ user, schoolId, onClose }) {
           </select>
         </div>
 
-        <div className="space-y-1">
-          <label className="text-xs font-semibold text-gray-600">
-            메모 <span className="text-gray-400 font-normal">(선택)</span>
-          </label>
-          <input
-            type="text"
-            value={memo}
-            onChange={e => setMemo(e.target.value)}
-            placeholder="예) 동아리 연합 주최자 인증, 학생회 임원 확인 등"
-            maxLength={100}
-            className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary-400 placeholder:text-gray-300"
-          />
-        </div>
+        {role !== 'ATTENDEE' && (
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-gray-600">
+              메모 <span className="text-gray-400 font-normal">(선택)</span>
+            </label>
+            <input
+              type="text"
+              value={memo}
+              onChange={e => setMemo(e.target.value)}
+              placeholder="예) 동아리 연합 주최자 인증, 학생회 임원 확인 등"
+              maxLength={100}
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary-400 placeholder:text-gray-300"
+            />
+          </div>
+        )}
 
         <div className="flex gap-2 pt-1">
           <button onClick={onClose} className="flex-1 btn-secondary text-sm py-2.5 rounded-xl">취소</button>

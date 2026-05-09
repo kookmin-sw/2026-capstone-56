@@ -8,3 +8,6 @@ export const updateMySchoolUserRole = (userId, role, memo) =>
 
 export const getSchoolUserRegistrations = (userId) =>
   api.get(`/school-admin/users/${userId}/registrations`).then(r => r.data)
+
+export const updateSchoolContact = (adminContact) =>
+  api.put('/school-admin/contact', { adminContact }).then(r => r.data)

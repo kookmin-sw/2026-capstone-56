@@ -191,15 +191,30 @@ export default function Header() {
     </header>
 
     {user && (
-      <button
-        onClick={() => setInquiryOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white pl-4 pr-5 py-3 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95"
-      >
-        <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-        </svg>
-        <span className="text-sm font-semibold">문의하기</span>
-      </button>
+      <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
+        {user.school?.adminContact && ['ATTENDEE', 'CERTIFIED'].includes(user.role) && (
+          <a
+            href={user.school.adminContact}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-2 bg-white border border-gray-200 hover:border-primary-300 text-gray-700 hover:text-primary-600 pl-4 pr-5 py-3 rounded-full shadow-md transition-all hover:scale-105 active:scale-95"
+          >
+            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span className="text-sm font-semibold">학교관리자에게 문의</span>
+          </a>
+        )}
+        <button
+          onClick={() => setInquiryOpen(true)}
+          className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white pl-4 pr-5 py-3 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95"
+        >
+          <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
+          <span className="text-sm font-semibold">문의하기</span>
+        </button>
+      </div>
     )}
 
     {inquiryOpen && <InquiryModal onClose={() => setInquiryOpen(false)} />}

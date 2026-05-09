@@ -210,7 +210,7 @@ router.put('/users/:userId/role', authMiddleware, OPERATOR, async (req, res, nex
 
     const updated = await prisma.user.update({
       where: { id: req.params.userId },
-      data: { role, roleMemo: memo?.trim() || null },
+      data: { role, roleMemo: role === 'ATTENDEE' ? null : (memo?.trim() || null) },
       select: { id: true, name: true, email: true, role: true, roleMemo: true }
     })
     const detail = memo?.trim()
