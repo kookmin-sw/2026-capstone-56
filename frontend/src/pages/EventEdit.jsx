@@ -284,22 +284,21 @@ export default function EventEdit() {
             </Section>
 
             <Section icon="💳" title="결제 설정">
-              <label className={`flex items-center gap-3 ${isClosed ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
+              <label className="flex items-center gap-3 cursor-not-allowed opacity-60">
                 <div
-                  onClick={() => !isClosed && setForm(f => ({ ...f, isPaid: !f.isPaid }))}
-                  className={`w-10 h-6 rounded-full transition-colors relative ${form.isPaid ? 'bg-primary-600' : 'bg-gray-200'}`}
+                  className={`w-10 h-6 rounded-full relative ${form.isPaid ? 'bg-primary-600' : 'bg-gray-200'}`}
                 >
                   <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${form.isPaid ? 'left-5' : 'left-1'}`} />
                 </div>
                 <span className="text-sm font-medium text-gray-700">유료 행사</span>
-                {isClosed && <span className="text-xs text-gray-400">(신청 마감 후 변경 불가)</span>}
+                <span className="text-xs text-gray-400">(행사 생성 후 변경 불가)</span>
               </label>
 
               {form.isPaid && (
                 <div className="space-y-4 pt-2 border-t">
-                  <Field label="가격 (원, 100원 이상) *">
-                    <div className="relative">
-                      <input type="number" min={100} className="input pr-8" value={form.price} onChange={set('price')} />
+                  <Field label="가격" hint="행사 생성 후 변경 불가">
+                    <div className="relative opacity-60 cursor-not-allowed">
+                      <input type="number" className="input pr-8" value={form.price} disabled />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">원</span>
                     </div>
                   </Field>
