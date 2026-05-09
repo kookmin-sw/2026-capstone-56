@@ -239,7 +239,8 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
       imageUrl,
       publishAt,
       refundContact,
-      refundDeadlineType = 'NONE', refundDeadlineValue,
+      refundDeadlineAt: refundDeadlineAtRaw,
+      releaseDeadline: releaseDeadlineRaw,
       refundPolicyText, contactEmail, contactPhone,
     } = req.body
 
@@ -290,14 +291,8 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
     const targetSchoolId = schoolId || user.schoolId
     if (!targetSchoolId) return res.status(400).json({ message: '학교 정보가 없습니다.' })
 
-    // 환불 마감 절대 시각 자동 계산 (payment 도메인이 BR-P01에서 사용)
-    let refundDeadlineAt = null
-    if (refundDeadlineType !== 'NONE' && refundDeadlineValue) {
-      const ms = refundDeadlineType === 'MINUTES'
-        ? refundDeadlineValue * 60 * 1000
-        : refundDeadlineValue * 60 * 60 * 1000
-      refundDeadlineAt = new Date(startDate.getTime() - ms)
-    }
+    const refundDeadlineAt = refundDeadlineAtRaw ? new Date(refundDeadlineAtRaw) : null
+    const releaseDeadline  = releaseDeadlineRaw  ? new Date(releaseDeadlineRaw)  : null
 
     const event = await prisma.event.create({
       data: {
@@ -306,7 +301,6 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
         location,
         schoolId: targetSchoolId,
         hostId: req.user.id,
-        // BR-05: 호스트 스냅샷 (권한 변경과 무관하게 영구 보존)
         hostNameSnapshot: user.name,
         hostAffiliationSnapshot: user.school?.name ?? null,
         imageUrl: imageUrl ?? null,
@@ -319,9 +313,8 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
         registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
         releaseIntervalMinutes: releaseIntervalMinutes ?? null,
         refundContact: refundContact ?? null,
-        refundDeadlineType,
-        refundDeadlineValue: refundDeadlineValue || null,
         refundDeadlineAt,
+        releaseDeadline,
         refundPolicyText,
         contactEmail,
         contactPhone,
@@ -373,7 +366,9 @@ router.put('/:id', authMiddleware, async (req, res, next) => {
       startAt, endAt, registrationDeadline,
       capacity, isPaid, price,
       releaseIntervalMinutes, imageUrl, publishAt,
-      refundContact, refundDeadlineType, refundDeadlineValue,
+      refundContact,
+      refundDeadlineAt: refundDeadlineAtRaw,
+      releaseDeadline: releaseDeadlineRaw,
     } = req.body
 
     // BR-26: 행사 시작 후에는 종료 시각만 수정 가능
@@ -412,20 +407,7 @@ router.put('/:id', authMiddleware, async (req, res, next) => {
       return res.status(400).json({ message: '신청 마감은 행사 시작 이전이어야 합니다.' })
     }
 
-    // 환불 마감 절대 시각 재계산
-    const effectiveType = refundDeadlineType ?? event.refundDeadlineType
-    const effectiveValue = refundDeadlineValue ?? event.refundDeadlineValue
-    let refundDeadlineAt = event.refundDeadlineAt
-    if (refundDeadlineType !== undefined || refundDeadlineValue !== undefined || startAt) {
-      if (effectiveType !== 'NONE' && effectiveValue) {
-        const ms = effectiveType === 'MINUTES' ? effectiveValue * 60 * 1000 : effectiveValue * 60 * 60 * 1000
-        refundDeadlineAt = new Date(newStartAt.getTime() - ms)
-      } else {
-        refundDeadlineAt = null
-      }
-    }
-
-    const data = { refundDeadlineAt }
+    const data = {}
     if (title !== undefined) data.title = title
     if (description !== undefined) data.description = description
     if (location !== undefined) data.location = location
@@ -438,8 +420,8 @@ router.put('/:id', authMiddleware, async (req, res, next) => {
     if (imageUrl !== undefined) data.imageUrl = imageUrl || null
     if (publishAt !== undefined) data.publishAt = publishAt ? new Date(publishAt) : null
     if (refundContact !== undefined) data.refundContact = refundContact
-    if (refundDeadlineType !== undefined) data.refundDeadlineType = refundDeadlineType
-    if (refundDeadlineValue !== undefined) data.refundDeadlineValue = refundDeadlineValue
+    if (refundDeadlineAtRaw !== undefined) data.refundDeadlineAt = refundDeadlineAtRaw ? new Date(refundDeadlineAtRaw) : null
+    if (releaseDeadlineRaw !== undefined) data.releaseDeadline = releaseDeadlineRaw ? new Date(releaseDeadlineRaw) : null
 
     const updated = await prisma.event.update({ where: { id: event.id }, data })
     audit(req.user.id, 'UPDATE_EVENT', 'EVENT', event.id, event.title)

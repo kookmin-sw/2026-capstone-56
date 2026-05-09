@@ -82,9 +82,8 @@ model Event {
   releaseIntervalMinutes  Int?
   lastReleaseAt           DateTime?
   refundContact           String?
-  refundDeadlineType      RefundDeadlineType @default(NONE)
-  refundDeadlineValue     Int?
   refundDeadlineAt        DateTime?
+  releaseDeadline         DateTime?
   refundPolicyText        String?
   contactEmail            String?
   contactPhone            String?
@@ -194,12 +193,6 @@ enum EventStatus {
   PUBLISHED
   CLOSED
   CANCELLED
-}
-
-enum RefundDeadlineType {
-  NONE
-  MINUTES
-  HOURS
 }
 
 enum RegistrationStatus {

@@ -24,16 +24,12 @@ function currentAlignedTime(now, intervalMinutes) {
  * @returns {{ eventId, released?, skipped? }}
  */
 async function releaseEvent(event, now) {
-  const thirtyMinBefore = new Date(event.startAt.getTime() - 30 * 60_000)
+  // 2차 신청마감(releaseDeadline) 없으면 startAt-30min 폴백
+  const cutoff = event.releaseDeadline
+    ?? new Date(event.startAt.getTime() - 30 * 60_000)
 
-  // BR-42: 행사 시작 30분 전 이후 스킵
-  if (now >= thirtyMinBefore) {
-    return { eventId: event.id, skipped: 'WITHIN_30MIN_OF_START' }
-  }
-
-  // 신청 마감 지난 행사 스킵
-  if (event.registrationDeadline && now >= event.registrationDeadline) {
-    return { eventId: event.id, skipped: 'DEADLINE_PASSED' }
+  if (now >= cutoff) {
+    return { eventId: event.id, skipped: 'RELEASE_DEADLINE_PASSED' }
   }
 
   // BR-43: 이번 윈도우에서 이미 릴리즈한 경우 스킵
@@ -80,7 +76,7 @@ async function releaseAll() {
     },
     select: {
       id: true, title: true, startAt: true,
-      registrationDeadline: true, releaseIntervalMinutes: true, lastReleaseAt: true,
+      releaseDeadline: true, releaseIntervalMinutes: true, lastReleaseAt: true,
     },
   })
 
@@ -104,8 +100,8 @@ async function getNextReleaseInfo(eventId) {
   const event = await prisma.event.findUnique({
     where: { id: eventId },
     select: {
-      id: true, status: true, startAt: true, registrationDeadline: true,
-      releaseIntervalMinutes: true, lastReleaseAt: true,
+      id: true, status: true, startAt: true,
+      releaseDeadline: true, releaseIntervalMinutes: true, lastReleaseAt: true,
     },
   })
 
@@ -119,13 +115,11 @@ async function getNextReleaseInfo(eventId) {
   }
 
   const now = new Date()
-  const thirtyMinBefore = new Date(event.startAt.getTime() - 30 * 60_000)
+  const cutoff = event.releaseDeadline
+    ?? new Date(event.startAt.getTime() - 30 * 60_000)
 
-  if (now >= thirtyMinBefore) {
-    return { enabled: false, reason: 'TOO_LATE' }
-  }
-  if (event.registrationDeadline && now >= event.registrationDeadline) {
-    return { enabled: false, reason: 'DEADLINE_PASSED' }
+  if (now >= cutoff) {
+    return { enabled: false, reason: 'RELEASE_DEADLINE_PASSED' }
   }
 
   const nextAt = nextAlignedTime(now, event.releaseIntervalMinutes)

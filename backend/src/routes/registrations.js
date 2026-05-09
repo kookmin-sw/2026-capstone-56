@@ -24,10 +24,14 @@ router.post('/', authMiddleware, async (req, res, next) => {
 
     if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
     if (event.status !== 'PUBLISHED') return res.status(400).json({ message: '신청 가능한 행사가 아닙니다.' })
-    if (event.registrationDeadline && new Date() > event.registrationDeadline) {
-      return res.status(400).json({ message: '신청 마감된 행사입니다.' })
+    const now = new Date()
+    // 2차 신청마감(releaseDeadline) 이후 모든 신청 차단. 없으면 startAt-30min 폴백
+    const releaseDeadline = event.releaseDeadline
+      ?? new Date(event.startAt.getTime() - 30 * 60_000)
+    if (now > releaseDeadline) {
+      return res.status(400).json({ message: '신청이 마감되었습니다.' })
     }
-    if (new Date() > event.startAt) {
+    if (now > event.startAt) {
       return res.status(400).json({ message: '행사가 이미 시작되었습니다.' })
     }
     // BR-02: 본인 학교 행사만 신청 가능
