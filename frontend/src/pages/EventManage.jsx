@@ -352,7 +352,11 @@ export default function EventManage() {
           <div>
             <InfoRow label="시작" value={fmtDateTime(event.startAt)} />
             <InfoRow label="종료" value={fmtDateTime(event.endAt)} />
-            <InfoRow label="신청 마감" value={fmtDateTime(event.registrationDeadline)} />
+            <InfoRow label="신청 마감 (1차)" value={fmtDateTime(event.registrationDeadline)} />
+            <InfoRow
+              label="신청 마감 (2차)"
+              value={event.releaseDeadline ? fmtDateTime(event.releaseDeadline) : '미설정 (시작 30분 전)'}
+            />
             <InfoRow label="장소" value={event.location} />
             <InfoRow label="정원" value={`${event.capacity}명`} />
           </div>
@@ -363,7 +367,7 @@ export default function EventManage() {
               <>
                 <InfoRow
                   label="환불 마감"
-                  value={event.refundDeadlineType === 'NONE' ? '제한 없음' : event.refundDeadlineAt ? fmtDateTime(event.refundDeadlineAt) : '-'}
+                  value={event.refundDeadlineAt ? fmtDateTime(event.refundDeadlineAt) : '제한 없음'}
                 />
                 <InfoRow label="환불 문의처" value={event.refundContact} />
               </>

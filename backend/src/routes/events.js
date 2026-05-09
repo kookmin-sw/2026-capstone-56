@@ -757,7 +757,10 @@ router.get('/:eventId/report', authMiddleware, async (req, res, next) => {
 
     const event = await prisma.event.findFirst({
       where: { id: eventId },
-      include: { host: { select: { name: true } } },
+      include: {
+        host: { select: { name: true } },
+        coHosts: { include: { user: { select: { name: true, role: true } } } },
+      },
     })
     if (!event) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
 
@@ -786,9 +789,18 @@ router.get('/:eventId/report', authMiddleware, async (req, res, next) => {
     const cancelled = registrations.filter(r => ['CANCELLED', 'EXPIRED'].includes(r.status)).length
     const totalPaid = registrations.reduce((s, r) => s + (r.paidAmount ?? 0), 0)
     const totalRefunded = registrations.reduce((s, r) => s + (r.refundedAmount ?? 0), 0)
+    const attended = checkedIn + noShow  // 발권 완료 기준 (체크인 + 미체크인)
+    const noShowRate = attended > 0 ? Math.round((noShow / attended) * 1000) / 10 : null
+    const totalAll = registrations.length
+    const cancelRate = totalAll > 0 ? Math.round((cancelled / totalAll) * 1000) / 10 : null
     const avgRating = reviews.length > 0
       ? Math.round(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length * 10) / 10
       : null
+
+    const ROLE_LABEL_KO = { CERTIFIED: '인증주최자', SCHOOL_ADMIN: '학교총관리자', OPERATOR: '운영자', ATTENDEE: '일반사용자' }
+    const coHostNames = (event.coHosts ?? [])
+      .map(ch => `${ch.user?.name ?? '?'} (${ROLE_LABEL_KO[ch.user?.role] ?? ch.user?.role})`)
+      .join(', ')
 
     const fmt = (iso) => iso ? new Date(iso).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) : '-'
 
@@ -796,21 +808,32 @@ router.get('/:eventId/report', authMiddleware, async (req, res, next) => {
     const infoRows = [
       ['행사명', event.title],
       ['주최자', event.hostNameSnapshot ?? event.host?.name ?? '-'],
+      ['공동호스트', coHostNames || '없음'],
       ['시작일시', fmt(event.startAt)],
       ['종료일시', fmt(event.endAt)],
       ['장소', event.location ?? '-'],
       ['정원', event.capacity],
+      ['요금', event.isPaid ? `${event.price?.toLocaleString()}원 (유료)` : '무료'],
+      ['1차 신청마감', fmt(event.registrationDeadline)],
+      ['환불 마감', event.isPaid ? fmt(event.refundDeadlineAt) : '-'],
+      ['2차 신청마감', event.releaseDeadline ? fmt(event.releaseDeadline) : '미설정 (시작 30분 전)'],
+      [''],
       ['총 신청자', totalReg],
       ['체크인', checkedIn],
       ['노쇼', noShow],
       ['취소', cancelled],
-      ['총 결제액', totalPaid],
-      ['총 환불액', totalRefunded],
-      ['평균 평점', avgRating ?? '리뷰 없음'],
+      ['노쇼율', noShowRate !== null ? `${noShowRate}%` : '-'],
+      ['취소율', cancelRate !== null ? `${cancelRate}%` : '-'],
+      ...(event.isPaid ? [
+        ['총 결제액', `${totalPaid.toLocaleString()}원`],
+        ['총 환불액', `${totalRefunded.toLocaleString()}원`],
+      ] : []),
+      ['리뷰 수', reviews.length],
+      ['평균 평점', avgRating !== null ? `${avgRating.toFixed(1)} / 5.0` : '리뷰 없음'],
     ]
 
     // 신청자 명단 헤더 + 행
-    const listHeader = ['이름', '이메일', '학번', '신청시각', '상태', '체크인시각', '결제금액', '환불금액']
+    const listHeader = ['이름', '이메일', '학번', '신청시각', '상태', '체크인시각', '결제금액', '환불금액', '취소·환불 사유']
     const listRows = registrations.map(r => [
       r.user.name,
       r.user.email,
@@ -820,6 +843,7 @@ router.get('/:eventId/report', authMiddleware, async (req, res, next) => {
       fmt(r.checkedInAt),
       r.paidAmount ?? 0,
       r.refundedAmount ?? 0,
+      r.cancelReason ?? '-',
     ])
 
     // BR-44: 다운로드 로그 기록
