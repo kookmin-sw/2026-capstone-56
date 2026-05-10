@@ -381,13 +381,18 @@ export default function EventDetail() {
             <p className="text-sm text-gray-400 mt-1.5">
               주최: {event.hostNameSnapshot ?? event.host?.name}
             </p>
+            {event.coHosts?.length > 0 && (
+              <p className="text-sm text-gray-400 mt-0.5">
+                공동주최: {event.coHosts.map(ch => ch.user?.name).filter(Boolean).join(', ')}
+              </p>
+            )}
           </div>
 
           {/* 공유 버튼 */}
           <div className="flex gap-2">
             <button
               onClick={copyLink}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl border text-sm font-medium transition-colors ${copied ? 'bg-gray-900 border-gray-900 text-white' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -403,18 +408,19 @@ export default function EventDetail() {
           </div>
 
           {/* 일정 & 장소 카드 */}
-          <div className="border border-gray-100 rounded-2xl divide-y divide-gray-100 overflow-hidden">
+          <div className="bg-white border border-gray-100 rounded-2xl divide-y divide-gray-100 overflow-hidden shadow-sm">
             {/* 날짜/시간 */}
             <div className="flex items-center gap-3 p-4">
-              <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-                <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-8 h-8 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
               <div>
-                <div className="text-sm font-semibold text-gray-800">{fmtDate(event.startAt)}</div>
+                <div className="text-sm font-semibold text-gray-800">행사 시작시간</div>
                 <div className="text-sm text-gray-500 mt-0.5">
-                  {fmtTime(event.startAt)} - {fmtTime(event.endAt)}
+                  {fmtDate(event.startAt)} {fmtTime(event.startAt)}
+                  {fmtTime(event.endAt) !== fmtTime(event.startAt) && ` ~ ${fmtTime(event.endAt)}`}
                 </div>
               </div>
             </div>
@@ -422,35 +428,80 @@ export default function EventDetail() {
             {/* 장소 */}
             {event.location && (
               <div className="flex items-center gap-3 p-4">
-                <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center shrink-0">
-                  <svg className="w-4 h-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-8 h-8 rounded-xl bg-rose-500 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <div className="text-sm font-semibold text-gray-800">{event.location}</div>
+                <div>
+                  <div className="text-sm font-semibold text-gray-800">행사 장소</div>
+                  <div className="text-sm text-gray-500 mt-0.5">{event.location}</div>
+                </div>
               </div>
             )}
 
-            {/* 신청 마감 */}
+            {/* 1차 신청마감 */}
             {event.registrationDeadline && (
               <div className="flex items-center gap-3 p-4">
-                <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-                  <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-gray-800">신청 마감</div>
-                  <div className="text-sm text-gray-500 mt-0.5">{fmtDate(event.registrationDeadline)}</div>
+                  <div className="text-sm font-semibold text-gray-800">1차 신청마감</div>
+                  <div className="text-sm text-gray-500 mt-0.5">{fmtDate(event.registrationDeadline)} {fmtTime(event.registrationDeadline)}</div>
                 </div>
               </div>
             )}
+
+            {/* 환불 마감 */}
+            {event.isPaid && event.refundDeadlineAt && (
+              <div className="flex items-center gap-3 p-4">
+                <div className="w-8 h-8 rounded-xl bg-rose-500 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-gray-800">환불 마감</div>
+                  <div className="text-sm text-gray-500 mt-0.5">{fmtDate(event.refundDeadlineAt)} {fmtTime(event.refundDeadlineAt)}</div>
+                </div>
+              </div>
+            )}
+
+            {/* 2차 신청마감 */}
+            {event.releaseDeadline ? (
+              <div className="flex items-center gap-3 p-4">
+                <div className="w-8 h-8 rounded-xl bg-violet-500 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-gray-800">2차 신청마감</div>
+                  <div className="text-sm text-gray-500 mt-0.5">{fmtDate(event.releaseDeadline)} {fmtTime(event.releaseDeadline)}</div>
+                </div>
+              </div>
+            ) : event.releaseIntervalMinutes ? (
+              <div className="flex items-center gap-3 p-4">
+                <div className="w-8 h-8 rounded-xl bg-violet-500 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-gray-800">2차 신청마감</div>
+                  <div className="text-sm text-gray-500 mt-0.5">행사 시작 30분 전 자동 마감</div>
+                </div>
+              </div>
+            ) : null}
           </div>
 
           {/* 행사 설명 */}
           {event.description && (
-            <div className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+            <div className="bg-white rounded-2xl shadow-sm p-4 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
               {event.description}
             </div>
           )}
@@ -471,12 +522,12 @@ export default function EventDetail() {
           )}
 
           {/* Q&A 섹션 */}
-          <div className="border-t pt-4">
+          <div className="bg-white rounded-2xl shadow-sm p-4">
             <EventQnA eventId={id} user={user} isHost={isHost} />
           </div>
 
           {/* 리뷰 섹션 */}
-          <div className="border-t pt-4">
+          <div className="bg-white rounded-2xl shadow-sm p-4">
             <EventReview
               eventId={id}
               user={user}
