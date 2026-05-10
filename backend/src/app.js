@@ -8,6 +8,18 @@ const schoolRoutes = require('./routes/schools')
 const kakaoRoutes = require('./routes/kakao')
 const adminRoutes = require('./routes/admin')
 const schoolAdminRoutes = require('./routes/schoolAdmin')
+const { paymentRouter, registrationRouter, adminRefundRouter } = require('./routes/payments')
+const eventRoutes = require('./routes/events')
+const whitelistRoutes = require('./routes/whitelist')
+const registrationDomainRoutes = require('./routes/registrations')
+const checkinRoutes = require('./routes/checkin')
+const noticeRoutes = require('./routes/notices')
+const notificationRoutes = require('./routes/notifications')
+const inquiryRoutes = require('./routes/inquiries')
+const certRequestRoutes = require('./routes/certRequests')
+const eventInteractionRoutes = require('./routes/eventInteractions')
+const { start: startRefundWorker } = require('./workers/refundWorker')
+const { start: startReleaseWorker } = require('./workers/releaseWorker')
 
 const app = express()
 
@@ -20,9 +32,20 @@ app.use('/api/auth/kakao', kakaoRoutes)
 app.use('/api/schools', schoolRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/school-admin', schoolAdminRoutes)
-
-// 행사 도메인 stub (메인 페이지 렌더링용)
-app.get('/api/events', (req, res) => res.json([]))
+app.use('/api/v1/payments', paymentRouter)
+// 행사신청 도메인(사용자) — 무료 신청·취소·내 티켓
+app.use('/api/v1/registrations', registrationDomainRoutes)
+// 결제 도메인(다른 팀원) — 유료 본인 환불(POST /:id/cancel)
+app.use('/api/v1/registrations', registrationRouter)
+app.use('/api/v1/admin', adminRefundRouter)
+app.use('/api/v1/events', eventRoutes)
+app.use('/api/v1/events/:eventId/whitelist', whitelistRoutes)
+app.use('/api/v1/checkin', checkinRoutes)
+app.use('/api/notices', noticeRoutes)
+app.use('/api/notifications', notificationRoutes)
+app.use('/api/inquiries', inquiryRoutes)
+app.use('/api/cert-requests', certRequestRoutes)
+app.use('/api/v1', eventInteractionRoutes)
 
 app.use((err, req, res, next) => {
   console.error(err)
@@ -30,4 +53,8 @@ app.use((err, req, res, next) => {
 })
 
 const PORT = process.env.PORT || 4000
-app.listen(PORT, () => console.log(`Auth server running on port ${PORT}`))
+app.listen(PORT, () => {
+  console.log(`Auth server running on port ${PORT}`)
+  startRefundWorker()
+  startReleaseWorker()
+})

@@ -9,36 +9,302 @@ datasource db {
 }
 
 model User {
-  id               String    @id @default(cuid())
-  email            String    @unique
-  password         String?
-  name             String
-  kakaoId          String?   @unique
-  studentId        String?   @unique
-  role             Role      @default(ATTENDEE)
-  emailVerified    Boolean   @default(false)
-  verifyToken      String?   @unique
-  resetToken       String?   @unique
-  resetTokenExpiry DateTime?
-  schoolId         String?
-  school           School?   @relation(fields: [schoolId], references: [id])
-  createdAt        DateTime  @default(now())
-  deletedAt        DateTime?
+  id                     String         @id @default(cuid())
+  email                  String         @unique
+  password               String?
+  name                   String
+  kakaoId                String?        @unique
+  studentId              String?
+  role                   Role           @default(ATTENDEE)
+  emailVerified          Boolean        @default(false)
+  verifyToken            String?        @unique
+  resetToken             String?        @unique
+  resetTokenExpiry       DateTime?
+  schoolId               String?
+  roleMemo               String?
+  createdAt              DateTime       @default(now())
+  deletedAt              DateTime?
+  verifyTokenExpiry      DateTime?
+  hostedEvents           Event[]        @relation("EventHost")
+  cancelledRegistrations Registration[] @relation("CancelledBy")
+  registrations          Registration[] @relation("Registrant")
+  auditLogs              AuditLog[]     @relation("AuditAdmin")
+  school                 School?        @relation(fields: [schoolId], references: [id])
+  notices                Notice[]       @relation("NoticeAuthor")
+  notifications          Notification[] @relation("NotificationReceiver")
+  inquiries              Inquiry[]      @relation("UserInquiries")
+  questions              EventQuestion[] @relation("QuestionAuthor")
+  answers                QuestionAnswer[] @relation("AnswerAuthor")
+  reviews                Review[]         @relation("ReviewAuthor")
+  hostRating             Float?
+  ratingCount            Int              @default(0)
+  certRequests           CertificationRequest[] @relation("CertRequests")
+  certReviewed           CertificationRequest[] @relation("CertReqReviewer")
+  coHostedEvents         EventCoHost[]          @relation("CoHostedEvents")
+
+  @@unique([studentId, schoolId])
 }
 
 model School {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  domain    String    @unique
-  address   String?
-  users     User[]
-  createdAt DateTime  @default(now())
-  deletedAt DateTime?
+  id           String    @id @default(cuid())
+  name         String    @unique
+  domain       String    @unique
+  address      String?
+  adminContact String?
+  createdAt    DateTime  @default(now())
+  deletedAt    DateTime?
+  events       Event[]
+  users        User[]
+  notices      Notice[]
+  certRequests CertificationRequest[]
+}
+
+model Event {
+  id                      String             @id @default(cuid())
+  title                   String
+  description             String?
+  location                String?
+  schoolId                String
+  school                  School             @relation(fields: [schoolId], references: [id])
+  hostId                  String
+  host                    User               @relation("EventHost", fields: [hostId], references: [id])
+  hostNameSnapshot        String?
+  hostAffiliationSnapshot String?
+  status                  EventStatus        @default(DRAFT)
+  isPaid                  Boolean            @default(false)
+  price                   Int?
+  capacity                Int
+  startAt                 DateTime
+  endAt                   DateTime
+  registrationDeadline    DateTime?
+  imageUrl                String?
+  publishAt               DateTime?
+  closedAt                DateTime?
+  releaseIntervalMinutes  Int?
+  lastReleaseAt           DateTime?
+  refundContact           String?
+  refundDeadlineAt        DateTime?
+  releaseDeadline         DateTime?
+  refundPolicyText        String?
+  contactEmail            String?
+  contactPhone            String?
+  registrations           Registration[]
+  whitelist               EventWhitelist?
+  questions               EventQuestion[]
+  reviews                 Review[]
+  coHosts                 EventCoHost[]
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+  deletedAt               DateTime?
+}
+
+model EventWhitelist {
+  id        String           @id @default(cuid())
+  eventId   String           @unique
+  event     Event            @relation(fields: [eventId], references: [id])
+  entries   WhitelistEntry[]
+  createdAt DateTime         @default(now())
+}
+
+model WhitelistEntry {
+  id          String         @id @default(cuid())
+  whitelistId String
+  whitelist   EventWhitelist @relation(fields: [whitelistId], references: [id])
+  studentId   String
+  createdAt   DateTime       @default(now())
+
+  @@unique([whitelistId, studentId])
+}
+
+model Registration {
+  id              String             @id @default(cuid())
+  eventId         String
+  event           Event              @relation(fields: [eventId], references: [id])
+  userId          String
+  user            User               @relation("Registrant", fields: [userId], references: [id])
+  status          RegistrationStatus @default(PENDING_PAYMENT)
+  orderId         String?            @unique
+  paymentKey      String?
+  paidAmount      Int?
+  paidAt          DateTime?
+  refundedAmount  Int?
+  refundedAt      DateTime?
+  idempotencyKey  String?
+  retryCount      Int                @default(0)
+  nextRetryAt     DateTime?
+  cancelReason    String?
+  cancelledBy     String?
+  cancelledByUser User?              @relation("CancelledBy", fields: [cancelledBy], references: [id])
+  checkedInAt     DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  admin      User     @relation("AuditAdmin", fields: [adminId], references: [id])
+  action     String
+  targetType String
+  targetId   String
+  detail     String?
+  createdAt  DateTime @default(now())
+}
+
+model Notice {
+  id          String       @id @default(cuid())
+  title       String
+  content     String
+  scope       NoticeScope
+  status      NoticeStatus @default(DRAFT)
+  schoolId    String?
+  school      School?      @relation(fields: [schoolId], references: [id])
+  authorId    String
+  author      User         @relation("NoticeAuthor", fields: [authorId], references: [id])
+  imageUrls   String[]
+  publishedAt DateTime?
+  deletedAt   DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Notification {
+  id              String    @id @default(cuid())
+  receiverId      String
+  receiver        User      @relation("NotificationReceiver", fields: [receiverId], references: [id])
+  type            String
+  title           String
+  content         String?
+  relatedTargetId String?
+  isRead          Boolean   @default(false)
+  readAt          DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@unique([receiverId, type, relatedTargetId])
 }
 
 enum Role {
-  ATTENDEE      // 일반사용자
-  CERTIFIED     // 인증사용자(주최자)
-  SCHOOL_ADMIN  // 학교총관리자
-  OPERATOR      // 운영자
+  ATTENDEE     // 일반사용자
+  CERTIFIED    // 인증사용자(주최자)
+  SCHOOL_ADMIN // 학교총관리자
+  OPERATOR     // 운영자
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  CANCELLED
+}
+
+enum RegistrationStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  EXPIRED
+  CANCELLATION_REQUESTED
+  CANCELLED
+  REFUND_FAILED
+  CHECKED_IN
+}
+
+enum NoticeScope {
+  GLOBAL
+  SCHOOL
+}
+
+enum NoticeStatus {
+  DRAFT
+  PUBLISHED
+  DELETED
+}
+
+model Inquiry {
+  id         String        @id @default(cuid())
+  body       String
+  userId     String
+  user       User          @relation("UserInquiries", fields: [userId], references: [id])
+  status     InquiryStatus @default(PENDING)
+  adminReply String?
+  repliedAt  DateTime?
+  createdAt  DateTime      @default(now())
+}
+
+enum InquiryStatus {
+  PENDING
+  ANSWERED
+}
+
+model CertificationRequest {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation("CertRequests", fields: [userId], references: [id])
+  schoolId     String
+  school       School        @relation(fields: [schoolId], references: [id])
+  message      String?
+  organization String?
+  contact      String?
+  status       CertReqStatus @default(PENDING)
+  reviewNote   String?
+  reviewedById String?
+  reviewedBy   User?         @relation("CertReqReviewer", fields: [reviewedById], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+enum CertReqStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model EventQuestion {
+  id          String          @id @default(cuid())
+  eventId     String
+  event       Event           @relation(fields: [eventId], references: [id])
+  authorId    String
+  author      User            @relation("QuestionAuthor", fields: [authorId], references: [id])
+  body        String
+  isAnonymous Boolean         @default(false)
+  answer      QuestionAnswer?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  deletedAt   DateTime?
+}
+
+model QuestionAnswer {
+  id         String        @id @default(cuid())
+  questionId String        @unique
+  question   EventQuestion @relation(fields: [questionId], references: [id])
+  authorId   String
+  author     User          @relation("AnswerAuthor", fields: [authorId], references: [id])
+  body       String
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+}
+
+model Review {
+  id          String    @id @default(cuid())
+  eventId     String
+  event       Event     @relation(fields: [eventId], references: [id])
+  authorId    String
+  author      User      @relation("ReviewAuthor", fields: [authorId], references: [id])
+  rating      Int
+  body        String
+  isAnonymous Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lockedAt    DateTime?
+
+  @@unique([eventId, authorId])
+}
+
+model EventCoHost {
+  id      String   @id @default(cuid())
+  eventId String
+  event   Event    @relation(fields: [eventId], references: [id])
+  userId  String
+  user    User     @relation("CoHostedEvents", fields: [userId], references: [id])
+  addedAt DateTime @default(now())
+
+  @@unique([eventId, userId])
 }

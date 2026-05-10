@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { register as registerApi } from '../api/auth'
 import { getSchools } from '../api/schools'
 import { useToast } from '../components/Toast'
+import PasswordStrength from '../components/PasswordStrength'
 
 export default function Register() {
   const { register, handleSubmit, formState: { errors, isSubmitting }, watch } = useForm()
@@ -74,13 +75,14 @@ export default function Register() {
                 {errors.name && <p className="text-red-500 text-xs mt-1.5">{errors.name.message}</p>}
               </div>
               <div>
-                <label className="label">학번</label>
+                <label className="label">학번 *</label>
                 <input
-                  {...register('studentId')}
+                  {...register('studentId', { required: '학번을 입력하세요' })}
                   type="text"
                   placeholder="20230001"
                   className="input"
                 />
+                {errors.studentId && <p className="text-red-500 text-xs mt-1.5">{errors.studentId.message}</p>}
               </div>
             </div>
             <div>
@@ -109,6 +111,7 @@ export default function Register() {
                 placeholder="8자 이상"
                 className="input"
               />
+              <PasswordStrength password={watch('password')} />
               {errors.password && <p className="text-red-500 text-xs mt-1.5">{errors.password.message}</p>}
             </div>
             <div>

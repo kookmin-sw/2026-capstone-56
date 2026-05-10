@@ -277,7 +277,7 @@ export default function HeroSection({ eventCount = 0, user, stats = [] }) {
               onClick={primary.trigger}
             >
               <Link
-                to={user ? '/events/new' : '/register'}
+                to={user ? '/events/create' : '/register'}
                 className="relative inline-flex items-center justify-center gap-2 bg-primary-600 text-white font-bold px-8 py-4 rounded-2xl text-sm w-full sm:w-auto"
                 style={{ boxShadow: '0 8px 32px rgba(99,102,241,0.35)' }}
               >

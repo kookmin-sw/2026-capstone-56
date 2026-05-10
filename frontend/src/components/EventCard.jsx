@@ -1,5 +1,16 @@
 import { Link } from 'react-router-dom'
 
+function fmtPublishAt(iso) {
+  const d = new Date(iso)
+  const month = d.getMonth() + 1
+  const day = d.getDate()
+  const h = d.getHours()
+  const m = d.getMinutes()
+  const ampm = h < 12 ? '오전' : '오후'
+  const h12 = h % 12 || 12
+  return `${month}월 ${day}일 ${ampm} ${h12}시 ${m.toString().padStart(2, '0')}분`
+}
+
 const PALETTES = [
   { from: '#6366f1', to: '#8b5cf6' },
   { from: '#f43f5e', to: '#fb923c' },
@@ -15,10 +26,10 @@ function getPalette(id) {
 }
 
 export default function EventCard({ event }) {
-  const sold = event._count?.tickets ?? 0
-  const remaining = event.maxCapacity - sold
+  const sold = event._count?.registrations ?? 0
+  const remaining = event.capacity - sold
   const isFull = remaining <= 0
-  const ratio = Math.min(100, Math.round((sold / event.maxCapacity) * 100))
+  const ratio = Math.min(100, Math.round((sold / event.capacity) * 100))
   const palette = getPalette(event.id)
 
   const date = new Date(event.startAt)
@@ -27,9 +38,11 @@ export default function EventCard({ event }) {
   const weekday = date.toLocaleDateString('ko-KR', { weekday: 'short' })
   const time = date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
 
+  const isUpcoming = event.publishAt && new Date(event.publishAt) > new Date()
+
   return (
     <Link to={`/events/${event.id}`} className="group block">
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-card hover:shadow-card-hover hover:-translate-y-1.5 transition-all duration-300 overflow-hidden">
+      <div className="relative bg-white rounded-3xl border border-gray-100 shadow-card hover:shadow-card-hover hover:-translate-y-1.5 transition-all duration-300 overflow-hidden">
 
         {/* 컬러 헤더 */}
         <div
@@ -66,7 +79,7 @@ export default function EventCard({ event }) {
           {/* 가격 뱃지 */}
           <div className="absolute top-4 right-4 z-10">
             <span className="bg-white/90 backdrop-blur-sm text-gray-800 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
-              {event.price === 0 ? '무료' : `${event.price.toLocaleString()}원`}
+              {!event.isPaid || !event.price ? '무료' : `${event.price.toLocaleString()}원`}
             </span>
           </div>
 
@@ -120,7 +133,7 @@ export default function EventCard({ event }) {
               <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>{time}</span>
+              <span>{month}월 {day}일 {time}</span>
             </div>
           </div>
 
@@ -150,6 +163,18 @@ export default function EventCard({ event }) {
             </div>
           </div>
         </div>
+
+        {/* 오픈 예정 오버레이 */}
+        {isUpcoming && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center rounded-3xl">
+            <div className="bg-white/90 shadow-sm rounded-2xl px-4 py-2.5 flex flex-col items-center gap-1">
+              <span className="text-[12px] font-black text-gray-700 tracking-wide">오픈 예정</span>
+              <span className="text-[10px] font-semibold text-gray-500 text-center">
+                {fmtPublishAt(event.publishAt)}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </Link>
   )

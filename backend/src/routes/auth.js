@@ -34,8 +34,11 @@ const passwordLimiter = rateLimit({
 router.post('/register', registerLimiter, async (req, res, next) => {
   try {
     const { name, email, password, studentId } = req.body
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !studentId) {
       return res.status(400).json({ message: '모든 필드를 입력해주세요.' })
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ message: '비밀번호는 8자 이상이어야 합니다.' })
     }
 
     const existing = await prisma.user.findUnique({ where: { email } })
@@ -52,14 +55,12 @@ router.post('/register', registerLimiter, async (req, res, next) => {
       await prisma.user.delete({ where: { id: existing.id } })
     }
 
-    if (studentId) {
-      const existingStudent = await prisma.user.findUnique({ where: { studentId } })
-      if (existingStudent) return res.status(409).json({ message: '이미 등록된 학번입니다.' })
-    }
-
     // 이메일 도메인으로 학교 자동 매칭
     const domain = email.split('@')[1]
     const school = await prisma.school.findUnique({ where: { domain } })
+
+    const existingStudent = await prisma.user.findFirst({ where: { studentId, schoolId: school?.id || null } })
+    if (existingStudent) return res.status(409).json({ message: '이미 등록된 학번입니다.' })
 
     if (!school) {
       return res.status(400).json({ message: '등록되지 않은 학교 이메일입니다.' })
@@ -67,12 +68,13 @@ router.post('/register', registerLimiter, async (req, res, next) => {
 
     const hashed = await bcrypt.hash(password, 10)
     const verifyToken = randomUUID()
+    const verifyTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000)
     const user = await prisma.user.create({
       data: {
         name, email, password: hashed,
         studentId: studentId || null,
         schoolId: school?.id || null,
-        verifyToken
+        verifyToken, verifyTokenExpiry
       },
       select: { id: true, name: true, email: true, role: true, studentId: true, schoolId: true, school: { select: { name: true } } }
     })
@@ -92,10 +94,13 @@ router.get('/verify-email', async (req, res, next) => {
 
     const user = await prisma.user.findUnique({ where: { verifyToken: token } })
     if (!user) return res.status(400).json({ message: '유효하지 않거나 만료된 링크입니다.' })
+    if (user.verifyTokenExpiry && user.verifyTokenExpiry < new Date()) {
+      return res.status(400).json({ message: '만료된 인증 링크입니다. 재발송 버튼을 클릭해주세요.' })
+    }
 
     await prisma.user.update({
       where: { id: user.id },
-      data: { emailVerified: true, verifyToken: null }
+      data: { emailVerified: true, verifyToken: null, verifyTokenExpiry: null }
     })
     res.json({ message: '이메일 인증이 완료되었습니다.' })
   } catch (err) { next(err) }
@@ -108,7 +113,8 @@ router.post('/resend-verification', authMiddleware, async (req, res, next) => {
     if (user.emailVerified) return res.status(400).json({ message: '이미 인증된 이메일입니다.' })
 
     const verifyToken = randomUUID()
-    await prisma.user.update({ where: { id: user.id }, data: { verifyToken, emailVerified: false } })
+    const verifyTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    await prisma.user.update({ where: { id: user.id }, data: { verifyToken, verifyTokenExpiry, emailVerified: false } })
 
     const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verifyToken}`
     await sendVerificationEmail({ to: user.email, name: user.name, verifyUrl })
@@ -131,7 +137,7 @@ router.post('/login', loginLimiter, async (req, res, next) => {
       ? await prisma.school.findUnique({ where: { id: user.schoolId }, select: { id: true, name: true, domain: true } })
       : null
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, emailVerified: user.emailVerified, schoolId: user.schoolId },
+      { id: user.id, email: user.email, role: user.role, emailVerified: user.emailVerified, schoolId: user.schoolId, studentId: user.studentId ?? null },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN }
     )
@@ -146,7 +152,7 @@ router.get('/me', authMiddleware, async (req, res, next) => {
       where: { id: req.user.id },
       select: {
         id: true, name: true, email: true, role: true, emailVerified: true,
-        schoolId: true, kakaoId: true, school: { select: { id: true, name: true, domain: true } }
+        studentId: true, schoolId: true, kakaoId: true, roleMemo: true, school: { select: { id: true, name: true, domain: true, adminContact: true } }
       }
     })
     res.json({ ...user, isKakaoUser: !!user.kakaoId })
@@ -257,6 +263,18 @@ router.delete('/me', authMiddleware, async (req, res, next) => {
     // BR-U07: 학교총관리자는 탈퇴 불가
     if (user.role === 'SCHOOL_ADMIN') {
       return res.status(403).json({ message: '학교총관리자는 운영자에게 탈퇴 요청이 필요합니다.' })
+    }
+
+    // BR-U08: 인증사용자는 진행 중 행사(PUBLISHED) 0건일 때만 탈퇴 가능
+    if (user.role === 'CERTIFIED') {
+      const activeEventCount = await prisma.event.count({
+        where: { hostId: user.id, status: 'PUBLISHED', deletedAt: null },
+      })
+      if (activeEventCount > 0) {
+        return res.status(403).json({
+          message: `진행 중인 행사 ${activeEventCount}건이 있어 탈퇴할 수 없습니다. 행사를 먼저 종료하거나 삭제해주세요.`,
+        })
+      }
     }
 
     await prisma.user.update({

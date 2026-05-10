@@ -74,7 +74,7 @@ router.get('/callback', async (req, res) => {
         : null
 
       const token = jwt.sign(
-        { id: existingUser.id, email: existingUser.email, role: existingUser.role, emailVerified: existingUser.emailVerified, schoolId: existingUser.schoolId },
+        { id: existingUser.id, email: existingUser.email, role: existingUser.role, emailVerified: existingUser.emailVerified, schoolId: existingUser.schoolId, studentId: existingUser.studentId ?? null },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN }
       )
@@ -107,7 +107,7 @@ router.post('/complete', async (req, res, next) => {
   try {
     const { tempToken, email, studentId, name } = req.body
 
-    if (!tempToken || !email) {
+    if (!tempToken || !email || !studentId) {
       return res.status(400).json({ message: '필수 정보가 누락되었습니다.' })
     }
 
@@ -129,15 +129,18 @@ router.post('/complete', async (req, res, next) => {
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) return res.status(409).json({ message: '이미 사용 중인 이메일입니다.' })
 
-    if (studentId) {
-      const existingStudent = await prisma.user.findUnique({ where: { studentId } })
-      if (existingStudent) return res.status(409).json({ message: '이미 등록된 학번입니다.' })
-    }
-
     const domain = email.split('@')[1]
     const school = await prisma.school.findUnique({ where: { domain } })
 
+    if (!school) {
+      return res.status(400).json({ message: '등록되지 않은 학교 이메일입니다.' })
+    }
+
+    const existingStudent = await prisma.user.findFirst({ where: { studentId, schoolId: school.id } })
+    if (existingStudent) return res.status(409).json({ message: '이미 등록된 학번입니다.' })
+
     const verifyToken = randomUUID()
+    const verifyTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000)
     const user = await prisma.user.create({
       data: {
         name: name || payload.kakaoName,
@@ -147,6 +150,7 @@ router.post('/complete', async (req, res, next) => {
         studentId: studentId || null,
         schoolId: school?.id || null,
         verifyToken,
+        verifyTokenExpiry,
       },
       select: { id: true, name: true, email: true, role: true, emailVerified: true, schoolId: true, school: { select: { name: true } } }
     })
