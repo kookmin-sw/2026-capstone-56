@@ -59,6 +59,7 @@ const ROLE_LABEL = { CERTIFIED: '인증주최자', SCHOOL_ADMIN: '학교총관�
 
 function CoHostSection({ event, user, isMainHost, queryClient, eventId, coHostQuery, setCoHostQuery, coHostCandidates, setCoHostCandidates }) {
   const coHosts = event.coHosts ?? []
+  const [open, setOpen] = useState(true)
 
   const addMut = useMutation({
     mutationFn: (userId) => addCoHost(eventId, userId),
@@ -90,11 +91,17 @@ function CoHostSection({ event, user, isMainHost, queryClient, eventId, coHostQu
 
   return (
     <div className="bg-white rounded-3xl border border-gray-100 shadow-card p-5 space-y-4">
-      <div>
-        <h2 className="text-sm font-bold text-gray-700">공동호스트</h2>
-        <p className="text-xs text-gray-400 mt-0.5">공동호스트 추가·제거는 행사 생성자만 가능합니다.</p>
-      </div>
+      <button onClick={() => setOpen(o => !o)} className="flex items-center justify-between w-full text-left">
+        <div>
+          <h2 className="text-sm font-bold text-gray-700">공동호스트</h2>
+          <p className="text-xs text-gray-400 mt-0.5">공동호스트 추가·제거는 행사 생성자만 가능합니다.</p>
+        </div>
+        <svg className={`w-4 h-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
 
+      {open && <>
       {/* 현재 공동호스트 목록 */}
       {coHosts.length === 0 ? (
         <p className="text-xs text-gray-400">등록된 공동호스트가 없습니다.</p>
@@ -156,6 +163,7 @@ function CoHostSection({ event, user, isMainHost, queryClient, eventId, coHostQu
           )}
         </div>
       )}
+      </>}
     </div>
   )
 }
@@ -171,6 +179,8 @@ export default function EventManage() {
   const [refundReason, setRefundReason] = useState('')
   const [coHostQuery, setCoHostQuery] = useState('')
   const [coHostCandidates, setCoHostCandidates] = useState([])
+  const [whitelistOpen, setWhitelistOpen] = useState(true)
+  const [participantOpen, setParticipantOpen] = useState(true)
 
   const { data: event, isLoading: eventLoading, isError } = useQuery({
     queryKey: ['event', id],
@@ -409,7 +419,24 @@ export default function EventManage() {
       />
 
       {/* 화이트리스트 — 유료 행사만 */}
-      {event.isPaid && <EventWhitelistManager eventId={id} />}
+      {event.isPaid && (
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-card p-5">
+          <button
+            onClick={() => setWhitelistOpen(o => !o)}
+            className="flex items-center justify-between w-full text-left"
+          >
+            <h2 className="text-sm font-bold text-gray-800">학생회비 납부자 화이트리스트</h2>
+            <svg className={`w-4 h-4 text-gray-400 transition-transform ${whitelistOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {whitelistOpen && (
+            <div className="mt-4">
+              <EventWhitelistManager eventId={id} hideTitle />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 체크인 현황 */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-card p-5">
@@ -510,14 +537,20 @@ export default function EventManage() {
 
       {/* 참가자 명단 */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-card p-5">
-        <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={() => setParticipantOpen(o => !o)}
+          className="flex items-center justify-between w-full text-left mb-4"
+        >
           <h2 className="text-sm font-bold text-gray-800">
             참가자 명단
             <span className="text-gray-400 font-normal ml-1">({visibleRegs.length}명)</span>
           </h2>
-        </div>
+          <svg className={`w-4 h-4 text-gray-400 transition-transform ${participantOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
-        {regLoading ? (
+        {participantOpen && (regLoading ? (
           <p className="text-sm text-gray-400 text-center py-8">불러오는 중...</p>
         ) : visibleRegs.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-8">신청자가 없습니다.</p>
@@ -574,7 +607,7 @@ export default function EventManage() {
               </tbody>
             </table>
           </div>
-        )}
+        ))}
       </div>
 
       {/* 리뷰 섹션 — 행사 종료 후에만 표시 */}
