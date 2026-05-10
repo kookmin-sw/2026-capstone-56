@@ -214,30 +214,7 @@ export default function EventManage() {
     onError: (err) => alert(err.response?.data?.message ?? '환불 처리 실패'),
   })
 
-  if (eventLoading) return <div className="card p-12 text-center text-gray-400">불러오는 중...</div>
-  if (isError || !event) return <div className="card p-12 text-center text-gray-400">행사를 찾을 수 없습니다.</div>
-
-  const isMainHost = user?.id === event.host?.id
-  const isCoHost = !isMainHost && event.coHosts?.some(ch => ch.userId === user?.id)
-  const isHost = user && (
-    isMainHost || isCoHost ||
-    ['SCHOOL_ADMIN', 'OPERATOR'].includes(user.role)
-  )
-  if (!isHost) return <div className="card p-12 text-center text-gray-400">접근 권한이 없습니다.</div>
-
-  const displayStatus = isEnded ? 'ENDED' : event.status
-  const statusCfg = EVENT_STATUS[displayStatus] ?? { label: event.status, color: 'bg-gray-100 text-gray-500' }
-
-  // 체크인 현황 통계
-  const totalParticipants = registrations.filter(r => ['CONFIRMED', 'CHECKED_IN'].includes(r.status)).length
-  const checkedIn = registrations.filter(r => r.status === 'CHECKED_IN').length
-  const notCheckedIn = registrations.filter(r => r.status === 'CONFIRMED').length
-  const checkInRate = totalParticipants > 0 ? Math.round((checkedIn / totalParticipants) * 100) : 0
-
-  // 참가자 명단 (취소자 제외)
-  const visibleRegs = registrations.filter(r => !HIDDEN_STATUSES.includes(r.status))
-
-  // 시각화 데이터
+  // 시각화 데이터 — useMemo는 얼리 리턴 전에 선언해야 Rules of Hooks 준수
   const statusChartData = useMemo(() => {
     const map = {
       CONFIRMED:              { label: '발권완료',     color: '#22c55e' },
@@ -270,6 +247,29 @@ export default function EventManage() {
       .sort((a, b) => new Date(a[0]) - new Date(b[0]))
       .map(([date, count]) => ({ date, count, cumulative: (cum += count) }))
   }, [registrations])
+
+  if (eventLoading) return <div className="card p-12 text-center text-gray-400">불러오는 중...</div>
+  if (isError || !event) return <div className="card p-12 text-center text-gray-400">행사를 찾을 수 없습니다.</div>
+
+  const isMainHost = user?.id === event.host?.id
+  const isCoHost = !isMainHost && event.coHosts?.some(ch => ch.userId === user?.id)
+  const isHost = user && (
+    isMainHost || isCoHost ||
+    ['SCHOOL_ADMIN', 'OPERATOR'].includes(user.role)
+  )
+  if (!isHost) return <div className="card p-12 text-center text-gray-400">접근 권한이 없습니다.</div>
+
+  const displayStatus = isEnded ? 'ENDED' : event.status
+  const statusCfg = EVENT_STATUS[displayStatus] ?? { label: event.status, color: 'bg-gray-100 text-gray-500' }
+
+  // 체크인 현황 통계
+  const totalParticipants = registrations.filter(r => ['CONFIRMED', 'CHECKED_IN'].includes(r.status)).length
+  const checkedIn = registrations.filter(r => r.status === 'CHECKED_IN').length
+  const notCheckedIn = registrations.filter(r => r.status === 'CONFIRMED').length
+  const checkInRate = totalParticipants > 0 ? Math.round((checkedIn / totalParticipants) * 100) : 0
+
+  // 참가자 명단 (취소자 제외)
+  const visibleRegs = registrations.filter(r => !HIDDEN_STATUSES.includes(r.status))
 
   const lastUpdated = dataUpdatedAt
     ? new Date(dataUpdatedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -332,16 +332,22 @@ export default function EventManage() {
           </Link>
         )}
         <button
-          onClick={() => downloadReport(id, 'csv')}
+          onClick={() => downloadReport(id, 'csv').catch(e => alert(e.message))}
           className="btn text-sm border border-purple-200 text-purple-600 hover:bg-purple-50 px-4 py-2 rounded-xl"
         >
           CSV
         </button>
         <button
-          onClick={() => downloadReport(id, 'xlsx')}
+          onClick={() => downloadReport(id, 'xlsx').catch(e => alert(e.message))}
           className="btn text-sm border border-purple-200 text-purple-600 hover:bg-purple-50 px-4 py-2 rounded-xl"
         >
           Excel
+        </button>
+        <button
+          onClick={() => downloadReport(id, 'pdf').catch(e => alert(e.message))}
+          className="btn text-sm border border-rose-200 text-rose-600 hover:bg-rose-50 px-4 py-2 rounded-xl"
+        >
+          PDF
         </button>
       </div>
 
