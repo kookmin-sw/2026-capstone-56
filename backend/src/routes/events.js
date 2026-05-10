@@ -437,6 +437,7 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
       refundDeadlineAt: refundDeadlineAtRaw,
       releaseDeadline: releaseDeadlineRaw,
       refundPolicyText, contactEmail, contactPhone,
+      whitelistOnly, whitelistPrice,
     } = req.body
 
     if (!title || !capacity || !startAt || !endAt) {
@@ -513,6 +514,8 @@ router.post('/', authMiddleware, requireRole('CERTIFIED', 'SCHOOL_ADMIN', 'OPERA
         refundPolicyText,
         contactEmail,
         contactPhone,
+        whitelistOnly: !!whitelistOnly,
+        whitelistPrice: whitelistPrice != null ? Number(whitelistPrice) : null,
         status: 'PUBLISHED',
       },
     })
@@ -564,6 +567,7 @@ router.put('/:id', authMiddleware, async (req, res, next) => {
       refundContact,
       refundDeadlineAt: refundDeadlineAtRaw,
       releaseDeadline: releaseDeadlineRaw,
+      whitelistOnly, whitelistPrice,
     } = req.body
 
     // BR-26: 행사 시작 후에는 종료 시각만 수정 가능
@@ -617,6 +621,8 @@ router.put('/:id', authMiddleware, async (req, res, next) => {
     if (refundContact !== undefined) data.refundContact = refundContact
     if (refundDeadlineAtRaw !== undefined) data.refundDeadlineAt = refundDeadlineAtRaw ? new Date(refundDeadlineAtRaw) : null
     if (releaseDeadlineRaw !== undefined) data.releaseDeadline = releaseDeadlineRaw ? new Date(releaseDeadlineRaw) : null
+    if (whitelistOnly !== undefined) data.whitelistOnly = !!whitelistOnly
+    if (whitelistPrice !== undefined) data.whitelistPrice = whitelistPrice != null ? Number(whitelistPrice) : null
 
     const updated = await prisma.event.update({ where: { id: event.id }, data })
     audit(req.user.id, 'UPDATE_EVENT', 'EVENT', event.id, event.title)
