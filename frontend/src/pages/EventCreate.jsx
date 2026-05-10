@@ -242,7 +242,7 @@ export default function EventCreate() {
 
   const createMutation = useMutation({
     mutationFn: createEvent,
-    onSuccess: (event) => navigate(`/events/${event.id}`),
+    onSuccess: (event) => navigate(`/events/${event.id}/manage`),
     onError: (err) => alert(err.response?.data?.message ?? '생성에 실패했습니다.'),
   })
 
@@ -413,6 +413,10 @@ export default function EventCreate() {
 
               {form.isPaid && (
                 <div className="space-y-4 pt-2 border-t">
+                  <div className="flex gap-2 p-3 bg-blue-50 border border-blue-100 rounded-2xl text-xs text-blue-700">
+                    <span className="shrink-0">ℹ️</span>
+                    <span>학생회비 납부자 화이트리스트는 행사 생성 후 <strong>관리 페이지</strong>에서 등록할 수 있습니다.</span>
+                  </div>
                   <Field label="가격 (원, 100원 이상) *">
                     <div className="relative">
                       <input
@@ -451,6 +455,12 @@ export default function EventCreate() {
 
             {/* 오픈 설정 */}
             <Section icon="🚀" title="오픈 설정">
+              {form.isPaid && (
+                <div className="flex gap-2 p-3 bg-amber-50 border border-amber-100 rounded-2xl text-xs text-amber-700">
+                  <span className="shrink-0">💡</span>
+                  <span>화이트리스트 적용 행사의 경우 <strong>지정된 시간에 오픈</strong>을 사용하면, 오픈 전에 화이트리스트를 미리 등록해 두고 지정 시각부터 신청을 받을 수 있습니다.</span>
+                </div>
+              )}
               <Field label="행사 카드 공개 시점">
                 <div className="flex gap-2">
                   {[
