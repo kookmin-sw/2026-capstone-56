@@ -24,6 +24,170 @@ const upload = multer({
 const router = express.Router()
 const prisma = new PrismaClient()
 
+// ── PDF 보고서 HTML 템플릿 ──────────────────────────────────────────────────
+function buildReportHtml({ event, registrations, reviews, noShowRate, cancelRate, totalPaid, totalRefunded, avgRating, checkedIn, noShow, cancelled, totalReg }) {
+  const fmt = (iso) => iso ? new Date(iso).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) : '-'
+
+  const withMemo = (user) => user?.roleMemo ? `${user.name}(${user.roleMemo})` : user?.name ?? '?'
+  const STATUS_KO = {
+    CONFIRMED: { label: '발권완료', bg: '#dcfce7', color: '#166534' },
+    CHECKED_IN: { label: '체크인', bg: '#ede9fe', color: '#5b21b6' },
+    PENDING_PAYMENT: { label: '결제대기', bg: '#fef9c3', color: '#854d0e' },
+    CANCELLATION_REQUESTED: { label: '환불대기', bg: '#dbeafe', color: '#1e40af' },
+    REFUND_FAILED: { label: '환불실패', bg: '#fee2e2', color: '#991b1b' },
+    CANCELLED: { label: '취소', bg: '#f3f4f6', color: '#6b7280' },
+    EXPIRED: { label: '만료', bg: '#f3f4f6', color: '#9ca3af' },
+  }
+
+  const hostLabel = withMemo(event.host) !== '?' ? withMemo(event.host) : (event.hostNameSnapshot ?? '-')
+  const coHostNames = (event.coHosts ?? []).map(ch => withMemo(ch.user)).join(', ') || '없음'
+
+  const isEnded = event.endAt && new Date(event.endAt) < new Date()
+  const statusLabel = isEnded ? '종료됨' : { DRAFT: '초안', PUBLISHED: '공개중', CLOSED: '마감됨', CANCELLED: '취소됨' }[event.status] ?? event.status
+  const statusColor = isEnded ? '#64748b' : { DRAFT: '#d97706', PUBLISHED: '#16a34a', CLOSED: '#6b7280', CANCELLED: '#ef4444' }[event.status] ?? '#6b7280'
+
+  const stars = avgRating !== null ? '★'.repeat(Math.round(avgRating)) + '☆'.repeat(5 - Math.round(avgRating)) : ''
+
+  const regRows = registrations.map(r => {
+    const s = STATUS_KO[r.status] ?? { label: r.status, bg: '#f3f4f6', color: '#374151' }
+    return `
+      <tr>
+        <td>${r.user.name}</td>
+        <td>${r.user.email}</td>
+        <td>${r.user.studentId ?? '-'}</td>
+        <td>${fmt(r.createdAt)}</td>
+        <td><span class="badge" style="background:${s.bg};color:${s.color}">${s.label}</span></td>
+        <td>${r.checkedInAt ? fmt(r.checkedInAt) : '-'}</td>
+        ${event.isPaid ? `<td style="text-align:right">${(r.paidAmount ?? 0).toLocaleString()}</td><td style="text-align:right">${(r.refundedAmount ?? 0).toLocaleString()}</td>` : ''}
+        <td>${r.cancelReason ?? '-'}</td>
+      </tr>`
+  }).join('')
+
+  return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; font-size: 11px; color: #1f2937; background: #fff; }
+  .header { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; padding: 20px 24px; border-radius: 8px 8px 0 0; }
+  .header-top { display: flex; align-items: center; justify-content: space-between; }
+  .brand { font-size: 11px; opacity: 0.7; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .event-title { font-size: 20px; font-weight: 700; }
+  .status-badge { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+  .host-line { opacity: 0.8; margin-top: 4px; font-size: 11px; }
+
+  .body { padding: 16px; }
+  .section-title { font-size: 10px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .info-card { background: #f9fafb; border-radius: 8px; padding: 12px; }
+  .info-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f3f4f6; }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { color: #9ca3af; }
+  .info-value { font-weight: 500; text-align: right; max-width: 60%; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: #f9fafb; border-radius: 8px; padding: 12px; text-align: center; }
+  .stat-num { font-size: 22px; font-weight: 800; color: #1f2937; }
+  .stat-num.blue { color: #2563eb; }
+  .stat-num.amber { color: #d97706; }
+  .stat-num.red { color: #dc2626; }
+  .stat-label { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+
+  .meta-row { display: flex; gap: 12px; margin-bottom: 16px; }
+  .meta-card { background: #f9fafb; border-radius: 8px; padding: 10px 14px; flex: 1; }
+  .meta-card .stars { color: #f59e0b; font-size: 14px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  thead tr { background: #4f46e5; color: #fff; }
+  th { padding: 7px 8px; text-align: left; font-weight: 600; }
+  td { padding: 6px 8px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+  tr:nth-child(even) td { background: #f9fafb; }
+  .badge { padding: 2px 7px; border-radius: 20px; font-size: 9px; font-weight: 600; white-space: nowrap; }
+
+  .footer { text-align: center; color: #d1d5db; font-size: 9px; margin-top: 16px; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">festicket · 행사 레포트</div>
+    <div class="header-top">
+      <div class="event-title">${event.title}</div>
+      <span class="status-badge" style="background:${statusColor}33;border-color:${statusColor}66">${statusLabel}</span>
+    </div>
+    <div class="host-line">주최: ${hostLabel} ${coHostNames !== '없음' ? `· 공동주최: ${coHostNames}` : ''}</div>
+  </div>
+
+  <div class="body">
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="section-title">행사 정보</div>
+        <div class="info-row"><span class="info-label">주최자</span><span class="info-value">${hostLabel}</span></div>
+        ${coHostNames !== '없음' ? `<div class="info-row"><span class="info-label">공동호스트</span><span class="info-value" style="font-size:9px">${coHostNames}</span></div>` : ''}
+        <div class="info-row"><span class="info-label">시작일시</span><span class="info-value">${fmt(event.startAt)}</span></div>
+        <div class="info-row"><span class="info-label">종료일시</span><span class="info-value">${fmt(event.endAt)}</span></div>
+        <div class="info-row"><span class="info-label">장소</span><span class="info-value">${event.location ?? '-'}</span></div>
+        <div class="info-row"><span class="info-label">정원</span><span class="info-value">${event.capacity}명</span></div>
+        <div class="info-row"><span class="info-label">요금</span><span class="info-value">${event.isPaid ? `${event.price?.toLocaleString()}원` : '무료'}</span></div>
+      </div>
+      <div class="info-card">
+        <div class="section-title">마감 정보</div>
+        <div class="info-row"><span class="info-label">1차 신청마감</span><span class="info-value">${fmt(event.registrationDeadline)}</span></div>
+        ${event.isPaid ? `<div class="info-row"><span class="info-label">환불 마감</span><span class="info-value">${fmt(event.refundDeadlineAt)}</span></div>` : ''}
+        <div class="info-row"><span class="info-label">2차 신청마감</span><span class="info-value">${event.releaseDeadline ? fmt(event.releaseDeadline) : '미설정 (시작 30분 전)'}</span></div>
+
+      </div>
+    </div>
+
+    <div class="section-title">참가 통계</div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num">${totalReg}</div><div class="stat-label">총 신청자</div></div>
+      <div class="stat-card"><div class="stat-num blue">${checkedIn}</div><div class="stat-label">체크인</div></div>
+      <div class="stat-card"><div class="stat-num amber">${noShowRate !== null ? noShowRate + '%' : '-'}</div><div class="stat-label">노쇼율</div></div>
+      <div class="stat-card"><div class="stat-num red">${cancelRate !== null ? cancelRate + '%' : '-'}</div><div class="stat-label">취소율</div></div>
+    </div>
+
+    ${(event.isPaid || (isEnded && avgRating !== null)) ? `
+    <div class="meta-row">
+      ${event.isPaid ? `
+      <div class="meta-card">
+        <div class="section-title">결제 현황</div>
+        <div style="display:flex;gap:24px;margin-top:4px">
+          <div><div style="font-size:14px;font-weight:700;color:#4f46e5">${totalPaid.toLocaleString()}원</div><div style="color:#9ca3af;font-size:10px">총 결제액</div></div>
+          <div><div style="font-size:14px;font-weight:700;color:#ef4444">${totalRefunded.toLocaleString()}원</div><div style="color:#9ca3af;font-size:10px">총 환불액</div></div>
+          <div><div style="font-size:14px;font-weight:700;color:#059669">${(totalPaid - totalRefunded).toLocaleString()}원</div><div style="color:#9ca3af;font-size:10px">순수익</div></div>
+        </div>
+      </div>` : ''}
+      ${isEnded && avgRating !== null ? `
+      <div class="meta-card">
+        <div class="section-title">리뷰</div>
+        <div style="margin-top:4px;display:flex;align-items:center;gap:8px">
+          <span class="stars">${stars}</span>
+          <span style="font-size:18px;font-weight:800;color:#f59e0b">${avgRating.toFixed(1)}</span>
+          <span style="color:#9ca3af">(${reviews.length}개)</span>
+        </div>
+      </div>` : ''}
+    </div>` : ''}
+
+    <div class="section-title" style="margin-bottom:8px">신청자 명단 (${registrations.length}명)</div>
+    <table>
+      <thead>
+        <tr>
+          <th>이름</th><th>이메일</th><th>학번</th><th>신청시각</th><th>상태</th><th>체크인시각</th>
+          ${event.isPaid ? '<th>결제</th><th>환불</th>' : ''}
+          <th>취소·환불 사유</th>
+        </tr>
+      </thead>
+      <tbody>${regRows}</tbody>
+    </table>
+
+    <div class="footer">생성일시: ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })} · festicket</div>
+  </div>
+</body>
+</html>`
+}
+
 const ACTIVE_STATUSES = ['PENDING_PAYMENT', 'CONFIRMED', 'CANCELLATION_REQUESTED', 'REFUND_FAILED', 'CHECKED_IN']
 
 // 관리 권한 헬퍼: 호스트 본인, 공동호스트, 같은 학교 SCHOOL_ADMIN, OPERATOR
@@ -753,13 +917,13 @@ router.delete('/:id/cohosts/:userId', authMiddleware, async (req, res, next) => 
 router.get('/:eventId/report', authMiddleware, async (req, res, next) => {
   try {
     const { eventId } = req.params
-    const format = req.query.format === 'xlsx' ? 'xlsx' : 'csv'
+    const format = ['xlsx', 'pdf'].includes(req.query.format) ? req.query.format : 'csv'
 
     const event = await prisma.event.findFirst({
       where: { id: eventId },
       include: {
-        host: { select: { name: true } },
-        coHosts: { include: { user: { select: { name: true, role: true } } } },
+        host: { select: { name: true, roleMemo: true } },
+        coHosts: { include: { user: { select: { name: true, roleMemo: true } } } },
       },
     })
     if (!event) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
@@ -848,6 +1012,26 @@ router.get('/:eventId/report', authMiddleware, async (req, res, next) => {
 
     // BR-44: 다운로드 로그 기록
     audit(req.user.id, 'DOWNLOAD_REPORT', 'EVENT', event.id, `${event.title} (${format})`)
+
+    if (format === 'pdf') {
+      const html = buildReportHtml({ event, registrations, reviews, infoRows, noShowRate, cancelRate, totalPaid, totalRefunded, avgRating, checkedIn, noShow, cancelled, totalReg })
+      const { getBrowser } = require('../utils/browser')
+      const browser = await getBrowser()
+      const page = await browser.newPage()
+      try {
+        await page.setContent(html, { waitUntil: 'networkidle0' })
+        const pdfData = await page.pdf({
+          format: 'A4',
+          printBackground: true,
+          margin: { top: '16mm', bottom: '16mm', left: '14mm', right: '14mm' },
+        })
+        res.setHeader('Content-Type', 'application/pdf')
+        res.setHeader('Content-Disposition', `attachment; filename="report_${eventId}.pdf"`)
+        return res.send(Buffer.from(pdfData))
+      } finally {
+        await page.close()
+      }
+    }
 
     if (format === 'xlsx') {
       const wb = XLSX.utils.book_new()
