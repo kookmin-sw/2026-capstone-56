@@ -88,8 +88,6 @@ model Event {
   refundPolicyText        String?
   contactEmail            String?
   contactPhone            String?
-  whitelistOnly           Boolean            @default(false)
-  whitelistPrice          Int?
   registrations           Registration[]
   whitelist               EventWhitelist?
   questions               EventQuestion[]

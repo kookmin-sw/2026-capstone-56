@@ -39,41 +39,18 @@ router.post('/', authMiddleware, async (req, res, next) => {
       return res.status(403).json({ message: '본인 학교 행사만 신청할 수 있습니다.' })
     }
 
-    // 화이트리스트 조회 (whitelistOnly 또는 유료 행사에서 필요)
-    let isOnWhitelist = null
-    if (event.whitelistOnly || event.isPaid) {
-      isOnWhitelist = user.studentId
+    // BR-W03: 유료 행사 — 화이트리스트에 등록된 학번이면 무료 신청 허용
+    if (event.isPaid) {
+      const isOnWhitelist = user.studentId
         ? await prisma.eventWhitelist.findFirst({
-            where: { eventId, entries: { some: { studentId: user.studentId } } },
+            where: {
+              eventId,
+              entries: { some: { studentId: user.studentId } },
+            },
           })
         : null
-    }
-
-    // 기능 1: 화이트리스트 전용 신청 차단 (무료/유료 공통)
-    if (event.whitelistOnly && !isOnWhitelist) {
-      return res.status(403).json({ message: '화이트리스트에 등록된 인원만 신청할 수 있습니다.' })
-    }
-
-    // 유료 행사 처리
-    if (event.isPaid) {
-      if (isOnWhitelist) {
-        // 화이트리스트 사용자: whitelistPrice 적용
-        const effectivePrice = event.whitelistPrice ?? 0
-        if (effectivePrice > 0) {
-          // 할인가 결제 → 결제 도메인으로, whitelistPrice를 가격으로 내려줌
-          return res.status(402).json({
-            message: '결제가 필요합니다.',
-            price: effectivePrice,
-            whitelistDiscount: true,
-          })
-        }
-        // effectivePrice === 0 → 무료 등록으로 계속 진행
-      } else {
-        // 화이트리스트 미등록 → 일반 결제 도메인으로
-        return res.status(402).json({
-          message: '결제 도메인을 통해 신청해야 합니다.',
-          price: event.price,
-        })
+      if (!isOnWhitelist) {
+        return res.status(400).json({ message: '유료 행사는 결제 도메인을 통해 신청해야 합니다.' })
       }
     }
 

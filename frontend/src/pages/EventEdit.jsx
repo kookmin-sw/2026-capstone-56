@@ -129,10 +129,6 @@ export default function EventEdit() {
         imageUrl: event.imageUrl ?? '',
         openMode: event.publishAt ? 'scheduled' : 'immediate',
         publishAt: toLocal(event.publishAt),
-        whitelistEnabled: !!(event.whitelistOnly || event.whitelistPrice != null),
-        whitelistOnly: event.whitelistOnly ?? false,
-        whitelistPriceEnabled: event.whitelistPrice != null,
-        whitelistPriceValue: event.whitelistPrice ?? '',
       })
       if (event.imageUrl) setImagePreview(event.imageUrl)
     }
@@ -186,10 +182,6 @@ export default function EventEdit() {
           releaseDeadline: form.releaseDeadline || null,
           imageUrl: form.imageUrl || null,
           publishAt: form.openMode === 'scheduled' && form.publishAt ? form.publishAt : null,
-          whitelistOnly: form.whitelistEnabled ? form.whitelistOnly : false,
-          whitelistPrice: form.whitelistEnabled && form.isPaid && form.whitelistPriceEnabled
-            ? Number(form.whitelistPriceValue)
-            : null,
         }
     updateMutation.mutate(payload)
   }
@@ -324,64 +316,6 @@ export default function EventEdit() {
                   <Field label="환불 마감 이후 문의처">
                     <input className="input" placeholder="예: host@univ.ac.kr / 010-1234-5678" value={form.refundContact} onChange={set('refundContact')} />
                   </Field>
-                </div>
-              )}
-            </Section>
-
-            {/* 화이트리스트 설정 */}
-            <Section icon="📋" title="화이트리스트 설정">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <div
-                  onClick={() => setForm(f => ({ ...f, whitelistEnabled: !f.whitelistEnabled }))}
-                  className={`w-10 h-6 rounded-full transition-colors relative ${form.whitelistEnabled ? 'bg-primary-600' : 'bg-gray-200'}`}
-                >
-                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${form.whitelistEnabled ? 'left-5' : 'left-1'}`} />
-                </div>
-                <span className="text-sm font-medium text-gray-700">화이트리스트 사용</span>
-              </label>
-
-              {form.whitelistEnabled && (
-                <div className="space-y-3 pt-2 border-t border-gray-100">
-                  <label className="flex items-center gap-2.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={form.whitelistOnly}
-                      onChange={e => setForm(f => ({ ...f, whitelistOnly: e.target.checked }))}
-                      className="w-4 h-4 rounded accent-primary-600"
-                    />
-                    <div>
-                      <div className="text-sm font-medium text-gray-700">화이트리스트 인원만 신청 가능</div>
-                      <div className="text-xs text-gray-400">미등록 인원은 신청 자체가 차단됩니다.</div>
-                    </div>
-                  </label>
-
-                  {form.isPaid && (
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={form.whitelistPriceEnabled}
-                          onChange={e => setForm(f => ({ ...f, whitelistPriceEnabled: e.target.checked }))}
-                          className="w-4 h-4 rounded accent-primary-600"
-                        />
-                        <div className="text-sm font-medium text-gray-700">화이트리스트 가격 변경</div>
-                      </label>
-                      {form.whitelistPriceEnabled && (
-                        <div className="ml-6 relative w-40">
-                          <input
-                            type="number"
-                            min={0}
-                            className="input pr-8"
-                            placeholder="0"
-                            value={form.whitelistPriceValue}
-                            onChange={e => setForm(f => ({ ...f, whitelistPriceValue: e.target.value }))}
-                          />
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">원</span>
-                          <p className="text-xs text-gray-400 mt-1">0원 입력 시 무료로 처리됩니다.</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               )}
             </Section>
