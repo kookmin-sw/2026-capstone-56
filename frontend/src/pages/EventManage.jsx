@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getEvent, getEventRegistrations, approveRefund, publishEvent, closeEvent, downloadReport, addCoHost, removeCoHost, searchCoHostCandidates } from '../api/events'
 import { getReviews } from '../api/reviews'
 import { useAuth } from '../hooks/useAuth'
+import EventWhitelistManager from '../components/EventWhitelistManager'
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -406,6 +407,9 @@ export default function EventManage() {
         coHostCandidates={coHostCandidates}
         setCoHostCandidates={setCoHostCandidates}
       />
+
+      {/* 화이트리스트 — 유료 행사만 */}
+      {event.isPaid && <EventWhitelistManager eventId={id} />}
 
       {/* 체크인 현황 */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-card p-5">
