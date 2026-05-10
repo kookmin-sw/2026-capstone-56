@@ -1024,21 +1024,31 @@ router.get('/:eventId/report', authMiddleware, async (req, res, next) => {
 
     if (format === 'pdf') {
       const html = buildReportHtml({ event, registrations, reviews, infoRows, noShowRate, cancelRate, totalPaid, totalRefunded, avgRating, checkedIn, noShow, cancelled, totalReg })
-      const { getBrowser } = require('../utils/browser')
-      const browser = await getBrowser()
-      const page = await browser.newPage()
+      const { launchBrowser } = require('../utils/browser')
+      const browser = await launchBrowser()
       try {
-        await page.setContent(html, { waitUntil: 'networkidle0' })
-        const pdfData = await page.pdf({
-          format: 'A4',
-          printBackground: true,
-          margin: { top: '16mm', bottom: '16mm', left: '14mm', right: '14mm' },
-        })
-        res.setHeader('Content-Type', 'application/pdf')
-        res.setHeader('Content-Disposition', `attachment; filename="report_${eventId}.pdf"`)
-        return res.send(Buffer.from(pdfData))
+        const page = await browser.newPage()
+        try {
+          await page.setContent(html, { waitUntil: 'domcontentloaded' })
+          const client = await page.createCDPSession()
+          const { data } = await client.send('Page.printToPDF', {
+            printBackground: true,
+            paperWidth: 8.27,
+            paperHeight: 11.69,
+            marginTop: 16 / 25.4,
+            marginBottom: 16 / 25.4,
+            marginLeft: 14 / 25.4,
+            marginRight: 14 / 25.4,
+          })
+          const pdfBuffer = Buffer.from(data, 'base64')
+          res.setHeader('Content-Type', 'application/pdf')
+          res.setHeader('Content-Disposition', `attachment; filename="report_${eventId}.pdf"`)
+          return res.send(pdfBuffer)
+        } finally {
+          await page.close()
+        }
       } finally {
-        await page.close()
+        await browser.close()
       }
     }
 
