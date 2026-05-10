@@ -406,7 +406,16 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
       })
     }
 
-    res.json({ ...event, cancelledCount, lockedCount, myRegistration })
+    // 본인 화이트리스트 포함 여부(로그인 + 학번 있을 때)
+    let isWhitelisted = false
+    if (req.user?.studentId) {
+      const entry = await prisma.whitelistEntry.findFirst({
+        where: { whitelist: { eventId: event.id }, studentId: req.user.studentId },
+      })
+      isWhitelisted = !!entry
+    }
+
+    res.json({ ...event, cancelledCount, lockedCount, myRegistration, isWhitelisted })
   } catch (err) {
     next(err)
   }

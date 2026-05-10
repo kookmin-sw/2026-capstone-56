@@ -3,5 +3,11 @@
     "allow": [
       "Read(//d/festivalpro/**)"
     ]
+  },
+  "lspServers": {
+    "typescript": {
+      "command": "node",
+      "args": ["C:\\nvm4w\\nodejs\\node_modules\\typescript-language-server\\lib\\cli.mjs", "--stdio"]
+    }
   }
 }

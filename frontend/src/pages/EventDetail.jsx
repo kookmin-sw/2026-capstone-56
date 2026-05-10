@@ -98,6 +98,11 @@ function RegistrationCard({ event, user, myReg, activeCount, navigate, applyMuta
         <div className="text-xs text-gray-400">{activeCount}/{event.capacity}명 신청</div>
       </div>
 
+      {/* 화이트리스트 포함 안내 */}
+      {event.isWhitelisted && (
+        <p className="text-sm text-green-600 font-medium">✓ 화이트리스트에 포함되어 있습니다.</p>
+      )}
+
       {/* 신청 버튼 */}
       <div className="space-y-2">
         {isUpcoming ? (

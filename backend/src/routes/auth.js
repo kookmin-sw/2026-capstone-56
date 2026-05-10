@@ -137,7 +137,7 @@ router.post('/login', loginLimiter, async (req, res, next) => {
       ? await prisma.school.findUnique({ where: { id: user.schoolId }, select: { id: true, name: true, domain: true } })
       : null
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, emailVerified: user.emailVerified, schoolId: user.schoolId },
+      { id: user.id, email: user.email, role: user.role, emailVerified: user.emailVerified, schoolId: user.schoolId, studentId: user.studentId ?? null },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN }
     )
