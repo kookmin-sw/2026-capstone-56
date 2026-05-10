@@ -74,7 +74,7 @@ router.get('/callback', async (req, res) => {
         : null
 
       const token = jwt.sign(
-        { id: existingUser.id, email: existingUser.email, role: existingUser.role, emailVerified: existingUser.emailVerified, schoolId: existingUser.schoolId },
+        { id: existingUser.id, email: existingUser.email, role: existingUser.role, emailVerified: existingUser.emailVerified, schoolId: existingUser.schoolId, studentId: existingUser.studentId ?? null },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN }
       )
