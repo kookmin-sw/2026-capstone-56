@@ -1,6 +1,10 @@
 import api from './axios'
 
-export const getNotices = () => api.get('/notices').then(r => r.data)
+export const getNotices = ({ page = 1, limit = 10, q = '' } = {}) => {
+  const params = new URLSearchParams({ page, limit })
+  if (q) params.set('q', q)
+  return api.get(`/notices?${params}`).then(r => r.data)
+}
 export const getNotice = (id) => api.get(`/notices/${id}`).then(r => r.data)
 
 export const uploadNoticeImage = async (file) => {
