@@ -156,6 +156,17 @@ export default function Profile() {
             <input value={user?.school?.name || '소속 학교 없음'} disabled className="input opacity-50 cursor-not-allowed" />
             <p className="text-xs text-gray-400 mt-1">학교는 변경할 수 없습니다.</p>
           </div>
+          <div>
+            <label className="label">역할</label>
+            <div className="flex flex-col gap-1">
+              <span className="text-sm text-gray-700 font-medium">
+                {{ ATTENDEE: '일반 사용자', CERTIFIED: '인증 주최자', SCHOOL_ADMIN: '학교 총관리자', OPERATOR: '운영자' }[user?.role] ?? user?.role}
+              </span>
+              {user?.roleMemo && (
+                <span className="text-xs text-gray-400">{user.roleMemo}</span>
+              )}
+            </div>
+          </div>
           <button type="submit" disabled={updateInfoMutation.isPending} className="btn-primary w-full justify-center">
             {updateInfoMutation.isPending ? '저장 중...' : '저장'}
           </button>

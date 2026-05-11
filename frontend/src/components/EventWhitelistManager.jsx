@@ -8,7 +8,7 @@ import {
   deleteWhitelistEntry,
 } from '../api/whitelist'
 
-export default function EventWhitelistManager({ eventId }) {
+export default function EventWhitelistManager({ eventId, hideTitle = false }) {
   const queryClient = useQueryClient()
   const [studentId, setStudentId] = useState('')
   const [search, setSearch] = useState('')
@@ -66,7 +66,7 @@ export default function EventWhitelistManager({ eventId }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-gray-800">학생회비 납부자 화이트리스트</h3>
+        {!hideTitle && <h3 className="font-semibold text-gray-800">학생회비 납부자 화이트리스트</h3>}
         {!whitelist && (
           <button
             onClick={() => createMutation.mutate()}

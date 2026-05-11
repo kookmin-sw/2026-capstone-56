@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getMyEvents, publishEvent, closeEvent, deleteEvent } from '../api/events'
+import { useAuth } from '../hooks/useAuth'
 
 function fmtDate(iso) {
   if (!iso) return ''
@@ -18,6 +19,12 @@ const STATUS_CONFIG = {
   PUBLISHED: { label: '공개중', color: 'bg-green-100 text-green-700' },
   CLOSED:    { label: '마감됨', color: 'bg-gray-100 text-gray-600' },
   CANCELLED: { label: '취소됨', color: 'bg-red-100 text-red-500' },
+  ENDED:     { label: '종료됨', color: 'bg-slate-100 text-slate-500' },
+}
+
+function getDisplayStatus(event) {
+  if (event.status === 'PUBLISHED' && event.endAt && new Date(event.endAt) < new Date()) return 'ENDED'
+  return event.status
 }
 
 const TABS = [
@@ -28,10 +35,83 @@ const TABS = [
   { value: 'CANCELLED', label: '취소됨' },
 ]
 
+function ProfileCard({ user, events }) {
+  const totalEvents = events.length
+
+  const totalReviewCount = events.reduce((s, e) => s + (e.reviewCount ?? 0), 0)
+  const overallRating = totalReviewCount > 0
+    ? Math.round(
+        events.reduce((s, e) => s + (e.reviewAvg ?? 0) * (e.reviewCount ?? 0), 0) / totalReviewCount * 10
+      ) / 10
+    : null
+
+  const totalCheckedIn = events.reduce((s, e) => s + (e.checkedInCount ?? 0), 0)
+
+  const ROLE_LABEL = {
+    CERTIFIED: '인증사용자',
+    SCHOOL_ADMIN: '학교총관리자',
+    OPERATOR: '운영자',
+    ATTENDEE: '일반사용자',
+  }
+
+  return (
+    <div className="bg-white rounded-3xl border border-gray-100 shadow-card p-5 space-y-5 sticky top-6">
+      {/* 기본 정보 */}
+      <div className="space-y-1">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-100 to-purple-100 flex items-center justify-center mb-3">
+          <span className="text-xl font-bold text-primary-600">{user?.name?.[0] ?? '?'}</span>
+        </div>
+        <div className="font-bold text-gray-900 text-base">{user?.name}</div>
+        {user?.school?.name && (
+          <div className="text-xs text-gray-500">{user.school.name}</div>
+        )}
+        {user?.studentId && (
+          <div className="text-xs text-gray-400 font-mono">{user.studentId}</div>
+        )}
+        <span className="inline-block text-xs px-2 py-0.5 rounded-full bg-primary-50 text-primary-600 font-semibold mt-1">
+          {ROLE_LABEL[user?.role] ?? user?.role}
+        </span>
+        {user?.roleMemo && (
+          <div className="text-xs text-gray-400 mt-0.5">{user.roleMemo}</div>
+        )}
+      </div>
+
+      <div className="border-t border-gray-50" />
+
+      {/* 통계 */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-400">주최한 행사</span>
+          <span className="text-sm font-bold text-gray-800">{totalEvents}개</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-400">총 체크인 인원</span>
+          <span className="text-sm font-bold text-gray-800">{totalCheckedIn}명</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-400">전체 행사 평균 별점</span>
+          {overallRating !== null ? (
+            <div className="flex items-center gap-1">
+              <span className="text-amber-400 text-sm">★</span>
+              <span className="text-sm font-bold text-gray-800">{overallRating.toFixed(1)}</span>
+              <span className="text-xs text-gray-400">({totalReviewCount})</span>
+            </div>
+          ) : (
+            <span className="text-xs text-gray-400">리뷰 없음</span>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function MyEvents() {
   const [tab, setTab] = useState('all')
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ['my-events'],
@@ -59,75 +139,100 @@ export default function MyEvents() {
   const filtered = tab === 'all' ? events : events.filter(e => e.status === tab)
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">내 행사 관리</h1>
-        <Link to="/events/create" className="btn-primary text-sm px-4 py-2 rounded-xl">
-          + 행사 만들기
-        </Link>
-      </div>
+    <div className="max-w-5xl mx-auto">
+      <div className="flex gap-6 items-start">
 
-      {/* 탭 필터 */}
-      <div className="flex gap-2 flex-wrap">
-        {TABS.map(t => (
-          <button
-            key={t.value}
-            onClick={() => setTab(t.value)}
-            className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-all ${
-              tab === t.value
-                ? 'bg-primary-600 text-white shadow-sm'
-                : 'bg-white text-gray-600 border border-gray-100'
-            }`}
-          >
-            {t.label}
-            {t.value !== 'all' && (
-              <span className="ml-1.5 text-xs opacity-70">
-                {events.filter(e => e.status === t.value).length}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {isLoading ? (
-        <div className="card p-12 text-center text-gray-400">불러오는 중...</div>
-      ) : filtered.length === 0 ? (
-        <div className="card p-12 text-center space-y-3">
-          <p className="text-gray-400">표시할 행사가 없습니다.</p>
-          <Link to="/events/create" className="btn-primary text-sm px-5 py-2.5 rounded-xl inline-block">
-            행사 만들기
-          </Link>
+        {/* 프로필 카드 (왼쪽 사이드바) */}
+        <div className="w-56 shrink-0 hidden lg:block">
+          <ProfileCard user={user} events={events} />
         </div>
-      ) : (
-        <ul className="space-y-3">
-          {filtered.map(event => (
-            <EventRow
-              key={event.id}
-              event={event}
-              onPublish={() => {
-                if (confirm('이 행사를 공개하시겠습니까?')) publishMutation.mutate(event.id)
-              }}
-              onClose={() => {
-                if (confirm(`"${event.title}" 행사를 마감하시겠습니까?\n더 이상 신청을 받지 않습니다.`)) closeMutation.mutate(event.id)
-              }}
-              onDelete={() => {
-                if (confirm(`"${event.title}" 행사를 삭제하시겠습니까?\n신청자가 있으면 자동 취소 처리됩니다.`)) {
-                  deleteMutation.mutate(event.id)
-                }
-              }}
-              isPublishing={publishMutation.isPending && publishMutation.variables === event.id}
-              isClosing={closeMutation.isPending && closeMutation.variables === event.id}
-              isDeleting={deleteMutation.isPending && deleteMutation.variables === event.id}
-            />
-          ))}
-        </ul>
-      )}
+
+        {/* 메인 콘텐츠 */}
+        <div className="flex-1 min-w-0 space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-gray-900">내 행사 관리</h1>
+            <Link to="/events/create" className="btn-primary text-sm px-4 py-2 rounded-xl">
+              + 행사 만들기
+            </Link>
+          </div>
+
+          {/* 탭 필터 */}
+          <div className="flex gap-2 flex-wrap">
+            {TABS.map(t => (
+              <button
+                key={t.value}
+                onClick={() => setTab(t.value)}
+                className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-all ${
+                  tab === t.value
+                    ? 'bg-primary-600 text-white shadow-sm'
+                    : 'bg-white text-gray-600 border border-gray-100'
+                }`}
+              >
+                {t.label}
+                {t.value !== 'all' && (
+                  <span className="ml-1.5 text-xs opacity-70">
+                    {events.filter(e => e.status === t.value).length}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {isLoading ? (
+            <div className="card p-12 text-center text-gray-400">불러오는 중...</div>
+          ) : filtered.length === 0 ? (
+            <div className="card p-12 text-center space-y-3">
+              <p className="text-gray-400">표시할 행사가 없습니다.</p>
+              <Link to="/events/create" className="btn-primary text-sm px-5 py-2.5 rounded-xl inline-block">
+                행사 만들기
+              </Link>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {filtered.map(event => (
+                <EventRow
+                  key={event.id}
+                  event={event}
+                  onPublish={() => {
+                    if (confirm('이 행사를 공개하시겠습니까?')) publishMutation.mutate(event.id)
+                  }}
+                  onClose={() => {
+                    if (confirm(`"${event.title}" 행사를 마감하시겠습니까?\n더 이상 신청을 받지 않습니다.`)) closeMutation.mutate(event.id)
+                  }}
+                  onDelete={() => {
+                    if (confirm(`"${event.title}" 행사를 삭제하시겠습니까?\n신청자가 있으면 자동 취소 처리됩니다.`)) {
+                      deleteMutation.mutate(event.id)
+                    }
+                  }}
+                  isPublishing={publishMutation.isPending && publishMutation.variables === event.id}
+                  isClosing={closeMutation.isPending && closeMutation.variables === event.id}
+                  isDeleting={deleteMutation.isPending && deleteMutation.variables === event.id}
+                />
+              ))}
+            </ul>
+          )}
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
+function StarDisplay({ avg, count }) {
+  if (avg === null || avg === undefined) return null
+  return (
+    <div className="flex items-center gap-1">
+      <span className="text-amber-400 text-sm">{'★'.repeat(Math.round(avg))}{'☆'.repeat(5 - Math.round(avg))}</span>
+      <span className="text-xs text-gray-500 font-semibold">{avg.toFixed(1)}</span>
+      <span className="text-xs text-gray-400">({count}개)</span>
     </div>
   )
 }
 
 function EventRow({ event, onPublish, onClose, onDelete, isPublishing, isClosing, isDeleting }) {
-  const cfg = STATUS_CONFIG[event.status] ?? { label: event.status, color: 'bg-gray-100 text-gray-500' }
+  const displayStatus = getDisplayStatus(event)
+  const cfg = STATUS_CONFIG[displayStatus] ?? { label: event.status, color: 'bg-gray-100 text-gray-500' }
+  const isEnded = displayStatus === 'ENDED'
   const attendees = event._count?.registrations ?? 0
   const remaining = event.capacity - attendees
 
@@ -151,6 +256,11 @@ function EventRow({ event, onPublish, onClose, onDelete, isPublishing, isClosing
         <div className="flex-1 min-w-0 space-y-1.5">
           <div className="flex items-center gap-2 flex-wrap">
             <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${cfg.color}`}>{cfg.label}</span>
+            {event.isCoHost && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-50 text-violet-600">
+                공동호스트
+              </span>
+            )}
             {event.isPaid && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
                 유료 {event.price?.toLocaleString()}원
@@ -172,6 +282,7 @@ function EventRow({ event, onPublish, onClose, onDelete, isPublishing, isClosing
             {remaining > 0 && <span className="ml-1 text-emerald-600">({remaining}석 남음)</span>}
             {remaining <= 0 && <span className="ml-1 text-red-500">(마감)</span>}
           </div>
+          {isEnded && <StarDisplay avg={event.reviewAvg} count={event.reviewCount} />}
         </div>
       </div>
 
@@ -184,7 +295,7 @@ function EventRow({ event, onPublish, onClose, onDelete, isPublishing, isClosing
           관리
         </Link>
 
-        {!['CANCELLED', 'CLOSED'].includes(event.status) && (
+        {event.status !== 'CANCELLED' && !isEnded && (
           <Link
             to={`/events/${event.id}/edit`}
             className="btn text-xs border border-blue-200 text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-lg"
@@ -203,25 +314,26 @@ function EventRow({ event, onPublish, onClose, onDelete, isPublishing, isClosing
           </button>
         )}
 
-        {event.status === 'PUBLISHED' && (
-          <>
-            <Link
-              to={`/events/${event.id}/checkin`}
-              className="btn text-xs border border-primary-200 text-primary-600 hover:bg-primary-50 px-3 py-1.5 rounded-lg"
-            >
-              QR 체크인
-            </Link>
-            <button
-              onClick={onClose}
-              disabled={isClosing}
-              className="btn text-xs border border-orange-200 text-orange-600 hover:bg-orange-50 px-3 py-1.5 rounded-lg disabled:opacity-50"
-            >
-              {isClosing ? '마감 중...' : '신청 마감'}
-            </button>
-          </>
+        {['PUBLISHED', 'CLOSED'].includes(event.status) && !isEnded && (
+          <Link
+            to={`/events/${event.id}/checkin`}
+            className="btn text-xs border border-primary-200 text-primary-600 hover:bg-primary-50 px-3 py-1.5 rounded-lg"
+          >
+            QR 체크인
+          </Link>
         )}
 
-        {!['CANCELLED', 'CLOSED'].includes(event.status) && (
+        {event.status === 'PUBLISHED' && !isEnded && (
+          <button
+            onClick={onClose}
+            disabled={isClosing}
+            className="btn text-xs border border-orange-200 text-orange-600 hover:bg-orange-50 px-3 py-1.5 rounded-lg disabled:opacity-50"
+          >
+            {isClosing ? '마감 중...' : '신청 마감'}
+          </button>
+        )}
+
+        {!event.isCoHost && !['CANCELLED', 'CLOSED'].includes(event.status) && !isEnded && (
           <button
             onClick={onDelete}
             disabled={isDeleting}

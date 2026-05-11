@@ -29,8 +29,12 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const token = localStorage.getItem('token')
-    if (token && !user) {
-      getMe().then(setUser).catch(logout)
+    if (token) {
+      getMe().then(data => {
+        const merged = { ...user, ...data }
+        localStorage.setItem('user', JSON.stringify(merged))
+        setUser(merged)
+      }).catch(logout)
     }
   }, [])
 

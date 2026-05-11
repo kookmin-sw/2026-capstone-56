@@ -50,9 +50,45 @@ export const getEventRegistrations = async (id) => {
   return res.data
 }
 
+export const getNextRelease = async (id) => {
+  const res = await api.get(`/v1/events/${id}/next-release`)
+  return res.data
+}
+
 export const approveRefund = async (eventId, regId, reason) => {
   const res = await api.post(`/v1/events/${eventId}/registrations/${regId}/refund`, { cancelReason: reason })
   return res.data
+}
+
+export const searchCoHostCandidates = async (schoolId, q) => {
+  const res = await api.get('/v1/events/cohost-candidates', { params: { schoolId, q } })
+  return res.data
+}
+
+export const addCoHost = async (eventId, userId) => {
+  const res = await api.post(`/v1/events/${eventId}/cohosts`, { userId })
+  return res.data
+}
+
+export const removeCoHost = async (eventId, userId) => {
+  const res = await api.delete(`/v1/events/${eventId}/cohosts/${userId}`)
+  return res.data
+}
+
+export const downloadReport = async (eventId, format) => {
+  const res = await api.get(`/v1/events/${eventId}/report`, {
+    params: { format },
+    responseType: 'blob',
+  })
+  const blob = res.data instanceof Blob ? res.data : new Blob([res.data])
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `report_${eventId}.${format}`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  setTimeout(() => window.URL.revokeObjectURL(url), 1000)
 }
 
 export const uploadEventImage = async (file) => {

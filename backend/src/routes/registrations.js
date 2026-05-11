@@ -24,10 +24,14 @@ router.post('/', authMiddleware, async (req, res, next) => {
 
     if (!event || event.deletedAt) return res.status(404).json({ message: '행사를 찾을 수 없습니다.' })
     if (event.status !== 'PUBLISHED') return res.status(400).json({ message: '신청 가능한 행사가 아닙니다.' })
-    if (event.registrationDeadline && new Date() > event.registrationDeadline) {
-      return res.status(400).json({ message: '신청 마감된 행사입니다.' })
+    const now = new Date()
+    // 2차 신청마감(releaseDeadline) 이후 모든 신청 차단. 없으면 startAt-30min 폴백
+    const releaseDeadline = event.releaseDeadline
+      ?? new Date(event.startAt.getTime() - 30 * 60_000)
+    if (now > releaseDeadline) {
+      return res.status(400).json({ message: '신청이 마감되었습니다.' })
     }
-    if (new Date() > event.startAt) {
+    if (now > event.startAt) {
       return res.status(400).json({ message: '행사가 이미 시작되었습니다.' })
     }
     // BR-02: 본인 학교 행사만 신청 가능
@@ -64,7 +68,22 @@ router.post('/', authMiddleware, async (req, res, next) => {
         const activeCount = await tx.registration.count({
           where: { eventId, status: { in: ACTIVE_STATUSES } },
         })
-        if (activeCount >= event.capacity) {
+
+        // BR-17 Option A: 취소표 릴리즈 기능이 설정된 경우, lastReleaseAt 이후
+        // 발생한 CANCELLED/EXPIRED 자리는 다음 릴리즈까지 사용 불가로 처리
+        let lockedCount = 0
+        if (event.releaseIntervalMinutes) {
+          const since = event.lastReleaseAt ?? new Date(0)
+          lockedCount = await tx.registration.count({
+            where: {
+              eventId,
+              status: { in: ['CANCELLED', 'EXPIRED'] },
+              updatedAt: { gt: since },
+            },
+          })
+        }
+
+        if (activeCount + lockedCount >= event.capacity) {
           const err = new Error('CAPACITY_EXCEEDED')
           err.statusCode = 409
           throw err

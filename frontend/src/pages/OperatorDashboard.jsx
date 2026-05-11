@@ -56,15 +56,38 @@ export default function OperatorDashboard() {
     <div className="max-w-5xl mx-auto space-y-8">
 
       {/* 헤더 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">운영자 대시보드</h1>
-          <p className="text-sm text-gray-400 mt-0.5">플랫폼 전체 현황</p>
-        </div>
-        <Link to="/admin/schools" className="btn-primary text-sm px-4 py-2 rounded-xl">
-          학교 관리
-        </Link>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">운영자 대시보드</h1>
+        <p className="text-sm text-gray-400 mt-0.5">플랫폼 전체 현황</p>
       </div>
+
+      {/* 환불 대기 알림 */}
+      {((stats?.refundQueue?.pending ?? 0) + (stats?.refundQueue?.failed ?? 0)) > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-red-100 rounded-xl flex items-center justify-center shrink-0">
+              <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-red-700">처리 필요한 환불 건이 있습니다</p>
+              <p className="text-xs text-red-400 mt-0.5">
+                환불 처리 중 {stats.refundQueue.pending}건
+                {stats.refundQueue.failed > 0 && (
+                  <span className="ml-2 font-semibold">· 환불 실패 {stats.refundQueue.failed}건</span>
+                )}
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/admin/refund-queue"
+            className="text-xs font-semibold text-red-600 hover:underline shrink-0"
+          >
+            처리하러 가기 →
+          </Link>
+        </div>
+      )}
 
       {/* 통계 카드 */}
       <div>
@@ -190,7 +213,9 @@ export default function OperatorDashboard() {
             { to: '/admin/users', label: '유저 관리', desc: '전체 사용자 조회·역할 변경', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
             { to: '/admin/events', label: '행사 관리', desc: '전체 행사 공개·삭제', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
             { to: '/my-events', label: '내 행사 관리', desc: '내가 만든 행사', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+            { to: '/admin/notices', label: '공지 관리', desc: '전체 공지 작성·발행', icon: 'M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z' },
             { to: '/admin/audit-logs', label: '감사 로그', desc: '관리자 액션 기록', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+            { to: '/admin/inquiries', label: '1:1 문의', desc: '사용자 문의 답변', icon: 'M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z' },
           ].map(item => (
             <Link key={item.to} to={item.to} className="card p-4 flex items-center gap-3 hover:shadow-card-hover hover:-translate-y-0.5 transition-all group">
               <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center shrink-0 group-hover:bg-primary-100 transition">
@@ -198,8 +223,15 @@ export default function OperatorDashboard() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                 </svg>
               </div>
-              <div>
-                <div className="text-sm font-semibold text-gray-800">{item.label}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-gray-800">{item.label}</span>
+                  {item.to === '/admin/inquiries' && (stats?.pendingInquiries ?? 0) > 0 && (
+                    <span className="text-[10px] font-bold bg-red-500 text-white px-1.5 py-0.5 rounded-full leading-none">
+                      {stats.pendingInquiries}
+                    </span>
+                  )}
+                </div>
                 <div className="text-xs text-gray-400">{item.desc}</div>
               </div>
             </Link>

@@ -18,30 +18,86 @@ const ROLE_BADGE = {
   OPERATOR: 'bg-orange-100 text-orange-700',
 }
 
-function RoleSelect({ user, schoolId }) {
+function RoleChangeModal({ user, schoolId, onClose }) {
   const toast = useToast()
   const queryClient = useQueryClient()
+  const [role, setRole] = useState(user.role)
+  const [memo, setMemo] = useState(user.roleMemo || '')
 
   const mutation = useMutation({
-    mutationFn: (role) => updateUserRole(user.id, role),
+    mutationFn: () => updateUserRole(user.id, role, memo),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['school-users', schoolId] })
       toast('역할이 변경되었습니다.', 'success')
+      onClose()
     },
     onError: (err) => toast(err.response?.data?.message || '변경에 실패했습니다.', 'error'),
   })
 
   return (
-    <select
-      value={user.role}
-      onChange={e => mutation.mutate(e.target.value)}
-      disabled={mutation.isPending}
-      className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-400 disabled:opacity-50"
-    >
-      {ROLES.map(r => (
-        <option key={r.value} value={r.value}>{r.label}</option>
-      ))}
-    </select>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
+      <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 space-y-4" onClick={e => e.stopPropagation()}>
+        <div>
+          <h3 className="font-bold text-gray-900">역할 변경</h3>
+          <p className="text-sm text-gray-400 mt-0.5">{user.name} · {user.email}</p>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-gray-600">역할 선택</label>
+          <select
+            value={role}
+            onChange={e => setRole(e.target.value)}
+            className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-400"
+          >
+            {ROLES.map(r => (
+              <option key={r.value} value={r.value}>{r.label}</option>
+            ))}
+          </select>
+        </div>
+
+        {role !== 'ATTENDEE' && (
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-gray-600">
+              메모 <span className="text-gray-400 font-normal">(선택)</span>
+            </label>
+            <input
+              type="text"
+              value={memo}
+              onChange={e => setMemo(e.target.value)}
+              placeholder="예) 동아리 연합 주최자 인증, 학생회 임원 확인 등"
+              maxLength={100}
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary-400 placeholder:text-gray-300"
+            />
+          </div>
+        )}
+
+        <div className="flex gap-2 pt-1">
+          <button onClick={onClose} className="flex-1 btn-secondary text-sm py-2.5 rounded-xl">취소</button>
+          <button
+            onClick={() => mutation.mutate()}
+            disabled={mutation.isPending || (role === user.role && memo === (user.roleMemo || ''))}
+            className="flex-1 btn-primary text-sm py-2.5 rounded-xl disabled:opacity-50"
+          >
+            {mutation.isPending ? '변경 중...' : '변경'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function RoleSelect({ user, schoolId }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-700 hover:border-primary-300 hover:text-primary-600 transition"
+      >
+        변경
+      </button>
+      {open && <RoleChangeModal user={user} schoolId={schoolId} onClose={() => setOpen(false)} />}
+    </>
   )
 }
 
@@ -143,11 +199,18 @@ export default function SchoolDetail() {
                     }
                   </td>
                   <td className="px-5 py-4">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${ROLE_BADGE[user.role]}`}>
-                        {ROLES.find(r => r.value === user.role)?.label ?? user.role}
-                      </span>
-                      {user.role !== 'OPERATOR' && <RoleSelect user={user} schoolId={schoolId} />}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${ROLE_BADGE[user.role]}`}>
+                          {ROLES.find(r => r.value === user.role)?.label ?? user.role}
+                        </span>
+                        {user.role !== 'OPERATOR' && <RoleSelect user={user} schoolId={schoolId} />}
+                      </div>
+                      {user.roleMemo && (
+                        <span className="text-xs text-gray-400 truncate max-w-[180px]" title={user.roleMemo}>
+                          {user.roleMemo}
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-5 py-4 text-right">

@@ -2,6 +2,7 @@ const express = require('express')
 const { PrismaClient } = require('@prisma/client')
 const authMiddleware = require('../middleware/auth')
 const { requireRole } = require('../middleware/auth')
+const audit = require('../utils/audit')
 
 const router = express.Router()
 const prisma = new PrismaClient()
@@ -53,6 +54,7 @@ router.post('/', authMiddleware, OPERATOR, async (req, res, next) => {
       data: { name, domain, address: address || null },
       select: { id: true, name: true, domain: true, address: true, createdAt: true },
     })
+    audit(req.user.id, 'CREATE_SCHOOL', 'SCHOOL', school.id, school.name)
     res.status(201).json(school)
   } catch (err) { next(err) }
 })
@@ -82,6 +84,7 @@ router.put('/:id', authMiddleware, OPERATOR, async (req, res, next) => {
       },
       select: { id: true, name: true, domain: true, address: true, createdAt: true },
     })
+    audit(req.user.id, 'UPDATE_SCHOOL', 'SCHOOL', req.params.id, updated.name)
     res.json(updated)
   } catch (err) { next(err) }
 })
@@ -94,11 +97,21 @@ router.delete('/:id', authMiddleware, OPERATOR, async (req, res, next) => {
 
     const userCount = await prisma.user.count({ where: { schoolId: req.params.id, deletedAt: null } })
 
+    // BR-S03: 학교 삭제 시 소속 SCHOOL_ADMIN을 ATTENDEE로 강등
+    const demoted = await prisma.user.updateMany({
+      where: { schoolId: req.params.id, role: 'SCHOOL_ADMIN', deletedAt: null },
+      data: { role: 'ATTENDEE' },
+    })
+
     await prisma.school.update({
       where: { id: req.params.id },
       data: { deletedAt: new Date() },
     })
-    res.json({ message: '학교가 삭제되었습니다.', affectedUsers: userCount })
+
+    audit(req.user.id, 'DELETE_SCHOOL', 'SCHOOL', req.params.id,
+      `${school.name} · 소속 ${userCount}명 · 총관리자 ${demoted.count}명 강등`)
+
+    res.json({ message: '학교가 삭제되었습니다.', affectedUsers: userCount, demotedAdmins: demoted.count })
   } catch (err) { next(err) }
 })
 
