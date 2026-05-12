@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getNotifications, markNotificationRead } from '../api/notifications'
+import { getNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from '../api/notifications'
 import { Link } from 'react-router-dom'
 
 function fmtDate(iso) {
@@ -21,13 +21,16 @@ export default function Notifications() {
     queryFn: getNotifications,
   })
 
-  const readMut = useMutation({
-    mutationFn: markNotificationRead,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['notifications'] })
-      qc.invalidateQueries({ queryKey: ['notifications-unread'] })
-    },
-  })
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['notifications'] })
+    qc.invalidateQueries({ queryKey: ['notifications-unread'] })
+  }
+
+  const readMut = useMutation({ mutationFn: markNotificationRead, onSuccess: invalidate })
+  const readAllMut = useMutation({ mutationFn: markAllNotificationsRead, onSuccess: invalidate })
+  const deleteMut = useMutation({ mutationFn: deleteNotification, onSuccess: invalidate })
+
+  const unreadCount = notifications.filter(n => !n.isRead).length
 
   if (isLoading) {
     return (
@@ -43,11 +46,20 @@ export default function Notifications() {
     <div className="max-w-2xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-black text-gray-900">알림</h1>
-        {notifications.some(n => !n.isRead) && (
-          <span className="text-xs text-primary-600 font-semibold">
-            미읽음 {notifications.filter(n => !n.isRead).length}개
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {unreadCount > 0 && (
+            <span className="text-xs text-primary-600 font-semibold">미읽음 {unreadCount}개</span>
+          )}
+          {unreadCount > 0 && (
+            <button
+              onClick={() => readAllMut.mutate()}
+              disabled={readAllMut.isPending}
+              className="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2.5 py-1 hover:bg-gray-50 transition disabled:opacity-50"
+            >
+              모두 읽음
+            </button>
+          )}
+        </div>
       </div>
 
       {notifications.length === 0 ? (
@@ -70,10 +82,16 @@ export default function Notifications() {
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {!n.isRead && (
-                    <span className="w-2 h-2 rounded-full bg-primary-500" />
-                  )}
+                  {!n.isRead && <span className="w-2 h-2 rounded-full bg-primary-500" />}
                   <span className="text-xs text-gray-400">{fmtDate(n.createdAt)}</span>
+                  <button
+                    onClick={e => { e.stopPropagation(); deleteMut.mutate(n.id) }}
+                    disabled={deleteMut.isPending}
+                    className="text-gray-300 hover:text-red-400 transition text-lg leading-none pb-0.5 disabled:opacity-50"
+                    title="삭제"
+                  >
+                    ×
+                  </button>
                 </div>
               </div>
               {(() => {

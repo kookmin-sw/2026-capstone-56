@@ -35,6 +35,20 @@ router.get('/unread', authMiddleware, async (req, res, next) => {
   }
 })
 
+// 알림 전체 읽음 처리
+// PATCH /api/notifications/read-all
+router.patch('/read-all', authMiddleware, async (req, res, next) => {
+  try {
+    await prisma.notification.updateMany({
+      where: { receiverId: req.user.id, isRead: false },
+      data: { isRead: true, readAt: new Date() },
+    })
+    res.json({ message: '모든 알림을 읽음 처리했습니다.' })
+  } catch (err) {
+    next(err)
+  }
+})
+
 // UC-N03: 알림 읽음 처리
 // PATCH /api/notifications/:id/read
 // BR-N02: 본인 알림 소유권 검증 | BR-N08: readAt 기록
@@ -62,6 +76,26 @@ router.patch('/:id/read', authMiddleware, async (req, res, next) => {
     })
 
     res.json(updated)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// 알림 개별 삭제
+// DELETE /api/notifications/:id
+router.delete('/:id', authMiddleware, async (req, res, next) => {
+  try {
+    const notification = await prisma.notification.findUnique({
+      where: { id: req.params.id },
+    })
+
+    if (!notification) return res.status(404).json({ message: '알림을 찾을 수 없습니다.' })
+    if (notification.receiverId !== req.user.id) {
+      return res.status(403).json({ message: '접근 권한이 없습니다.' })
+    }
+
+    await prisma.notification.delete({ where: { id: req.params.id } })
+    res.json({ message: '알림이 삭제되었습니다.' })
   } catch (err) {
     next(err)
   }

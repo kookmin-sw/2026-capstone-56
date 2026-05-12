@@ -1,47 +1,90 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { keepPreviousData } from '@tanstack/react-query'
 import { getNotices } from '../api/notices'
-import { useAuth } from '../hooks/useAuth'
 
 function fmtDate(iso) {
   if (!iso) return ''
   return new Date(iso).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
 }
 
-function NoticeList({ notices }) {
-  if (notices.length === 0) {
-    return <div className="card p-8 text-center text-sm text-gray-400">등록된 공지가 없습니다.</div>
-  }
+function Pagination({ page, totalPages, onPage }) {
+  if (totalPages <= 1) return null
+
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1)
+    .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+    .reduce((acc, p, idx, arr) => {
+      if (idx > 0 && arr[idx - 1] !== p - 1) acc.push('...')
+      acc.push(p)
+      return acc
+    }, [])
+
   return (
-    <div className="space-y-2">
-      {notices.map(notice => (
-        <Link
-          key={notice.id}
-          to={`/notices/${notice.id}`}
-          className="card p-4 flex items-center justify-between hover:shadow-md transition group"
-        >
-          <span className="font-semibold text-gray-800 truncate group-hover:text-primary-600 transition">
-            {notice.title}
-          </span>
-          <span className="text-xs text-gray-400 shrink-0 ml-4">{fmtDate(notice.publishedAt)}</span>
-        </Link>
-      ))}
+    <div className="flex items-center justify-center gap-1.5">
+      <button
+        onClick={() => onPage(page - 1)}
+        disabled={page === 1}
+        className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition"
+      >
+        이전
+      </button>
+      {pages.map((p, idx) =>
+        p === '...'
+          ? <span key={`dots-${idx}`} className="px-2 text-gray-400 text-sm">…</span>
+          : (
+            <button
+              key={p}
+              onClick={() => onPage(p)}
+              className={`px-3 py-1.5 text-sm rounded-lg border transition ${
+                page === p
+                  ? 'bg-primary-500 text-white border-primary-500'
+                  : 'border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              {p}
+            </button>
+          )
+      )}
+      <button
+        onClick={() => onPage(page + 1)}
+        disabled={page === totalPages}
+        className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition"
+      >
+        다음
+      </button>
     </div>
   )
 }
 
 export default function Notices() {
-  const { user } = useAuth()
+  const [inputVal, setInputVal] = useState('')
+  const [q, setQ] = useState('')
+  const [page, setPage] = useState(1)
 
-  const { data: notices = [], isLoading } = useQuery({
-    queryKey: ['notices'],
-    queryFn: getNotices,
+  const { data, isLoading } = useQuery({
+    queryKey: ['notices', page, q],
+    queryFn: () => getNotices({ page, limit: 10, q }),
+    placeholderData: keepPreviousData,
   })
 
-  const globalNotices = notices.filter(n => n.scope === 'GLOBAL')
-  const schoolNotices = notices.filter(n => n.scope === 'SCHOOL')
+  const notices = data?.data ?? []
+  const total = data?.total ?? 0
+  const totalPages = data?.totalPages ?? 1
 
-  if (isLoading) {
+  function handleSearch(e) {
+    e.preventDefault()
+    setQ(inputVal.trim())
+    setPage(1)
+  }
+
+  function handleReset() {
+    setInputVal('')
+    setQ('')
+    setPage(1)
+  }
+
+  if (isLoading && !data) {
     return (
       <div className="max-w-3xl mx-auto space-y-3">
         {[...Array(5)].map((_, i) => (
@@ -52,28 +95,68 @@ export default function Notices() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      <h1 className="text-2xl font-black text-gray-900">공지사항</h1>
+    <div className="max-w-3xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-black text-gray-900">공지사항</h1>
+        <span className="text-sm text-gray-400">총 {total}건</span>
+      </div>
 
-      {/* 전체 공지 */}
-      <section className="space-y-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">전체 공지</span>
-          <span className="text-xs text-gray-400">{globalNotices.length}건</span>
+      {/* 검색 */}
+      <form onSubmit={handleSearch} className="flex gap-2">
+        <input
+          type="text"
+          value={inputVal}
+          onChange={e => setInputVal(e.target.value)}
+          placeholder="제목으로 검색"
+          className="flex-1 border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+        />
+        <button type="submit" className="btn-primary px-4 py-2 text-sm">
+          검색
+        </button>
+        {q && (
+          <button
+            type="button"
+            onClick={handleReset}
+            className="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+          >
+            초기화
+          </button>
+        )}
+      </form>
+
+      {/* 목록 */}
+      {notices.length === 0 ? (
+        <div className="card p-8 text-center text-sm text-gray-400">
+          {q ? `"${q}"에 해당하는 공지가 없습니다.` : '등록된 공지가 없습니다.'}
         </div>
-        <NoticeList notices={globalNotices} />
-      </section>
-
-      {/* 학교 공지 — 해당 학교 학생에게만 노출 (백엔드에서 schoolId 필터링) */}
-      {user?.schoolId && (
-        <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-purple-100 text-purple-700">학교 공지</span>
-            <span className="text-xs text-gray-400">{schoolNotices.length}건</span>
-          </div>
-          <NoticeList notices={schoolNotices} />
-        </section>
+      ) : (
+        <div className="space-y-2">
+          {notices.map(notice => (
+            <Link
+              key={notice.id}
+              to={`/notices/${notice.id}`}
+              className="card p-4 flex items-center justify-between hover:shadow-md transition group"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={`shrink-0 text-xs font-bold px-2 py-0.5 rounded-full ${
+                  notice.scope === 'GLOBAL'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-purple-100 text-purple-700'
+                }`}>
+                  {notice.scope === 'GLOBAL' ? '전체' : '학교'}
+                </span>
+                <span className="font-semibold text-gray-800 truncate group-hover:text-primary-600 transition">
+                  {notice.title}
+                </span>
+              </div>
+              <span className="text-xs text-gray-400 shrink-0 ml-4">{fmtDate(notice.publishedAt)}</span>
+            </Link>
+          ))}
+        </div>
       )}
+
+      {/* 페이지네이션 */}
+      <Pagination page={page} totalPages={totalPages} onPage={setPage} />
     </div>
   )
 }

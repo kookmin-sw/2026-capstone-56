@@ -300,10 +300,15 @@ export default function HeroSection({ eventCount = 0, user, stats = [] }) {
           {/* Secondary 버튼 */}
           <motion.div
             className="relative overflow-hidden rounded-2xl"
-            whileHover={{ scale: 1.04, backgroundColor: 'rgba(255,255,255,0.12)' }}
+            whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
             transition={{ type: 'spring', stiffness: 380, damping: 22 }}
-            style={{ background: 'rgba(240,238,255,0.34)' }}
+            style={{
+              background: 'rgba(255,255,255,0.7)',
+              backdropFilter: 'blur(8px)',
+              border: '1.5px solid rgba(124,58,237,0.25)',
+              boxShadow: '0 4px 16px rgba(99,102,241,0.12)',
+            }}
             onClick={secondary.trigger}
           >
             <a
