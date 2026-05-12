@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getEvent, publishEvent, closeEvent, getNextRelease } from '../api/events'
 import { createFreeRegistration, cancelFreeRegistration } from '../api/registrations'
@@ -66,13 +66,77 @@ function ReleaseCountdown({ nextReleaseAt, pendingRange }) {
   )
 }
 
+// ── 주최자 카드 ──────────────────────────────────────────────────────────────
+const ROLE_LABEL = {
+  CERTIFIED: '인증주최자',
+  SCHOOL_ADMIN: '학교총관리자',
+  OPERATOR: '운영자',
+  ATTENDEE: '일반사용자',
+}
+
+function HostCard({ host, hostEventCount }) {
+  if (!host) return null
+  return (
+    <div className="bg-white rounded-3xl shadow-card p-5 space-y-4">
+      <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">주최자</div>
+
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-100 to-purple-100 flex items-center justify-center shrink-0">
+          <span className="text-base font-bold text-primary-600">{host.name?.[0] ?? '?'}</span>
+        </div>
+        <div className="min-w-0">
+          <div className="font-bold text-gray-900 text-sm truncate">{host.name}</div>
+          {host.school?.name && (
+            <div className="text-xs text-gray-400 truncate">{host.school.name}</div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <span className="inline-block text-xs px-2 py-0.5 rounded-full bg-primary-50 text-primary-600 font-semibold w-fit">
+          {ROLE_LABEL[host.role] ?? host.role}
+        </span>
+        {host.roleMemo && (
+          <div className="text-xs text-gray-400">{host.roleMemo}</div>
+        )}
+      </div>
+
+      <div className="border-t border-gray-50" />
+
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-400">진행한 행사</span>
+          <span className="text-sm font-bold text-gray-800">{hostEventCount ?? 0}개</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-400">평균 별점</span>
+          {host.hostRating != null && host.ratingCount > 0 ? (
+            <div className="flex items-center gap-1">
+              <span className="text-amber-400 text-sm">★</span>
+              <span className="text-sm font-bold text-gray-800">{Number(host.hostRating).toFixed(1)}</span>
+              <span className="text-xs text-gray-400">({host.ratingCount})</span>
+            </div>
+          ) : (
+            <span className="text-xs text-gray-400">리뷰 없음</span>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── 우측 신청 카드 ────────────────────────────────────────────────────────────
 function RegistrationCard({ event, user, myReg, activeCount, navigate, applyMutation, cancelMutation, cancelPaidMutation, cancelPendingMutation, onPaidRegister, isPaying, nextRelease }) {
   const lockedCount = event.lockedCount ?? 0
   const remaining = event.capacity - activeCount - lockedCount
   const isFull = remaining <= 0
   const ratio = Math.min(100, Math.round(((activeCount + lockedCount) / event.capacity) * 100))
-  const isUpcoming = event.publishAt && new Date(event.publishAt) > new Date()
+  const now = new Date()
+  const isUpcoming = event.publishAt && new Date(event.publishAt) > now
+  const releaseCutoff = event.releaseDeadline
+    ? new Date(event.releaseDeadline)
+    : event.startAt ? new Date(new Date(event.startAt).getTime() - 30 * 60_000) : null
+  const isDeadlinePassed = !!releaseCutoff && now > releaseCutoff
 
   return (
     <div className="bg-white rounded-3xl shadow-card p-5 space-y-4">
@@ -164,6 +228,17 @@ function RegistrationCard({ event, user, myReg, activeCount, navigate, applyMuta
               {event.closedAt
                 ? '호스트에 의해 조기 마감된 행사입니다.'
                 : '신청 기간이 종료된 행사입니다.'}
+            </p>
+          </>
+        ) : isDeadlinePassed ? (
+          <>
+            <button disabled className="btn w-full py-3.5 rounded-2xl bg-gray-100 text-gray-400 text-base font-bold cursor-not-allowed">
+              신청 마감
+            </button>
+            <p className="text-xs text-center text-gray-400">
+              {event.releaseDeadline
+                ? `2차 신청마감(${fmtDate(event.releaseDeadline)} ${fmtTime(event.releaseDeadline)})이 지났습니다.`
+                : '행사 시작 30분 전 신청이 마감되었습니다.'}
             </p>
           </>
         ) : event.status !== 'PUBLISHED' ? (
@@ -340,15 +415,11 @@ export default function EventDetail() {
       {/* ── 히어로 이미지 ── */}
       <div className="relative mb-6">
         <div className="w-full h-56 rounded-3xl overflow-hidden bg-gradient-to-br from-indigo-100 via-purple-50 to-indigo-100">
-          {event.imageUrl ? (
-            <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <svg className="w-16 h-16 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-          )}
+          <img
+            src={event.imageUrl || '/logo6.png'}
+            alt={event.title}
+            className={`w-full h-full ${event.imageUrl ? 'object-cover' : 'object-contain p-8 opacity-60'}`}
+          />
         </div>
 
         {/* 뒤로 버튼 */}
@@ -536,25 +607,10 @@ export default function EventDetail() {
             />
           </div>
 
-          {/* 호스트 전용 섹션 */}
-          {isHost && (
-            <div className="border-t pt-4">
-              <Link
-                to={`/events/${id}/manage`}
-                className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-2xl text-sm font-semibold transition w-fit"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                행사 관리
-              </Link>
-            </div>
-          )}
         </div>
 
-        {/* 오른쪽: 신청 카드 (sticky) */}
-        <div className="w-60 shrink-0 sticky top-6">
+        {/* 오른쪽: 신청 카드 + 주최자 카드 (sticky) */}
+        <div className="w-60 shrink-0 sticky top-6 space-y-4">
           <RegistrationCard
             event={event}
             user={user}
@@ -569,6 +625,7 @@ export default function EventDetail() {
             isPaying={isPaying}
             nextRelease={nextRelease}
           />
+          <HostCard host={event.host} hostEventCount={event.hostEventCount} />
         </div>
 
       </div>
