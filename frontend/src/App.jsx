@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import KakaoCallback from './pages/KakaoCallback'
@@ -36,11 +36,15 @@ import SchoolAdminNotices from './pages/SchoolAdminNotices'
 import Notifications from './pages/Notifications'
 import AdminInquiries from './pages/AdminInquiries'
 import Footer from './components/Footer'
+import Poster from './pages/Poster'
 
 export default function App() {
+  const location = useLocation()
+  const isPoster = location.pathname === '/poster'
+
   return (
     <div className="min-h-screen bg-[#e9e4ff]">
-      <Header />
+      {!isPoster && <Header />}
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -80,9 +84,10 @@ export default function App() {
         <Route path="/admin/notices" element={<OperatorRoute><div className="max-w-6xl mx-auto px-4 py-6"><AdminNotices /></div></OperatorRoute>} />
         <Route path="/admin/inquiries" element={<OperatorRoute><div className="max-w-6xl mx-auto px-4 py-6"><AdminInquiries /></div></OperatorRoute>} />
         <Route path="/notifications" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><Notifications /></div></PrivateRoute>} />
+        <Route path="/poster" element={<Poster />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      <Footer />
+      {!isPoster && <Footer />}
     </div>
   )
 }
