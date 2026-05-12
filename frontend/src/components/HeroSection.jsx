@@ -134,7 +134,7 @@ export default function HeroSection({ eventCount = 0, user, stats = [] }) {
   return (
     <section
       ref={heroRef}
-      className="hero-gradient relative rounded-4xl overflow-hidden mb-14 px-8 py-28 text-center"
+      className="hero-gradient relative rounded-4xl overflow-hidden mb-14 px-4 sm:px-8 py-16 sm:py-28 text-center"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
