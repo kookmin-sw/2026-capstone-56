@@ -441,7 +441,7 @@ export default function EventDetail() {
       </div>
 
       {/* ── 본문 2컬럼 ── */}
-      <div className="flex gap-5 items-start">
+      <div className="flex flex-col lg:flex-row gap-5 items-start">
 
         {/* 왼쪽: 정보 */}
         <div className="flex-1 min-w-0 space-y-4">
@@ -610,7 +610,7 @@ export default function EventDetail() {
         </div>
 
         {/* 오른쪽: 신청 카드 + 주최자 카드 (sticky) */}
-        <div className="w-60 shrink-0 sticky top-6 space-y-4">
+        <div className="w-full lg:w-60 shrink-0 lg:sticky top-6 space-y-4">
           <RegistrationCard
             event={event}
             user={user}
