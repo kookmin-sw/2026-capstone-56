@@ -7,3 +7,4 @@ db*.md
 # 포스터
 poster.html
 festicket-poster*.png
+frontend/src/pages/Poster.jsx

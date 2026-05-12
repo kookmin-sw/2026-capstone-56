@@ -9,7 +9,7 @@ const MOCK_EVENTS = [
     capacity: 300,
     isPaid: false,
     price: null,
-    imageUrl: null,
+    imageUrl: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&h=200&fit=crop',
     status: 'OPEN',
     scope: 'PUBLIC',
     _count: { registrations: 241, waitlist: 0 },
@@ -24,7 +24,7 @@ const MOCK_EVENTS = [
     capacity: 100,
     isPaid: true,
     price: 5000,
-    imageUrl: null,
+    imageUrl: 'https://images.unsplash.com/photo-1522383225653-ed111181a951?w=400&h=200&fit=crop',
     status: 'OPEN',
     scope: 'PUBLIC',
     _count: { registrations: 78, waitlist: 0 },
@@ -39,7 +39,7 @@ const MOCK_EVENTS = [
     capacity: 50,
     isPaid: false,
     price: null,
-    imageUrl: null,
+    imageUrl: 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=400&h=200&fit=crop',
     status: 'OPEN',
     scope: 'SCHOOL',
     _count: { registrations: 49, waitlist: 3 },
@@ -69,7 +69,7 @@ export default function Poster() {
         display: 'flex',
         flexDirection: 'column',
         padding: '28px 32px',
-        gap: '14px',
+        gap: '9px',
         boxSizing: 'border-box',
         position: 'relative',
       }}>
@@ -95,21 +95,22 @@ export default function Poster() {
           {MOCK_EVENTS.map(event => <EventCard key={event.id} event={event} />)}
         </div>
 
-        {/* ── 주요 기능 4개 ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '10px', position: 'relative', zIndex: 10 }}>
+        {/* ── 주요 기능 5개 ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: '8px', position: 'relative', zIndex: 10 }}>
           {[
             { badge: '운영', color: '#3b82f6', title: '행사 관리', items: ['행사 생성 및 수정', 'QR 티켓 발급', '실시간 체크인'] },
             { badge: '참여', color: '#10b981', title: '간편 참여', items: ['행사 둘러보기', '클릭 한 번 신청', 'QR로 입장'] },
             { badge: '결제', color: '#f59e0b', title: '유료 결제', items: ['Toss Payments', '자동 환불 처리', '무료·유료 통합'] },
-            { badge: '공지', color: '#8b5cf6', title: '알림 & 공지', items: ['공지사항 게시판', '행사 업데이트 알림', '알림 대량 관리'] },
+            { badge: '가격', color: '#8b5cf6', title: '화이트리스트', items: ['대상별 가격 차등', '초청 명단 관리', '권한 기반 접근'] },
+            { badge: '행정', color: '#f43f5e', title: '행정 파일', items: ['증빙보고서 다운로드', '행정파일 자동생성', '참가자 명단 출력'] },
           ].map((f, i) => (
-            <div key={i} style={{ background: 'rgba(255,255,255,0.7)', borderTop: `3px solid ${f.color}`, borderRadius: '12px', padding: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '8px' }}>
-                <div style={{ background: f.color, color: 'white', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 'bold', flexShrink: 0, lineHeight: 1, textAlign: 'center' }}>{f.badge}</div>
-                <span style={{ fontSize: '12px', fontWeight: '800', color: '#1e293b' }}>{f.title}</span>
+            <div key={i} style={{ background: 'rgba(255,255,255,0.7)', borderTop: `3px solid ${f.color}`, borderRadius: '12px', padding: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '7px' }}>
+                <div style={{ background: f.color, color: 'white', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 'bold', flexShrink: 0, lineHeight: 1 }}>{f.badge}</div>
+                <span style={{ fontSize: '11px', fontWeight: '800', color: '#1e293b' }}>{f.title}</span>
               </div>
               {f.items.map((item, j) => (
-                <div key={j} style={{ fontSize: '11px', color: '#475569', marginBottom: '3px', display: 'flex', gap: '4px' }}>
+                <div key={j} style={{ fontSize: '10px', color: '#475569', marginBottom: '3px', display: 'flex', gap: '4px' }}>
                   <span style={{ color: f.color }}>●</span>{item}
                 </div>
               ))}
@@ -117,66 +118,11 @@ export default function Poster() {
           ))}
         </div>
 
-        {/* ── 도메인 + 기술스택 + 아키텍처 ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', position: 'relative', zIndex: 10 }}>
-          {/* 도메인 */}
-          <div style={{ background: 'rgba(255,255,255,0.7)', borderRadius: '12px', padding: '12px' }}>
-            <div style={{ fontSize: '12px', fontWeight: '800', color: '#1e293b', marginBottom: '10px' }}>도메인 구조</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              {[
-                { color: '#3b82f6', label: '인증', desc: '로그인·권한' },
-                { color: '#10b981', label: '행사', desc: '생성·신청' },
-                { color: '#f59e0b', label: '결제', desc: '결제·환불' },
-                { color: '#8b5cf6', label: '알림', desc: '공지·알림' },
-              ].map((d, i) => (
-                <div key={i} style={{ borderLeft: `3px solid ${d.color}`, paddingLeft: '6px', background: '#f8fafc', borderRadius: '4px', padding: '6px 6px 6px 8px' }}>
-                  <div style={{ fontSize: '11px', fontWeight: '800', color: d.color }}>{d.label}</div>
-                  <div style={{ fontSize: '10px', color: '#64748b' }}>{d.desc}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 기술 스택 */}
-          <div style={{ background: 'rgba(255,255,255,0.7)', borderRadius: '12px', padding: '12px' }}>
-            <div style={{ fontSize: '12px', fontWeight: '800', color: '#1e293b', marginBottom: '10px' }}>기술 스택</div>
-            {[
-              { badge: '프론트', color: '#6366f1', value: 'React · TailwindCSS · Framer Motion' },
-              { badge: '백엔드', color: '#0ea5e9', value: 'Node.js · Express · Prisma' },
-              { badge: 'DB', color: '#10b981', value: 'Supabase PostgreSQL' },
-              { badge: '인증', color: '#8b5cf6', value: 'JWT · 카카오 OAuth' },
-              { badge: '결제', color: '#f59e0b', value: 'Toss Payments' },
-            ].map((s, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '5px' }}>
-                <span style={{ background: s.color, color: 'white', padding: '2px 6px', borderRadius: '10px', fontSize: '9px', fontWeight: 'bold', flexShrink: 0, minWidth: '36px', textAlign: 'center' }}>{s.badge}</span>
-                <span style={{ fontSize: '10px', color: '#475569' }}>{s.value}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* 아키텍처 */}
-          <div style={{ background: 'rgba(255,255,255,0.7)', borderRadius: '12px', padding: '12px' }}>
-            <div style={{ fontSize: '12px', fontWeight: '800', color: '#1e293b', marginBottom: '10px' }}>아키텍처</div>
-            {[
-              'AWS Amplify (SPA 배포)',
-              'AWS API Gateway + Express',
-              'Supabase PostgreSQL 관리형',
-              'JWT + 카카오 OAuth',
-              'Toss Payments API',
-              'Supabase Storage',
-            ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', gap: '5px', fontSize: '10px', color: '#475569', marginBottom: '4px' }}>
-                <span style={{ color: '#6366f1', flexShrink: 0 }}>●</span>{item}
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* ── 사용 화면 4개 ── */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '10px', position: 'relative', zIndex: 10 }}>
           {[
             {
-              title: '행사 목록', color: '#3730a3', height: '110px',
+              title: '행사 목록', color: '#3730a3', height: '130px',
               body: (
                 <div style={{ padding: '6px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
                   {[['봄 축제','무료','#6366f1'],['동아리 공연','5,000원','#f43f5e'],['취업 특강','무료','#10b981']].map(([t,p,c],j)=>(
@@ -190,20 +136,17 @@ export default function Poster() {
               desc: '행사 둘러보기',
             },
             {
-              title: '행사 신청', color: '#3730a3', height: '110px',
+              title: '행사 신청', color: '#3730a3', height: '130px',
               body: (
                 <div style={{ padding: '6px', flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  {/* 행사명 + 무료 배지 */}
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                     <div style={{ fontSize:'8px', fontWeight:'bold', color:'#1e293b' }}>2026 봄 대학 축제</div>
                     <span style={{ fontSize:'6px', fontWeight:'bold', background:'#dcfce7', color:'#16a34a', padding:'1px 4px', borderRadius:'3px' }}>무료</span>
                   </div>
-                  {/* 일시 + 장소 */}
                   <div style={{ display:'flex', gap:'6px' }}>
                     <div style={{ fontSize:'7px', color:'#64748b' }}>📅 5월 20일 18:00</div>
                     <div style={{ fontSize:'7px', color:'#64748b' }}>📍 중앙광장</div>
                   </div>
-                  {/* 신청 현황 */}
                   <div>
                     <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'2px' }}>
                       <span style={{ fontSize:'6px', color:'#94a3b8' }}>241 / 300명</span>
@@ -213,7 +156,6 @@ export default function Poster() {
                       <div style={{ height:'100%', width:'80%', background:'linear-gradient(90deg,#6366f1,#8b5cf6)', borderRadius:'2px' }} />
                     </div>
                   </div>
-                  {/* 신청 버튼 */}
                   <div style={{ background:'linear-gradient(90deg,#6366f1,#8b5cf6)', borderRadius:'4px', padding:'4px', textAlign:'center', marginTop:'auto' }}>
                     <span style={{ fontSize:'8px', fontWeight:'bold', color:'white' }}>지금 신청하기</span>
                   </div>
@@ -222,7 +164,7 @@ export default function Poster() {
               desc: '간편 신청',
             },
             {
-              title: '🎟️ 내 티켓', color: '#3730a3', height: '110px',
+              title: '🎟️ 내 티켓', color: '#3730a3', height: '130px',
               body: (
                 <div style={{ padding: '6px', display:'flex', gap:'6px' }}>
                   <div style={{ flex:1, background:'linear-gradient(135deg,#6366f1,#8b5cf6)', borderRadius:'6px', padding:'8px' }}>
@@ -234,19 +176,15 @@ export default function Poster() {
                   </div>
                   <div style={{ background:'white', borderRadius:'6px', padding:'5px', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                     <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
-                      {/* 좌상단 눈 */}
                       <rect x="2" y="2" width="16" height="16" rx="2" fill="#6366f1"/>
                       <rect x="4" y="4" width="12" height="12" rx="1" fill="white"/>
                       <rect x="6" y="6" width="8" height="8" rx="1" fill="#6366f1"/>
-                      {/* 우상단 눈 */}
                       <rect x="26" y="2" width="16" height="16" rx="2" fill="#6366f1"/>
                       <rect x="28" y="4" width="12" height="12" rx="1" fill="white"/>
                       <rect x="30" y="6" width="8" height="8" rx="1" fill="#6366f1"/>
-                      {/* 좌하단 눈 */}
                       <rect x="2" y="26" width="16" height="16" rx="2" fill="#6366f1"/>
                       <rect x="4" y="28" width="12" height="12" rx="1" fill="white"/>
                       <rect x="6" y="30" width="8" height="8" rx="1" fill="#6366f1"/>
-                      {/* 데이터 도트 */}
                       <rect x="20" y="2" width="4" height="4" rx="1" fill="#6366f1"/>
                       <rect x="26" y="20" width="4" height="4" rx="1" fill="#6366f1"/>
                       <rect x="32" y="20" width="4" height="4" rx="1" fill="#6366f1"/>
@@ -268,11 +206,11 @@ export default function Poster() {
               desc: 'QR 티켓',
             },
             {
-              title: '⚡ QR 체크인', color: '#3730a3', height: '110px',
+              title: '⚡ QR 체크인', color: '#3730a3', height: '130px',
               body: (
                 <div style={{ padding: '6px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div style={{ border:'2px dashed #6366f1', borderRadius:'6px', padding:'10px', textAlign:'center', marginBottom:'4px' }}>
-                    <div style={{ fontSize:'16px', marginBottom:'2px' }}>📷</div>
+                  <div style={{ border:'2px dashed #6366f1', borderRadius:'6px', padding:'14px', textAlign:'center', marginBottom:'4px' }}>
+                    <div style={{ fontSize:'20px', marginBottom:'2px' }}>📷</div>
                     <div style={{ fontSize:'7px', color:'#64748b' }}>QR 스캔</div>
                   </div>
                   <div style={{ background:'#eef2ff', borderRadius:'4px', padding:'3px', textAlign:'center' }}>
@@ -295,6 +233,84 @@ export default function Poster() {
           ))}
         </div>
 
+        {/* ── 아키텍처 다이어그램 ── */}
+        <div style={{ position: 'relative', zIndex: 10, background: 'rgba(255,255,255,0.6)', borderRadius: '14px', padding: '14px 18px' }}>
+          <div style={{ fontSize: '11px', fontWeight: '800', color: '#1e293b', marginBottom: '12px', letterSpacing: '0.5px' }}>ARCHITECTURE</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'center' }}>
+
+            {/* 사용자 */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#f1f5f9', border: '2px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>👤</div>
+              <span style={{ fontSize: '8px', color: '#64748b', fontWeight: '600' }}>사용자</span>
+            </div>
+
+            {/* 화살표 */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', margin: '0 6px', marginBottom: '14px' }}>
+              <div style={{ height: '1.5px', width: '32px', background: '#6366f1' }} />
+              <span style={{ fontSize: '7px', color: '#94a3b8' }}>HTTPS</span>
+            </div>
+
+            {/* 프론트엔드 */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+              <div style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', borderRadius: '10px', padding: '8px 10px', minWidth: '80px', textAlign: 'center' }}>
+                <div style={{ fontSize: '9px', fontWeight: '800', color: 'white', marginBottom: '2px' }}>React SPA</div>
+                <div style={{ fontSize: '7px', color: 'rgba(255,255,255,0.75)' }}>TailwindCSS</div>
+                <div style={{ fontSize: '7px', color: 'rgba(255,255,255,0.6)', marginTop: '2px', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '2px' }}>AWS Amplify</div>
+              </div>
+              <span style={{ fontSize: '8px', color: '#64748b', fontWeight: '600' }}>Frontend</span>
+            </div>
+
+            {/* 화살표 */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', margin: '0 6px', marginBottom: '14px' }}>
+              <div style={{ height: '1.5px', width: '32px', background: '#6366f1' }} />
+              <span style={{ fontSize: '7px', color: '#94a3b8' }}>REST API</span>
+            </div>
+
+            {/* 백엔드 */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+              <div style={{ background: 'linear-gradient(135deg,#0ea5e9,#3b82f6)', borderRadius: '10px', padding: '8px 10px', minWidth: '90px', textAlign: 'center' }}>
+                <div style={{ fontSize: '9px', fontWeight: '800', color: 'white', marginBottom: '2px' }}>Express.js</div>
+                <div style={{ fontSize: '7px', color: 'rgba(255,255,255,0.75)' }}>Node.js · Prisma</div>
+                <div style={{ fontSize: '7px', color: 'rgba(255,255,255,0.6)', marginTop: '2px', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '2px' }}>API Gateway</div>
+              </div>
+              <span style={{ fontSize: '8px', color: '#64748b', fontWeight: '600' }}>Backend</span>
+            </div>
+
+            {/* 화살표 → 분기 */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', margin: '0 6px', marginBottom: '14px' }}>
+              <div style={{ height: '1.5px', width: '28px', background: '#10b981' }} />
+              <div style={{ height: '1.5px', width: '28px', background: '#f59e0b' }} />
+              <div style={{ height: '1.5px', width: '28px', background: '#8b5cf6' }} />
+            </div>
+
+            {/* 우측 서비스들 */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              {/* Supabase */}
+              <div style={{ display: 'flex', gap: '5px' }}>
+                <div style={{ background: '#ecfdf5', border: '1.5px solid #10b981', borderRadius: '8px', padding: '5px 8px', minWidth: '80px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '8px', fontWeight: '800', color: '#10b981' }}>Supabase</div>
+                  <div style={{ fontSize: '7px', color: '#64748b' }}>PostgreSQL</div>
+                </div>
+                <div style={{ background: '#ecfdf5', border: '1.5px solid #10b981', borderRadius: '8px', padding: '5px 8px', minWidth: '66px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '8px', fontWeight: '800', color: '#10b981' }}>Storage</div>
+                  <div style={{ fontSize: '7px', color: '#64748b' }}>이미지</div>
+                </div>
+              </div>
+              {/* 인증 + 결제 */}
+              <div style={{ display: 'flex', gap: '5px' }}>
+                <div style={{ background: '#fefce8', border: '1.5px solid #f59e0b', borderRadius: '8px', padding: '5px 8px', minWidth: '80px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '8px', fontWeight: '800', color: '#f59e0b' }}>Kakao OAuth</div>
+                  <div style={{ fontSize: '7px', color: '#64748b' }}>JWT 인증</div>
+                </div>
+                <div style={{ background: '#fdf4ff', border: '1.5px solid #8b5cf6', borderRadius: '8px', padding: '5px 8px', minWidth: '66px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '8px', fontWeight: '800', color: '#8b5cf6' }}>Toss</div>
+                  <div style={{ fontSize: '7px', color: '#64748b' }}>결제</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
 
       </div>
     </>
