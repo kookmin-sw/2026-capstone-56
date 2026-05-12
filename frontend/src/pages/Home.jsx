@@ -41,6 +41,7 @@ export default function Home() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo]   = useState('')
   const [selectedSchoolId, setSelectedSchoolId] = useState(null) // null = 전체(PUBLIC)
+  const [showEnded, setShowEnded] = useState(false)
   const { user } = useAuth()
 
   const { data: schools = [] } = useQuery({ queryKey: ['schools'], queryFn: getSchools })
@@ -53,7 +54,11 @@ export default function Home() {
   const filtered = useMemo(() => {
     if (!events) return []
     const now = new Date()
-    return events.filter((e) => {
+    const result = events.filter((e) => {
+      const isEnded = e.endAt && new Date(e.endAt) < now
+      if (!showEnded && isEnded) return false
+      if (showEnded && !isEnded) return false
+
       if (search) {
         const q = search.toLowerCase()
         const hit = e.title.toLowerCase().includes(q)
@@ -87,12 +92,15 @@ export default function Home() {
       }
       return true
     })
-  }, [events, search, priceFilter, dateFilter, dateFrom, dateTo])
+    // 종료된 행사는 최근 종료 순 정렬
+    if (showEnded) result.sort((a, b) => new Date(b.endAt) - new Date(a.endAt))
+    return result
+  }, [events, search, priceFilter, dateFilter, dateFrom, dateTo, showEnded])
 
   const selectedSchool = schools.find(s => s.id === selectedSchoolId)
 
   const stats = events && events.length > 0 ? [
-    { label: '행사 모집 중', value: `${events.length}개` },
+    { label: showEnded ? '종료된 행사' : '행사 모집 중', value: `${events.length}개` },
     { label: '총 모집 인원', value: `${events.reduce((s, e) => s + e.capacity, 0).toLocaleString()}명` },
     { label: '무료 행사', value: `${events.filter(e => e.price === 0).length}개` },
   ] : []
@@ -187,6 +195,18 @@ export default function Home() {
               </button>
             )}
           </div>
+
+          {/* 종료된 행사 토글 */}
+          <button
+            onClick={() => { setShowEnded(v => !v); setDateFilter('all'); setDateFrom(''); setDateTo('') }}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-sm font-medium border shadow-card transition-all ${
+              showEnded
+                ? 'bg-gray-700 text-white border-gray-700'
+                : 'bg-white text-gray-500 border-gray-100 hover:text-gray-800 hover:bg-gray-50'
+            }`}
+          >
+            {showEnded ? '← 진행 중 행사' : '종료된 행사'}
+          </button>
         </div>
       </div>
 
@@ -194,11 +214,13 @@ export default function Home() {
       {!isLoading && !isError && (
         <div className="flex items-center justify-between">
           <h2 className="text-[15px] font-semibold text-gray-700">
-            {filtered.length > 0 ? `행사 ${filtered.length}개` : '결과 없음'}
+            {filtered.length > 0
+              ? `${showEnded ? '종료된 ' : ''}행사 ${filtered.length}개`
+              : '결과 없음'}
           </h2>
-          {(search || priceFilter !== 'all' || dateFilter !== 'all' || dateFrom || dateTo) && (
+          {(search || priceFilter !== 'all' || dateFilter !== 'all' || dateFrom || dateTo || showEnded) && (
             <button
-              onClick={() => { setSearch(''); setPriceFilter('all'); setDateFilter('all'); setDateFrom(''); setDateTo('') }}
+              onClick={() => { setSearch(''); setPriceFilter('all'); setDateFilter('all'); setDateFrom(''); setDateTo(''); setShowEnded(false) }}
               className="text-xs text-primary-600 font-medium hover:underline"
             >
               필터 초기화
@@ -221,7 +243,9 @@ export default function Home() {
         <div className="card p-16 text-center">
           <p className="text-5xl mb-4">🔍</p>
           <p className="text-gray-700 font-semibold mb-1">
-            {selectedSchool ? `${selectedSchool.name}의 행사가 없어요` : '조건에 맞는 행사가 없어요'}
+            {showEnded
+              ? (selectedSchool ? `${selectedSchool.name}의 종료된 행사가 없어요` : '종료된 행사가 없어요')
+              : (selectedSchool ? `${selectedSchool.name}의 행사가 없어요` : '조건에 맞는 행사가 없어요')}
           </p>
           <p className="text-sm text-gray-400">다른 키워드나 필터로 검색해보세요</p>
         </div>
