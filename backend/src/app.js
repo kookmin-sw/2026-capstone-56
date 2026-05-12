@@ -2,6 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const helmet = require('helmet')
+const compression = require('compression')
 
 const authRoutes = require('./routes/auth')
 const schoolRoutes = require('./routes/schools')
@@ -23,6 +24,7 @@ const { start: startReleaseWorker } = require('./workers/releaseWorker')
 
 const app = express()
 
+app.use(compression())
 app.use(helmet())
 app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }))
 app.use(express.json())
