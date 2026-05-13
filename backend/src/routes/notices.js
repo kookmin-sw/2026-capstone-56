@@ -50,35 +50,46 @@ router.post('/upload-image',
 
 // ──────────────────────────────────────────────
 // UC-NT07: 공지 목록 조회
-// GET /api/notices
+// GET /api/notices?page=1&limit=10&q=검색어
 // BR-NT05: PUBLISHED만 노출 | BR-NT07: 학교 공지는 해당 학교 사용자만
 // ──────────────────────────────────────────────
 router.get('/', authMiddleware, async (req, res, next) => {
   try {
     const { schoolId } = req.user
+    const page = Math.max(1, parseInt(req.query.page) || 1)
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10))
+    const q = req.query.q?.trim() || ''
 
-    const notices = await prisma.notice.findMany({
-      where: {
-        status: 'PUBLISHED',
-        deletedAt: null,
-        OR: [
-          { scope: 'GLOBAL' },
-          { scope: 'SCHOOL', schoolId: schoolId ?? '__none__' },
-        ],
-      },
-      orderBy: { publishedAt: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        scope: true,
-        schoolId: true,
-        publishedAt: true,
-        createdAt: true,
-        author: { select: { name: true } },
-      },
-    })
+    const where = {
+      status: 'PUBLISHED',
+      deletedAt: null,
+      OR: [
+        { scope: 'GLOBAL' },
+        { scope: 'SCHOOL', schoolId: schoolId ?? '__none__' },
+      ],
+      ...(q ? { title: { contains: q, mode: 'insensitive' } } : {}),
+    }
 
-    res.json(notices)
+    const [total, notices] = await Promise.all([
+      prisma.notice.count({ where }),
+      prisma.notice.findMany({
+        where,
+        orderBy: { publishedAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        select: {
+          id: true,
+          title: true,
+          scope: true,
+          schoolId: true,
+          publishedAt: true,
+          createdAt: true,
+          author: { select: { name: true } },
+        },
+      }),
+    ])
+
+    res.json({ data: notices, total, page, totalPages: Math.ceil(total / limit) })
   } catch (err) {
     next(err)
   }

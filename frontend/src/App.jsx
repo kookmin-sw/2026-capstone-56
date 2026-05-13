@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import KakaoCallback from './pages/KakaoCallback'
@@ -39,6 +39,8 @@ import AdminInquiries from './pages/AdminInquiries'
 import Footer from './components/Footer'
 
 export default function App() {
+  const location = useLocation()
+
   return (
     <div className="min-h-screen bg-[#e9e4ff]">
       <Header />

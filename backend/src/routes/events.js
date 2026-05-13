@@ -361,7 +361,14 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
     const event = await prisma.event.findUnique({
       where: { id: req.params.id },
       include: {
-        host: { select: { id: true, name: true, email: true } },
+        host: {
+          select: {
+            id: true, name: true, email: true,
+            role: true, roleMemo: true,
+            hostRating: true, ratingCount: true,
+            school: { select: { name: true } },
+          },
+        },
         school: { select: { id: true, name: true } },
         _count: {
           select: { registrations: { where: { status: { in: ACTIVE_STATUSES } } } },
@@ -415,7 +422,12 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
       isWhitelisted = !!entry
     }
 
-    res.json({ ...event, cancelledCount, lockedCount, myRegistration, isWhitelisted })
+    // 주최자가 진행한 행사 수 (삭제되지 않은 공개 이상)
+    const hostEventCount = await prisma.event.count({
+      where: { hostId: event.hostId, deletedAt: null, status: { not: 'DRAFT' } },
+    })
+
+    res.json({ ...event, cancelledCount, lockedCount, myRegistration, isWhitelisted, hostEventCount })
   } catch (err) {
     next(err)
   }

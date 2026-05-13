@@ -39,10 +39,11 @@ export default function EventCard({ event }) {
   const time = date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
 
   const isUpcoming = event.publishAt && new Date(event.publishAt) > new Date()
+  const isEnded = event.endAt && new Date(event.endAt) < new Date()
 
   return (
     <Link to={`/events/${event.id}`} className="group block">
-      <div className="relative bg-white rounded-3xl border border-gray-100 shadow-card hover:shadow-card-hover hover:-translate-y-1.5 transition-all duration-300 overflow-hidden">
+      <div className={`relative bg-white rounded-3xl border border-gray-100 shadow-card hover:shadow-card-hover hover:-translate-y-1.5 transition-all duration-300 overflow-hidden${isEnded ? ' opacity-80' : ''}`}>
 
         {/* 컬러 헤더 */}
         <div
@@ -83,8 +84,17 @@ export default function EventCard({ event }) {
             </span>
           </div>
 
+          {/* 종료 오버레이 */}
+          {isEnded && (
+            <div className="absolute inset-0 bg-black/55 flex items-center justify-center z-20">
+              <span className="text-white text-sm font-bold px-5 py-2 rounded-full backdrop-blur-sm tracking-wide border border-white/30 bg-white/10">
+                종료됨
+              </span>
+            </div>
+          )}
+
           {/* 마감 오버레이 */}
-          {isFull && event.status !== 'WAITING' && (
+          {isFull && event.status !== 'WAITING' && !isEnded && (
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
               <span className="bg-black/60 text-white text-sm font-bold px-5 py-2 rounded-full backdrop-blur-sm tracking-wide">
                 마감
@@ -138,30 +148,36 @@ export default function EventCard({ event }) {
           </div>
 
           {/* 잔여석 프로그레스 */}
-          <div>
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-[11px] text-gray-400 font-medium">모집 현황</span>
-              <span className={`text-[11px] font-bold ${
-                event.status === 'WAITING' ? 'text-amber-500'
-                : isFull ? 'text-red-500'
-                : ratio >= 80 ? 'text-orange-500'
-                : 'text-emerald-600'
-              }`}>
-                {event.status === 'WAITING' ? '신청 준비중' : isFull ? `마감 · 대기 ${event._count?.waitlist ?? 0}명` : `잔여 ${remaining}석`}
-              </span>
+          {isEnded ? (
+            <div className="text-[12px] text-gray-400 font-medium text-center py-1 border-t border-gray-50 pt-3">
+              종료된 행사입니다
             </div>
-            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-700"
-                style={{
-                  width: `${ratio}%`,
-                  background: isFull ? '#f87171'
-                    : ratio >= 80 ? '#fb923c'
-                    : `linear-gradient(90deg, ${palette.from}, ${palette.to})`
-                }}
-              />
+          ) : (
+            <div>
+              <div className="flex justify-between items-center mb-1.5">
+                <span className="text-[11px] text-gray-400 font-medium">모집 현황</span>
+                <span className={`text-[11px] font-bold ${
+                  event.status === 'WAITING' ? 'text-amber-500'
+                  : isFull ? 'text-red-500'
+                  : ratio >= 80 ? 'text-orange-500'
+                  : 'text-emerald-600'
+                }`}>
+                  {event.status === 'WAITING' ? '신청 준비중' : isFull ? `마감 · 대기 ${event._count?.waitlist ?? 0}명` : `잔여 ${remaining}석`}
+                </span>
+              </div>
+              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{
+                    width: `${ratio}%`,
+                    background: isFull ? '#f87171'
+                      : ratio >= 80 ? '#fb923c'
+                      : `linear-gradient(90deg, ${palette.from}, ${palette.to})`
+                  }}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* 오픈 예정 오버레이 */}

@@ -43,16 +43,16 @@ export default function Header() {
     <>
     <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2 shrink-0">
           <img src="/logo6.png" alt="페스티켓 로고" className="h-8 w-auto" />
-          <span className="font-black text-primary-600 text-lg tracking-tight">페스티켓</span>
+          <span className="font-black text-primary-600 text-lg tracking-tight whitespace-nowrap">페스티켓</span>
         </Link>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 min-w-0">
           {user && <NotificationBell />}
           <Link
             to="/notices"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-xl hover:bg-gray-50 transition"
+            className="hidden sm:block text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-xl hover:bg-gray-50 transition whitespace-nowrap"
           >
             공지사항
           </Link>
@@ -67,8 +67,8 @@ export default function Header() {
                 <div className="w-7 h-7 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-xs">
                   {user.name[0]}
                 </div>
-                <span className="text-sm font-semibold text-gray-800">{user.name}님</span>
-                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${ROLE_COLOR[user.role]}`}>
+                <span className="text-sm font-semibold text-gray-800 max-w-[60px] sm:max-w-none truncate">{user.name}님</span>
+                <span className={`hidden sm:inline text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${ROLE_COLOR[user.role]}`}>
                   {ROLE_LABEL[user.role]}
                 </span>
                 <svg className={`w-3.5 h-3.5 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -77,7 +77,7 @@ export default function Header() {
               </button>
 
               {open && (
-                <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-100 rounded-2xl shadow-modal py-1.5 text-sm">
+                <div className="absolute right-0 mt-2 w-52 max-w-[calc(100vw-1rem)] bg-white border border-gray-100 rounded-2xl shadow-modal py-1.5 text-sm">
                   <div className="px-4 py-2.5 border-b border-gray-50">
                     <p className="font-semibold text-gray-900">{user.name}</p>
                     <p className="text-xs text-gray-400 mt-0.5 truncate">{user.email}</p>
@@ -122,6 +122,16 @@ export default function Header() {
                     </Link>
                   )}
 
+                  <Link
+                    to="/notices"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition sm:hidden"
+                  >
+                    <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                    </svg>
+                    공지사항
+                  </Link>
                   <Link
                     to="/my-tickets"
                     onClick={() => setOpen(false)}
