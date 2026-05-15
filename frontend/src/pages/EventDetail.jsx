@@ -355,7 +355,18 @@ export default function EventDetail() {
   const handlePaidRegistration = async () => {
     setIsPaying(true)
     try {
-      const { orderId, amount, eventTitle } = await preparePayment(event.id)
+      let orderId, amount, eventTitle
+      try {
+        const res = await preparePayment(event.id)
+        orderId = res.orderId; amount = res.amount; eventTitle = res.eventTitle
+      } catch (err) {
+        if (err.response?.data?.isWhitelisted) {
+          setIsPaying(false)
+          applyMutation.mutate()
+          return
+        }
+        throw err
+      }
 
       await new Promise((resolve, reject) => {
         if (window.TossPayments) return resolve()
@@ -372,8 +383,8 @@ export default function EventDetail() {
         orderId,
         orderName: eventTitle,
         customerName: user.name,
-        successUrl: `${window.location.origin}/payment/success`,
-        failUrl: `${window.location.origin}/payment/fail`,
+        successUrl: `${window.location.origin}/payment/result`,
+        failUrl: `${window.location.origin}/payment/result`,
       })
     } catch (err) {
       alert(err.response?.data?.message ?? err.message ?? '결제 준비에 실패했습니다.')
@@ -441,7 +452,7 @@ export default function EventDetail() {
       </div>
 
       {/* ── 본문 2컬럼 ── */}
-      <div className="flex gap-5 items-start">
+      <div className="flex flex-col lg:flex-row gap-5 items-start">
 
         {/* 왼쪽: 정보 */}
         <div className="flex-1 min-w-0 space-y-4">
@@ -610,7 +621,7 @@ export default function EventDetail() {
         </div>
 
         {/* 오른쪽: 신청 카드 + 주최자 카드 (sticky) */}
-        <div className="w-60 shrink-0 sticky top-6 space-y-4">
+        <div className="w-full lg:w-60 shrink-0 lg:sticky top-6 space-y-4">
           <RegistrationCard
             event={event}
             user={user}
