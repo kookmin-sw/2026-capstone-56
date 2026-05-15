@@ -16,7 +16,16 @@ export default function Login() {
       login(token, user)
       navigate('/')
     } catch (err) {
-      toast(err.response?.data?.message || '로그인에 실패했습니다.', 'error')
+      if (err.response?.data?.needsVerification) {
+        const email = err.response.data.email
+        if (err.response.data.tokenExpired) {
+          navigate(`/verify-email?token=expired&email=${encodeURIComponent(email)}`)
+        } else {
+          toast('이메일 인증이 필요합니다. 인증 메일을 확인해주세요.', 'error')
+        }
+      } else {
+        toast(err.response?.data?.message || '로그인에 실패했습니다.', 'error')
+      }
     }
   }
 

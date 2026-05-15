@@ -35,7 +35,7 @@ export default function CheckIn() {
   })
 
   const mutation = useMutation({
-    mutationFn: checkin,
+    mutationFn: ({ qrCode, eventId }) => checkin(qrCode, eventId),
     onSuccess: (data) => {
       setResult(data)
       refetchStats()
@@ -50,7 +50,7 @@ export default function CheckIn() {
   const handleScan = (qrCode) => {
     if (mutation.isPending || !qrCode.trim()) return
     setResult(null)
-    mutation.mutate(qrCode.trim())
+    mutation.mutate({ qrCode: qrCode.trim(), eventId: id })
   }
 
   useEffect(() => {
