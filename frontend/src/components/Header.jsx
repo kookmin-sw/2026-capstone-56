@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import NotificationBell from './NotificationBell'
 import InquiryModal from './InquiryModal'
 import CertRequestModal from './CertRequestModal'
+import DelegationModal from './DelegationModal'
 
 const ROLE_LABEL = {
   ATTENDEE: '일반',
@@ -25,6 +26,7 @@ export default function Header() {
   const [open, setOpen] = useState(false)
   const [inquiryOpen, setInquiryOpen] = useState(false)
   const [certOpen, setCertOpen] = useState(false)
+  const [delegationOpen, setDelegationOpen] = useState(false)
   const ref = useRef(null)
 
   useEffect(() => {
@@ -155,6 +157,18 @@ export default function Header() {
                     </button>
                   )}
 
+                  {user.role === 'CERTIFIED' && (
+                    <button
+                      onClick={() => { setOpen(false); setDelegationOpen(true) }}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-amber-600 hover:bg-amber-50 transition"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                      권한 위임
+                    </button>
+                  )}
+
                   <button
                     onClick={() => { setOpen(false); setInquiryOpen(true) }}
                     className="w-full flex items-center gap-2 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition"
@@ -229,6 +243,7 @@ export default function Header() {
 
     {inquiryOpen && <InquiryModal onClose={() => setInquiryOpen(false)} />}
     {certOpen && <CertRequestModal onClose={() => setCertOpen(false)} />}
+    {delegationOpen && <DelegationModal onClose={() => setDelegationOpen(false)} />}
     </>
   )
 }
