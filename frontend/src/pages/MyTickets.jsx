@@ -87,8 +87,9 @@ export default function MyTickets() {
 
 function TicketItem({ r, tab, onCancel, onRefund, onCancelPending }) {
   const [showQR, setShowQR] = useState(false)
+  const refundDeadlinePassed = r.event.refundDeadlineAt && new Date() > new Date(r.event.refundDeadlineAt)
   const canCancel = tab === 'active' && r.status === 'CONFIRMED' && !r.event.isPaid
-  const canRefund = tab === 'active' && r.status === 'CONFIRMED' && r.event.isPaid
+  const canRefund = tab === 'active' && r.status === 'CONFIRMED' && r.event.isPaid && !refundDeadlinePassed
   const canCancelPending = tab === 'active' && r.status === 'PENDING_PAYMENT'
   const showQRBtn = r.status === 'CONFIRMED' || r.status === 'CHECKED_IN'
 
@@ -135,6 +136,9 @@ function TicketItem({ r, tab, onCancel, onRefund, onCancelPending }) {
             >
               환불 신청
             </button>
+          )}
+          {tab === 'active' && r.status === 'CONFIRMED' && r.event.isPaid && refundDeadlinePassed && (
+            <span className="text-xs text-gray-400 px-3 py-1.5">환불 마감</span>
           )}
           {canCancelPending && (
             <button

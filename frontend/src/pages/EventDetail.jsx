@@ -383,8 +383,8 @@ export default function EventDetail() {
         orderId,
         orderName: eventTitle,
         customerName: user.name,
-        successUrl: `${window.location.origin}/payment/success`,
-        failUrl: `${window.location.origin}/payment/fail`,
+        successUrl: `${window.location.origin}/payment/result`,
+        failUrl: `${window.location.origin}/payment/result`,
       })
     } catch (err) {
       alert(err.response?.data?.message ?? err.message ?? '결제 준비에 실패했습니다.')

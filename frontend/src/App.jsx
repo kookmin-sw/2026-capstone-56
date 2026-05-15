@@ -28,6 +28,7 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import PaymentSuccess from './pages/PaymentSuccess'
 import PaymentFail from './pages/PaymentFail'
+import PaymentResult from './pages/PaymentResult'
 import Header from './components/Header'
 import Notices from './pages/Notices'
 import NoticeDetail from './pages/NoticeDetail'
@@ -74,6 +75,7 @@ export default function App() {
         <Route path="/admin/schools/:schoolId" element={<OperatorRoute><SchoolDetail /></OperatorRoute>} />
         <Route path="/payment/success" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><PaymentSuccess /></div></PrivateRoute>} />
         <Route path="/payment/fail" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><PaymentFail /></div></PrivateRoute>} />
+        <Route path="/payment/result" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><PaymentResult /></div></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/school-admin" element={<SchoolAdminRoute><SchoolAdminDashboard /></SchoolAdminRoute>} />
         <Route path="/school-admin/notices" element={<SchoolAdminRoute><div className="max-w-6xl mx-auto px-4 py-6"><SchoolAdminNotices /></div></SchoolAdminRoute>} />
