@@ -355,7 +355,18 @@ export default function EventDetail() {
   const handlePaidRegistration = async () => {
     setIsPaying(true)
     try {
-      const { orderId, amount, eventTitle } = await preparePayment(event.id)
+      let orderId, amount, eventTitle
+      try {
+        const res = await preparePayment(event.id)
+        orderId = res.orderId; amount = res.amount; eventTitle = res.eventTitle
+      } catch (err) {
+        if (err.response?.data?.isWhitelisted) {
+          setIsPaying(false)
+          applyMutation.mutate()
+          return
+        }
+        throw err
+      }
 
       await new Promise((resolve, reject) => {
         if (window.TossPayments) return resolve()
