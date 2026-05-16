@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>페스티켓 — 국민대 캡스톤 2026 · 56팀</title>
+  <meta name="description" content="캠퍼스의 모든 행사, 한 곳에서. 대학 축제 참여·관리 올인원 플랫폼 페스티켓." />
+  <link rel="icon" href="logo6.png" />
+
+  <!-- Pretendard 폰트 -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+  />
+
+  <style>
+    /* ─────────────────────────────── Reset & Base ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Pretendard', -apple-system, sans-serif;
+      background: #e9e4ff;
+      color: #1e1b4b;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    a { text-decoration: none; color: inherit; }
+
+    /* ─────────────────────────────── CSS Variables ─── */
+    :root {
+      --primary: #7c3aed;
+      --primary-dark: #5b21b6;
+      --indigo: #6366f1;
+      --pink: #ec4899;
+      --bg: #e9e4ff;
+      --white: #ffffff;
+      --card-bg: rgba(255,255,255,0.75);
+      --text: #1e1b4b;
+      --muted: #6b7280;
+      --radius: 20px;
+      --radius-sm: 12px;
+    }
+
+    /* ─────────────────────────────── Utility ─── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+    .section { padding: 96px 0; }
+    .section-sm { padding: 64px 0; }
+    .text-gradient {
+      background: linear-gradient(90deg, #7c3aed 0%, #6366f1 50%, #3b82f6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .text-gradient-warm {
+      background: linear-gradient(90deg, #7c3aed 0%, #ec4899 60%, #f59e0b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 99px;
+      background: rgba(124,58,237,0.1);
+      color: var(--primary);
+      border: 1px solid rgba(124,58,237,0.2);
+    }
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.6);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 24px rgba(99,60,237,0.08);
+    }
+
+    /* ─────────────────────────────── NAV ─── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(233,228,255,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(124,58,237,0.1);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      font-size: 18px;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+    }
+    .nav-logo img { height: 32px; width: auto; }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 13px;
+      font-weight: 500;
+      color: #4b4576;
+      padding: 6px 14px;
+      border-radius: 10px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-links a:hover { background: rgba(124,58,237,0.1); color: var(--primary); }
+    .nav-demo-btn {
+      font-size: 13px;
+      font-weight: 700;
+      color: white !important;
+      background: var(--primary) !important;
+      padding: 8px 18px !important;
+      border-radius: 12px !important;
+      box-shadow: 0 4px 12px rgba(124,58,237,0.35);
+      transition: transform 0.15s, box-shadow 0.15s !important;
+    }
+    .nav-demo-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(124,58,237,0.45) !important;
+      background: var(--primary-dark) !important;
+    }
+
+    /* ─────────────────────────────── HERO ─── */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      padding-top: 60px;
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.5;
+    }
+    .blob-1 { width: 700px; height: 700px; top: -200px; left: -150px;
+      background: radial-gradient(circle, rgba(124,58,237,0.3), transparent 65%); }
+    .blob-2 { width: 600px; height: 600px; bottom: -150px; right: -100px;
+      background: radial-gradient(circle, rgba(236,72,153,0.25), transparent 65%); animation: blobPulse 8s ease-in-out infinite; }
+    .blob-3 { width: 400px; height: 400px; top: 30%; left: 40%;
+      background: radial-gradient(circle, rgba(99,102,241,0.2), transparent 65%); animation: blobPulse 6s ease-in-out infinite 2s; }
+    @keyframes blobPulse {
+      0%, 100% { transform: scale(1) translate(0,0); }
+      50% { transform: scale(1.15) translate(-20px, 20px); }
+    }
+    .grid-overlay {
+      position: absolute; inset: 0; opacity: 0.04;
+      background-image:
+        linear-gradient(rgba(124,58,237,0.8) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,58,237,0.8) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    /* 파티클 */
+    .particles { position: absolute; inset: 0; pointer-events: none; }
+    .particle {
+      position: absolute;
+      font-size: var(--sz);
+      animation: float var(--dur) ease-in-out infinite var(--delay);
+      opacity: 0.25;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.2; }
+      50% { transform: translateY(-20px) rotate(8deg); opacity: 0.35; }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(124,58,237,0.2);
+      border-radius: 99px;
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #4c3b99;
+      margin-bottom: 28px;
+    }
+    .live-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 0 0 rgba(16,185,129,0.4);
+      animation: livePing 2s ease-in-out infinite;
+    }
+    @keyframes livePing {
+      0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+      70% { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
+      100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+    }
+    .hero-title {
+      font-size: clamp(48px, 8vw, 90px);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -2px;
+      margin-bottom: 20px;
+    }
+    .hero-sub {
+      font-size: clamp(16px, 2.5vw, 20px);
+      color: #6b63a0;
+      line-height: 1.7;
+      margin-bottom: 44px;
+      font-weight: 400;
+    }
+    .hero-cta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 64px;
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--primary);
+      color: white;
+      font-weight: 700;
+      font-size: 15px;
+      padding: 14px 32px;
+      border-radius: 16px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 28px rgba(124,58,237,0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(124,58,237,0.5); }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.7);
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 15px;
+      padding: 14px 32px;
+      border-radius: 16px;
+      border: 1.5px solid rgba(124,58,237,0.3);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 16px rgba(99,60,237,0.1);
+      transition: transform 0.2s, background 0.2s;
+    }
+    .btn-secondary:hover { transform: translateY(-2px); background: rgba(255,255,255,0.9); }
+    .hero-tags {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #5b4f8a;
+      background: rgba(255,255,255,0.35);
+      border-radius: 99px;
+      padding: 7px 16px;
+      backdrop-filter: blur(4px);
+    }
+
+    /* ─────────────────────────────── ABOUT ─── */
+    #about { background: transparent; }
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+    @media (max-width: 768px) { .about-grid { grid-template-columns: 1fr; } }
+    .about-text h2 { font-size: 36px; font-weight: 800; line-height: 1.2; margin-bottom: 16px; letter-spacing: -0.5px; }
+    .about-text p { font-size: 16px; color: #5b4f8a; line-height: 1.8; margin-bottom: 12px; }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 32px;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: 16px;
+      padding: 20px 16px;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(99,60,237,0.08);
+    }
+    .stat-num { font-size: 28px; font-weight: 900; margin-bottom: 4px; }
+    .stat-label { font-size: 12px; color: #8a7fc0; font-weight: 500; }
+
+    /* mock UI card */
+    .mock-ui {
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(99,60,237,0.18);
+      overflow: hidden;
+      border: 1px solid rgba(124,58,237,0.1);
+    }
+    .mock-topbar {
+      background: #e9e4ff;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(124,58,237,0.08);
+    }
+    .mock-logo-row { display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 14px; color: var(--primary); }
+    .mock-logo-row img { height: 22px; }
+    .mock-dots { display: flex; gap: 6px; }
+    .mock-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .mock-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .mock-hero-bar {
+      background: linear-gradient(135deg, #ede9fe 0%, #f0e6ff 100%);
+      border-radius: 14px;
+      padding: 18px 20px;
+    }
+    .mock-hero-title { font-size: 16px; font-weight: 800; color: var(--primary); margin-bottom: 6px; }
+    .mock-hero-sub { font-size: 11px; color: #7c6fa0; margin-bottom: 12px; }
+    .mock-btn-row { display: flex; gap: 8px; }
+    .mock-btn { font-size: 10px; font-weight: 700; padding: 6px 12px; border-radius: 8px; }
+    .mock-btn-p { background: var(--primary); color: white; }
+    .mock-btn-s { background: white; color: var(--primary); border: 1px solid rgba(124,58,237,0.3); }
+    .mock-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mock-card {
+      background: #f9f7ff;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(124,58,237,0.07);
+    }
+    .mock-card-img { height: 52px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+    .mock-card-info { padding: 8px 10px; }
+    .mock-card-title { font-size: 10px; font-weight: 700; color: #2d1f6e; margin-bottom: 3px; }
+    .mock-card-sub { font-size: 9px; color: #8a7fc0; }
+    .mock-card-price { font-size: 10px; font-weight: 700; color: var(--primary); margin-top: 4px; }
+
+    /* ─────────────────────────────── FEATURES ─── */
+    #features { background: transparent; }
+    .section-title {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+    .section-title h2 { font-size: clamp(28px, 4vw, 42px); font-weight: 800; line-height: 1.2; letter-spacing: -0.5px; margin-bottom: 12px; }
+    .section-title p { font-size: 16px; color: #6b63a0; max-width: 520px; margin: 0 auto; line-height: 1.7; }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 900px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .features-grid { grid-template-columns: 1fr; } }
+    .feature-card {
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.7);
+      border-radius: 20px;
+      padding: 28px 24px;
+      box-shadow: 0 4px 20px rgba(99,60,237,0.07);
+      transition: transform 0.25s, box-shadow 0.25s;
+    }
+    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(99,60,237,0.14); }
+    .feature-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      margin-bottom: 16px;
+    }
+    .feature-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: #1e1b4b; }
+    .feature-card p { font-size: 14px; color: #6b63a0; line-height: 1.65; }
+
+    /* icon bg colors */
+    .ic-purple { background: linear-gradient(135deg, #ede9fe, #ddd6fe); }
+    .ic-blue   { background: linear-gradient(135deg, #dbeafe, #bfdbfe); }
+    .ic-pink   { background: linear-gradient(135deg, #fce7f3, #fbcfe8); }
+    .ic-green  { background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
+    .ic-amber  { background: linear-gradient(135deg, #fef3c7, #fde68a); }
+    .ic-indigo { background: linear-gradient(135deg, #e0e7ff, #c7d2fe); }
+
+    /* ─────────────────────────────── HOW IT WORKS ─── */
+    #how {
+      background: linear-gradient(160deg, rgba(124,58,237,0.06) 0%, rgba(99,102,241,0.04) 100%);
+      border-radius: 32px;
+      margin: 0 24px;
+    }
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      position: relative;
+    }
+    @media (max-width: 768px) { .steps { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .steps { grid-template-columns: 1fr; } }
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 32px 16px;
+      position: relative;
+    }
+    .step-num {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      font-size: 18px;
+      font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+      box-shadow: 0 6px 20px rgba(124,58,237,0.35);
+      flex-shrink: 0;
+    }
+    .step-icon { font-size: 28px; margin-bottom: 8px; }
+    .step h3 { font-size: 15px; font-weight: 700; color: #1e1b4b; margin-bottom: 6px; }
+    .step p { font-size: 13px; color: #6b63a0; line-height: 1.55; }
+    .step-arrow {
+      position: absolute;
+      right: -6px; top: 42px;
+      font-size: 20px;
+      color: rgba(124,58,237,0.3);
+      z-index: 1;
+    }
+
+    /* ─────────────────────────────── TECH STACK ─── */
+    #tech { background: transparent; }
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 640px) { .tech-grid { grid-template-columns: 1fr; } }
+    .tech-group {
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: 20px;
+      padding: 28px 24px;
+      box-shadow: 0 4px 16px rgba(99,60,237,0.07);
+    }
+    .tech-group-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--primary);
+      margin-bottom: 16px;
+    }
+    .tech-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tech-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 99px;
+      background: #f3f0ff;
+      color: #4c3b99;
+      border: 1px solid rgba(124,58,237,0.12);
+    }
+    .tech-chip span { font-size: 16px; }
+
+    /* ─────────────────────────────── DEMO ─── */
+    #demo { background: transparent; }
+    .demo-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: center;
+    }
+    @media (max-width: 768px) { .demo-wrap { grid-template-columns: 1fr; } }
+    .demo-phone {
+      background: #1e1b4b;
+      border-radius: 40px;
+      padding: 16px;
+      box-shadow: 0 32px 80px rgba(30,27,75,0.35);
+      max-width: 300px;
+      margin: 0 auto;
+    }
+    .demo-screen {
+      background: #e9e4ff;
+      border-radius: 28px;
+      aspect-ratio: 9/18;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .demo-screen-bar {
+      background: white;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .demo-screen-body { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .demo-event-card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(99,60,237,0.1);
+    }
+    .demo-event-img { height: 64px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+    .demo-event-info { padding: 8px 10px; }
+    .demo-event-title { font-size: 10px; font-weight: 700; color: #1e1b4b; margin-bottom: 2px; }
+    .demo-event-meta { font-size: 9px; color: #8a7fc0; }
+    .demo-event-price { font-size: 10px; font-weight: 700; color: var(--primary); margin-top: 4px; }
+    .demo-qr {
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 9px;
+      color: #6b63a0;
+      box-shadow: 0 2px 8px rgba(99,60,237,0.1);
+    }
+    .demo-qr-box {
+      width: 44px; height: 44px;
+      border: 2px solid #ddd6fe;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .demo-text h2 { font-size: 32px; font-weight: 800; line-height: 1.25; margin-bottom: 16px; letter-spacing: -0.5px; }
+    .demo-text p { font-size: 15px; color: #6b63a0; line-height: 1.75; margin-bottom: 24px; }
+    .demo-feature-list { display: flex; flex-direction: column; gap: 12px; }
+    .demo-feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .demo-feature-bullet {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: rgba(124,58,237,0.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .demo-feature-item h4 { font-size: 14px; font-weight: 700; color: #1e1b4b; margin-bottom: 2px; }
+    .demo-feature-item p { font-size: 13px; color: #6b63a0; line-height: 1.5; margin: 0; }
+
+    /* ─────────────────────────────── TEAM ─── */
+    #team { background: transparent; }
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 900px) { .team-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .team-grid { grid-template-columns: 1fr; } }
+    .team-card {
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.7);
+      border-radius: 20px;
+      padding: 28px 20px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(99,60,237,0.07);
+      transition: transform 0.25s, box-shadow 0.25s;
+    }
+    .team-card:hover { transform: translateY(-4px); box-shadow: 0 14px 40px rgba(99,60,237,0.14); }
+    .team-avatar {
+      width: 72px; height: 72px; border-radius: 50%;
+      margin: 0 auto 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 30px;
+      font-weight: 700;
+      color: white;
+      position: relative;
+    }
+    .team-avatar::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      padding: 3px;
+      background: linear-gradient(135deg, var(--primary), var(--pink));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+    }
+    .team-name { font-size: 16px; font-weight: 800; color: #1e1b4b; margin-bottom: 4px; }
+    .team-role { font-size: 12px; font-weight: 600; color: var(--primary); margin-bottom: 8px; }
+    .team-id { font-size: 11px; color: #8a7fc0; }
+    .team-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin-top: 12px; }
+    .team-tag {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 99px;
+      background: rgba(124,58,237,0.1);
+      color: var(--primary);
+    }
+
+    /* ─────────────────────────────── CTA BANNER ─── */
+    #cta {
+      margin: 0 24px;
+      background: linear-gradient(135deg, #7c3aed 0%, #6366f1 50%, #3b82f6 100%);
+      border-radius: 32px;
+      padding: 72px 32px;
+      text-align: center;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+    #cta::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.08) 1.5px, transparent 1.5px);
+      background-size: 32px 32px;
+    }
+    #cta h2 { font-size: clamp(24px, 4vw, 40px); font-weight: 800; line-height: 1.2; margin-bottom: 12px; position: relative; }
+    #cta p { font-size: 16px; opacity: 0.8; margin-bottom: 32px; position: relative; }
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 15px;
+      padding: 14px 32px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      transition: transform 0.2s;
+      position: relative;
+    }
+    .cta-btn:hover { transform: translateY(-2px); }
+
+    /* ─────────────────────────────── FOOTER ─── */
+    footer {
+      background: rgba(255,255,255,0.5);
+      border-top: 1px solid rgba(124,58,237,0.1);
+      padding: 40px 0;
+      margin-top: 80px;
+    }
+    .footer-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      text-align: center;
+    }
+    .footer-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 900; font-size: 18px; color: var(--primary);
+    }
+    .footer-logo img { height: 28px; }
+    .footer-links { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; }
+    .footer-links a { font-size: 13px; color: #8a7fc0; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--primary); }
+    .footer-copy { font-size: 12px; color: #a89fc0; }
+
+    /* ─────────────────────────────── Scroll animation ─── */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* Mobile nav */
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─────────── NAV ─────────── -->
+<nav>
+  <div class="container nav-inner">
+    <a href="#hero" class="nav-logo">
+      <img src="logo6.png" alt="페스티켓" />
+      페스티켓
+    </a>
+    <ul class="nav-links">
+      <li><a href="#about">소개</a></li>
+      <li><a href="#features">기능</a></li>
+      <li><a href="#tech">기술</a></li>
+      <li><a href="#team">팀</a></li>
+      <li><a href="https://staging.d25a68jt9cg4tx.amplifyapp.com/login" target="_blank" class="nav-demo-btn">데모 보기 →</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ─────────── HERO ─────────── -->
+<section id="hero">
+  <div class="hero-bg">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="grid-overlay"></div>
+  </div>
+  <!-- 파티클 -->
+  <div class="particles">
+    <span class="particle" style="--sz:34px;left:7%;top:18%;--dur:6.5s;--delay:0s">🎪</span>
+    <span class="particle" style="--sz:26px;left:86%;top:22%;--dur:9s;--delay:1.5s">🎵</span>
+    <span class="particle" style="--sz:24px;left:4%;top:55%;--dur:7.5s;--delay:0.7s">🎟️</span>
+    <span class="particle" style="--sz:32px;left:13%;top:72%;--dur:5.8s;--delay:2.8s">🎉</span>
+    <span class="particle" style="--sz:20px;left:44%;top:10%;--dur:8.2s;--delay:1s">✨</span>
+    <span class="particle" style="--sz:32px;left:90%;top:65%;--dur:6.8s;--delay:0.3s">🎊</span>
+    <span class="particle" style="--sz:24px;left:75%;top:42%;--dur:7.2s;--delay:2.2s">🎶</span>
+    <span class="particle" style="--sz:18px;left:62%;top:78%;--dur:9.8s;--delay:2.6s">⭐</span>
+    <span class="particle" style="--sz:22px;left:28%;top:28%;--dur:8.6s;--delay:3.8s">🎸</span>
+    <span class="particle" style="--sz:16px;left:53%;top:68%;--dur:10.2s;--delay:1.9s">🌟</span>
+  </div>
+
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-eyebrow">
+        <div class="live-dot"></div>
+        국민대학교 캡스톤 2026 · 56팀
+      </div>
+
+      <h1 class="hero-title">
+        캠퍼스의 모든 행사,<br>
+        <span class="text-gradient">한 곳에서</span>
+      </h1>
+
+      <p class="hero-sub">
+        대학 축제부터 동아리 모임까지<br>
+        신청부터 QR 체크인까지 <strong>한 번에</strong>
+      </p>
+
+      <div class="hero-cta">
+        <a href="https://staging.d25a68jt9cg4tx.amplifyapp.com/login" target="_blank" class="btn-primary">
+          🚀 서비스 체험하기
+        </a>
+        <a href="#about" class="btn-secondary">
+          프로젝트 소개 ↓
+        </a>
+      </div>
+
+      <div class="hero-tags">
+        <span class="hero-tag">🎟️ QR 티켓</span>
+        <span class="hero-tag">⚡ 실시간 체크인</span>
+        <span class="hero-tag">💳 간편 결제</span>
+        <span class="hero-tag">🎉 무료·유료 행사</span>
+        <span class="hero-tag">🏫 학교별 행사</span>
+        <span class="hero-tag">🔔 알림</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── ABOUT ─────────── -->
+<section id="about" class="section">
+  <div class="container">
+    <div class="about-grid reveal">
+      <div class="about-text">
+        <span class="badge">💡 프로젝트 소개</span>
+        <h2 style="margin-top:16px;">
+          대학 행사 참여,<br>
+          <span class="text-gradient">이제 더 쉽게</span>
+        </h2>
+        <p>
+          매 학기 진행되는 수백 개의 캠퍼스 행사들이 여전히 SNS 댓글, 구글 폼,
+          현장 줄서기로 운영되고 있습니다. 주최자는 참가자 관리에 지치고,
+          참가자는 정보를 찾기 어렵습니다.
+        </p>
+        <p>
+          <strong>페스티켓</strong>은 행사 개설부터 참가 신청, 결제, QR 티켓 발급,
+          현장 체크인까지 전 과정을 하나의 플랫폼에서 해결합니다.
+          학교 인증 시스템으로 신뢰도를 높이고, 실시간 대시보드로 운영 부담을 줄입니다.
+        </p>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-num text-gradient">∞</div>
+            <div class="stat-label">행사 등록 무제한</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num text-gradient">QR</div>
+            <div class="stat-label">스마트 티켓</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num text-gradient">실시간</div>
+            <div class="stat-label">체크인 현황</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mock UI -->
+      <div class="mock-ui" style="transform: rotate(1.5deg);">
+        <div class="mock-topbar">
+          <div class="mock-logo-row">
+            <img src="logo6.png" alt="로고" />
+            페스티켓
+          </div>
+          <div class="mock-dots">
+            <div class="mock-dot" style="background:#ef4444"></div>
+            <div class="mock-dot" style="background:#f59e0b"></div>
+            <div class="mock-dot" style="background:#10b981"></div>
+          </div>
+        </div>
+        <div class="mock-body">
+          <div class="mock-hero-bar">
+            <div class="mock-hero-title">캠퍼스의 모든 행사 🎉</div>
+            <div class="mock-hero-sub">⚡ 3개 행사 모집 중</div>
+            <div class="mock-btn-row">
+              <span class="mock-btn mock-btn-p">+ 행사 만들기</span>
+              <span class="mock-btn mock-btn-s">둘러보기 ↓</span>
+            </div>
+          </div>
+          <div style="font-size:10px;font-weight:700;color:#8a7fc0;padding:4px 2px;">진행 중인 행사 · 3개</div>
+          <div class="mock-cards">
+            <div class="mock-card">
+              <div class="mock-card-img" style="background:#fef3c7">🎵</div>
+              <div class="mock-card-info">
+                <div class="mock-card-title">봄 음악 페스티벌</div>
+                <div class="mock-card-sub">📍 중앙광장 · 5/22</div>
+                <div class="mock-card-price">무료</div>
+              </div>
+            </div>
+            <div class="mock-card">
+              <div class="mock-card-img" style="background:#ede9fe">🎪</div>
+              <div class="mock-card-info">
+                <div class="mock-card-title">동아리 박람회</div>
+                <div class="mock-card-sub">📍 학생회관 · 5/25</div>
+                <div class="mock-card-price">₩5,000</div>
+              </div>
+            </div>
+          </div>
+          <div class="mock-card" style="background:#f0fdf4">
+            <div style="padding:10px 12px;display:flex;align-items:center;gap:10px;">
+              <span style="font-size:18px;">✅</span>
+              <div>
+                <div style="font-size:10px;font-weight:700;color:#065f46">체크인 완료</div>
+                <div style="font-size:9px;color:#6b7280">QR 스캔으로 입장 확인</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── FEATURES ─────────── -->
+<section id="features" class="section">
+  <div class="container">
+    <div class="section-title reveal">
+      <span class="badge">✨ 핵심 기능</span>
+      <h2 style="margin-top:16px;">주최자와 참가자 모두를<br><span class="text-gradient">위한 기능</span></h2>
+      <p>복잡한 행사 운영을 간단하게. 참가 경험도 더 즐겁게.</p>
+    </div>
+
+    <div class="features-grid reveal">
+      <div class="feature-card">
+        <div class="feature-icon ic-purple">🎟️</div>
+        <h3>QR 티켓 발급</h3>
+        <p>신청 완료 즉시 고유 QR 코드 티켓이 발급됩니다. 종이 없이 스마트폰 하나로 입장하세요.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon ic-green">⚡</div>
+        <h3>실시간 QR 체크인</h3>
+        <p>행사장에서 카메라로 QR을 스캔하면 즉시 체크인. 대기줄 없이 빠른 입장이 가능합니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon ic-blue">💳</div>
+        <h3>토스페이먼츠 결제</h3>
+        <p>유료 행사도 간편하게. 토스페이먼츠 연동으로 카드·계좌이체·간편결제를 지원합니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon ic-pink">🏫</div>
+        <h3>학교별 행사 분리</h3>
+        <p>대학 이메일로 소속 학교를 인증합니다. 내 학교 행사만 모아보고, 신뢰할 수 있는 주최자를 확인하세요.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon ic-amber">📊</div>
+        <h3>실시간 운영 대시보드</h3>
+        <p>신청 현황, 체크인율, 환불 요청까지 한눈에. 주최자라면 대시보드에서 모든 것을 관리하세요.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon ic-indigo">🔔</div>
+        <h3>알림 & 공지 시스템</h3>
+        <p>행사 변경, 티켓 확정, 새 공지사항을 실시간 알림으로 받아보세요. 중요한 정보를 놓치지 않습니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon ic-purple">🎭</div>
+        <h3>다양한 역할 권한</h3>
+        <p>일반 참가자부터 인증 주최자, 학교 관리자, 슈퍼 운영자까지 세분화된 역할 기반 접근 제어를 제공합니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon ic-blue">💬</div>
+        <h3>카카오 소셜 로그인</h3>
+        <p>카카오 계정으로 빠르게 가입하고 로그인하세요. 학교 이메일 인증까지 연동해 소속을 확인합니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon ic-green">💰</div>
+        <h3>환불 관리</h3>
+        <p>참가자는 행사 전 환불 신청, 주최자는 환불 처리를 한 곳에서. 토스페이먼츠와 자동 연동됩니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── HOW IT WORKS ─────────── -->
+<section id="how" class="section">
+  <div class="container">
+    <div class="section-title reveal">
+      <span class="badge">🗺️ 사용 흐름</span>
+      <h2 style="margin-top:16px;">행사 참여, 이렇게<br><span class="text-gradient">간단합니다</span></h2>
+    </div>
+
+    <div class="steps reveal">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-icon">🔍</div>
+        <h3>행사 탐색</h3>
+        <p>학교, 날짜, 무료/유료 필터로 내게 맞는 행사를 빠르게 찾기</p>
+        <span class="step-arrow">›</span>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-icon">✍️</div>
+        <h3>간편 신청</h3>
+        <p>로그인 후 클릭 한 번으로 신청 완료. 유료 행사는 결제까지</p>
+        <span class="step-arrow">›</span>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-icon">🎟️</div>
+        <h3>QR 티켓 수령</h3>
+        <p>신청 즉시 고유 QR 코드 발급. 내 티켓 탭에서 언제든 확인</p>
+        <span class="step-arrow">›</span>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-icon">✅</div>
+        <h3>현장 체크인</h3>
+        <p>QR 스캔 한 번으로 입장 완료. 빠르고 간편한 스마트 입장</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── TECH STACK ─────────── -->
+<section id="tech" class="section">
+  <div class="container">
+    <div class="section-title reveal">
+      <span class="badge">🛠️ 기술 스택</span>
+      <h2 style="margin-top:16px;">검증된 기술로<br><span class="text-gradient">안정적으로</span></h2>
+      <p>빠른 개발과 안정적인 운영을 위해 최신 스택을 선택했습니다.</p>
+    </div>
+
+    <div class="tech-grid reveal">
+      <div class="tech-group">
+        <div class="tech-group-title">Frontend</div>
+        <div class="tech-chips">
+          <span class="tech-chip"><span>⚛️</span> React 18</span>
+          <span class="tech-chip"><span>⚡</span> Vite</span>
+          <span class="tech-chip"><span>💨</span> Tailwind CSS</span>
+          <span class="tech-chip"><span>🔄</span> React Query</span>
+          <span class="tech-chip"><span>🔀</span> React Router</span>
+          <span class="tech-chip"><span>🎞️</span> Framer Motion</span>
+        </div>
+      </div>
+      <div class="tech-group">
+        <div class="tech-group-title">Backend</div>
+        <div class="tech-chips">
+          <span class="tech-chip"><span>🟢</span> Node.js</span>
+          <span class="tech-chip"><span>🚂</span> Express</span>
+          <span class="tech-chip"><span>🔷</span> Prisma ORM</span>
+          <span class="tech-chip"><span>🐘</span> PostgreSQL</span>
+          <span class="tech-chip"><span>🔐</span> JWT</span>
+          <span class="tech-chip"><span>📧</span> Nodemailer</span>
+        </div>
+      </div>
+      <div class="tech-group">
+        <div class="tech-group-title">Infrastructure & Services</div>
+        <div class="tech-chips">
+          <span class="tech-chip"><span>🟠</span> AWS Amplify</span>
+          <span class="tech-chip"><span>🦸</span> Supabase</span>
+          <span class="tech-chip"><span>💾</span> Supabase Storage</span>
+          <span class="tech-chip"><span>🔵</span> GitHub Actions</span>
+        </div>
+      </div>
+      <div class="tech-group">
+        <div class="tech-group-title">외부 서비스 연동</div>
+        <div class="tech-chips">
+          <span class="tech-chip"><span>💳</span> 토스페이먼츠</span>
+          <span class="tech-chip"><span>🟡</span> 카카오 로그인</span>
+          <span class="tech-chip"><span>📱</span> QR 코드 생성</span>
+          <span class="tech-chip"><span>📷</span> QR 스캐너</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── DEMO / DETAIL ─────────── -->
+<section id="demo" class="section">
+  <div class="container">
+    <div class="demo-wrap reveal">
+      <!-- 모바일 목업 -->
+      <div class="demo-phone">
+        <div class="demo-screen">
+          <div class="demo-screen-bar">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <img src="logo6.png" alt="" style="height:16px;" />
+              페스티켓
+            </div>
+            <span style="font-size:16px;">🔔</span>
+          </div>
+          <div class="demo-screen-body">
+            <div class="demo-event-card">
+              <div class="demo-event-img" style="background:linear-gradient(135deg,#fef3c7,#fde68a)">🎵</div>
+              <div class="demo-event-info">
+                <div class="demo-event-title">봄 음악 페스티벌</div>
+                <div class="demo-event-meta">📍 중앙광장 · 2026.05.22</div>
+                <div class="demo-event-price">무료</div>
+              </div>
+            </div>
+            <div class="demo-qr">
+              <div class="demo-qr-box">🔲</div>
+              <div>
+                <div style="font-weight:700;color:#1e1b4b;font-size:10px;margin-bottom:2px;">내 QR 티켓</div>
+                <div>봄 음악 페스티벌</div>
+                <div style="color:#10b981;font-weight:700;font-size:9px;margin-top:2px;">✓ 입장 가능</div>
+              </div>
+            </div>
+            <div class="demo-event-card">
+              <div class="demo-event-img" style="background:linear-gradient(135deg,#ede9fe,#ddd6fe)">🎪</div>
+              <div class="demo-event-info">
+                <div class="demo-event-title">동아리 박람회</div>
+                <div class="demo-event-meta">📍 학생회관 · 2026.05.25</div>
+                <div class="demo-event-price">₩5,000</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-text">
+        <span class="badge">📱 주요 화면</span>
+        <h2 style="margin-top:16px;">
+          행사부터 티켓까지<br>
+          <span class="text-gradient">모두 한 앱에서</span>
+        </h2>
+        <p>복잡한 행사 운영 과정을 단순하게. 참가자는 더 즐겁게, 주최자는 더 편하게.</p>
+
+        <div class="demo-feature-list">
+          <div class="demo-feature-item">
+            <div class="demo-feature-bullet">🏫</div>
+            <div>
+              <h4>학교별 맞춤 피드</h4>
+              <p>내 학교의 행사만 모아보거나, 전체 대학 행사를 한 번에 탐색할 수 있습니다.</p>
+            </div>
+          </div>
+          <div class="demo-feature-item">
+            <div class="demo-feature-bullet">🎟️</div>
+            <div>
+              <h4>스마트 QR 티켓</h4>
+              <p>신청 즉시 발급되는 고유 QR 티켓으로 종이 없이 스마트하게 입장하세요.</p>
+            </div>
+          </div>
+          <div class="demo-feature-item">
+            <div class="demo-feature-bullet">📊</div>
+            <div>
+              <h4>주최자 실시간 대시보드</h4>
+              <p>신청자 목록, 체크인 현황, 수익 현황을 실시간으로 모니터링합니다.</p>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:28px;">
+          <a href="https://staging.d25a68jt9cg4tx.amplifyapp.com/login" target="_blank" class="btn-primary" style="display:inline-flex;">
+            🚀 지금 체험해보기
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── TEAM ─────────── -->
+<section id="team" class="section">
+  <div class="container">
+    <div class="section-title reveal">
+      <span class="badge">👥 팀 소개</span>
+      <h2 style="margin-top:16px;">함께 만든<br><span class="text-gradient">56팀</span></h2>
+      <p>국민대학교 소프트웨어학부 2026 캡스톤 56팀입니다.</p>
+    </div>
+
+    <div class="team-grid reveal">
+      <div class="team-card">
+        <div class="team-avatar" style="background:linear-gradient(135deg,#10b981,#059669)">결</div>
+        <div class="team-name">이한결</div>
+        <div class="team-role">UI/UX · 편의 도메인</div>
+        <div class="team-id">20235277</div>
+        <div class="team-tags">
+          <span class="team-tag">UI/UX</span>
+          <span class="team-tag">편의기능</span>
+        </div>
+      </div>
+
+      <div class="team-card">
+        <div class="team-avatar" style="background:linear-gradient(135deg,#ec4899,#f43f5e)">엽</div>
+        <div class="team-name">이주엽</div>
+        <div class="team-role">AWS · 행사 도메인</div>
+        <div class="team-id">20213058</div>
+        <div class="team-tags">
+          <span class="team-tag">AWS</span>
+          <span class="team-tag">행사관리</span>
+        </div>
+      </div>
+
+      <div class="team-card">
+        <div class="team-avatar" style="background:linear-gradient(135deg,#7c3aed,#6366f1)">창</div>
+        <div class="team-name">이창민</div>
+        <div class="team-role">GIT · 결제 도메인</div>
+        <div class="team-id">20235275</div>
+        <div class="team-tags">
+          <span class="team-tag">GIT</span>
+          <span class="team-tag">결제</span>
+        </div>
+      </div>
+
+      <div class="team-card">
+        <div class="team-avatar" style="background:linear-gradient(135deg,#3b82f6,#6366f1)">형</div>
+        <div class="team-name">김준형</div>
+        <div class="team-role">DB · 사용자 도메인</div>
+        <div class="team-id">20235272</div>
+        <div class="team-tags">
+          <span class="team-tag">DB</span>
+          <span class="team-tag">사용자관리</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── CTA BANNER ─────────── -->
+<section class="section-sm">
+  <div id="cta">
+    <h2>캠퍼스 행사, 이제 페스티켓으로<br>더 스마트하게 🎉</h2>
+    <p>주최자도 참가자도 모두 만족하는 대학 행사 플랫폼</p>
+    <a href="https://staging.d25a68jt9cg4tx.amplifyapp.com/login" target="_blank" class="cta-btn">
+      🚀 페스티켓 시작하기
+    </a>
+  </div>
+</section>
+
+<!-- ─────────── FOOTER ─────────── -->
+<footer>
+  <div class="container footer-inner">
+    <div class="footer-logo">
+      <img src="logo6.png" alt="페스티켓" />
+      페스티켓
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/kookmin-sw/2026-capstone-56" target="_blank">GitHub</a>
+      <a href="https://staging.d25a68jt9cg4tx.amplifyapp.com/login" target="_blank">데모 사이트</a>
+      <a href="#features">기능 소개</a>
+      <a href="#team">팀 소개</a>
+    </div>
+    <div class="footer-copy">© 2026 페스티켓 · 국민대학교 캡스톤 56팀 · All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal animation
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), i * 80);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  reveals.forEach(el => observer.observe(el));
+
+  // Smooth active nav link
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY + 80;
+    sections.forEach(sec => {
+      if (y >= sec.offsetTop && y < sec.offsetTop + sec.offsetHeight) {
+        navLinks.forEach(a => {
+          a.style.color = a.getAttribute('href') === '#' + sec.id ? 'var(--primary)' : '';
+          a.style.background = a.getAttribute('href') === '#' + sec.id ? 'rgba(124,58,237,0.1)' : '';
+        });
+      }
+    });
+  }, { passive: true });
+</script>
+
+</body>
+</html>
