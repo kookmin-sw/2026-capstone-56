@@ -19,9 +19,11 @@ const notificationRoutes = require('./routes/notifications')
 const inquiryRoutes = require('./routes/inquiries')
 const certRequestRoutes = require('./routes/certRequests')
 const delegationRoutes = require('./routes/delegation')
+const bookmarkRoutes = require('./routes/bookmarks')
 const eventInteractionRoutes = require('./routes/eventInteractions')
 const { start: startRefundWorker } = require('./workers/refundWorker')
 const { start: startReleaseWorker } = require('./workers/releaseWorker')
+const { start: startRoleExpiryWorker } = require('./workers/roleExpiryWorker')
 
 const app = express()
 
@@ -49,6 +51,7 @@ app.use('/api/notifications', notificationRoutes)
 app.use('/api/inquiries', inquiryRoutes)
 app.use('/api/cert-requests', certRequestRoutes)
 app.use('/api/delegations', delegationRoutes)
+app.use('/api/bookmarks', bookmarkRoutes)
 app.use('/api/v1', eventInteractionRoutes)
 
 app.use((err, req, res, next) => {
@@ -61,4 +64,5 @@ app.listen(PORT, () => {
   console.log(`Auth server running on port ${PORT}`)
   startRefundWorker()
   startReleaseWorker()
+  startRoleExpiryWorker()
 })

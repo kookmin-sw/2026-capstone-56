@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getAdminStats } from '../api/admin'
+import UserAvatar from '../components/UserAvatar'
 
 function fmtDate(iso) {
   if (!iso) return ''
@@ -144,9 +145,7 @@ export default function OperatorDashboard() {
             ) : (
               stats.recentUsers.map(user => (
                 <li key={user.id} className="flex items-center gap-3 px-5 py-3">
-                  <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-xs shrink-0">
-                    {user.name[0]}
-                  </div>
+                  <UserAvatar user={user} size="md" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-semibold text-gray-800 truncate">{user.name}</span>
