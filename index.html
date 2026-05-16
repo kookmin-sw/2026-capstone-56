@@ -594,27 +594,7 @@
       transition: transform 0.25s, box-shadow 0.25s;
     }
     .team-card:hover { transform: translateY(-4px); box-shadow: 0 14px 40px rgba(99,60,237,0.14); }
-    .team-avatar {
-      width: 72px; height: 72px; border-radius: 50%;
-      margin: 0 auto 14px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 30px;
-      font-weight: 700;
-      color: white;
-      position: relative;
-    }
-    .team-avatar::after {
-      content: '';
-      position: absolute;
-      inset: -3px;
-      border-radius: 50%;
-      padding: 3px;
-      background: linear-gradient(135deg, var(--primary), var(--pink));
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-    }
+    .team-avatar { display: none; }
     .team-name { font-size: 16px; font-weight: 800; color: #1e1b4b; margin-bottom: 4px; }
     .team-role { font-size: 12px; font-weight: 600; color: var(--primary); margin-bottom: 8px; }
     .team-id { font-size: 11px; color: #8a7fc0; }
