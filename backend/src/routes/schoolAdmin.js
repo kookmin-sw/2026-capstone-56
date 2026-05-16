@@ -168,7 +168,11 @@ router.post('/cert-requests/:id/approve', authMiddleware, SCHOOL_ADMIN, async (r
       }),
       prisma.user.update({
         where: { id: request.userId },
-        data: { role: 'CERTIFIED', roleMemo: memo?.trim() || null }
+        data: {
+          role: 'CERTIFIED',
+          roleMemo: memo?.trim() || null,
+          roleExpiresAt: request.organizationType === 'STUDENT_COUNCIL' ? request.expiresAt : null,
+        }
       })
     ])
 

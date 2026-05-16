@@ -36,6 +36,7 @@ model User {
   questions              EventQuestion[] @relation("QuestionAuthor")
   answers                QuestionAnswer[] @relation("AnswerAuthor")
   reviews                Review[]         @relation("ReviewAuthor")
+  roleExpiresAt          DateTime?
   hostRating             Float?
   ratingCount            Int              @default(0)
   certRequests           CertificationRequest[] @relation("CertRequests")
@@ -243,10 +244,12 @@ model CertificationRequest {
   user         User          @relation("CertRequests", fields: [userId], references: [id])
   schoolId     String
   school       School        @relation(fields: [schoolId], references: [id])
-  message      String?
-  organization String?
-  contact      String?
-  status       CertReqStatus @default(PENDING)
+  message          String?
+  organization     String?
+  contact          String?
+  organizationType OrgType   @default(CLUB)
+  expiresAt        DateTime?
+  status           CertReqStatus @default(PENDING)
   reviewNote   String?
   reviewedById String?
   reviewedBy   User?         @relation("CertReqReviewer", fields: [reviewedById], references: [id])
@@ -258,6 +261,11 @@ enum CertReqStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum OrgType {
+  STUDENT_COUNCIL
+  CLUB
 }
 
 model DelegationRequest {
