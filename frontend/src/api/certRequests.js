@@ -1,7 +1,10 @@
 import api from './axios'
 
-export const submitCertRequest = ({ message, organization, contact, organizationType, expiresAt }) =>
-  api.post('/cert-requests', { message, organization, contact, organizationType, expiresAt: expiresAt || undefined }).then(r => r.data)
+export const submitCertRequest = ({ message, organization, contact, organizationType, expiresAt, targetAdminId }) =>
+  api.post('/cert-requests', { message, organization, contact, organizationType, expiresAt: expiresAt || undefined, targetAdminId }).then(r => r.data)
+
+export const getSchoolAdmins = () =>
+  api.get('/cert-requests/admins').then(r => r.data)
 
 export const getMyCertRequests = () =>
   api.get('/cert-requests/mine').then(r => r.data)

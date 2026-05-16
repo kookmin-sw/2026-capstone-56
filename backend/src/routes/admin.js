@@ -184,7 +184,7 @@ router.patch('/users/:userId', authMiddleware, OPERATOR, async (req, res, next) 
 // PUT /api/admin/users/:userId/role — 역할 변경 (운영자)
 router.put('/users/:userId/role', authMiddleware, OPERATOR, async (req, res, next) => {
   try {
-    const { role, memo } = req.body
+    const { role, memo, organizationType } = req.body
     const VALID_ROLES = ['ATTENDEE', 'CERTIFIED', 'SCHOOL_ADMIN', 'OPERATOR']
 
     if (!VALID_ROLES.includes(role)) {
@@ -196,22 +196,14 @@ router.put('/users/:userId/role', authMiddleware, OPERATOR, async (req, res, nex
     })
     if (!target) return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' })
 
-    // 학교총관리자 임명 시 기존 총관리자 확인 (BR-A06)
-    if (role === 'SCHOOL_ADMIN' && target.schoolId) {
-      const existing = await prisma.user.findFirst({
-        where: { schoolId: target.schoolId, role: 'SCHOOL_ADMIN', deletedAt: null, NOT: { id: target.id } }
-      })
-      if (existing) {
-        return res.status(409).json({
-          message: `이미 총관리자(${existing.name})가 있습니다. 먼저 해제해주세요.`
-        })
-      }
-    }
-
     const updated = await prisma.user.update({
       where: { id: req.params.userId },
-      data: { role, roleMemo: role === 'ATTENDEE' ? null : (memo?.trim() || null) },
-      select: { id: true, name: true, email: true, role: true, roleMemo: true }
+      data: {
+        role,
+        roleMemo: role === 'ATTENDEE' ? null : (memo?.trim() || null),
+        organizationType: role === 'SCHOOL_ADMIN' ? (organizationType || null) : (role === 'ATTENDEE' ? null : undefined),
+      },
+      select: { id: true, name: true, email: true, role: true, roleMemo: true, organizationType: true }
     })
     const detail = memo?.trim()
       ? `${target.role} → ${role} (${target.name}) · ${memo.trim()}`
