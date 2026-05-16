@@ -4,6 +4,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getEvent, publishEvent, closeEvent, getNextRelease } from '../api/events'
 import { createFreeRegistration, cancelFreeRegistration } from '../api/registrations'
 import { preparePayment, cancelPaidRegistration, cancelPendingPayment } from '../api/payments'
+import { getBookmarkIds } from '../api/bookmarks'
+import BookmarkButton from '../components/BookmarkButton'
+import UserAvatar from '../components/UserAvatar'
 import { useAuth } from '../hooks/useAuth'
 import EventWhitelistManager from '../components/EventWhitelistManager'
 import EventParticipantManager from '../components/EventParticipantManager'
@@ -81,9 +84,7 @@ function HostCard({ host, hostEventCount }) {
       <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">주최자</div>
 
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-100 to-purple-100 flex items-center justify-center shrink-0">
-          <span className="text-base font-bold text-primary-600">{host.name?.[0] ?? '?'}</span>
-        </div>
+        <UserAvatar user={host} size="lg" className="rounded-2xl" />
         <div className="min-w-0">
           <div className="font-bold text-gray-900 text-sm truncate">{host.name}</div>
           {host.school?.name && (
@@ -292,6 +293,13 @@ export default function EventDetail() {
     queryFn: () => getEvent(id),
   })
 
+  const { data: bookmarkedIds = [] } = useQuery({
+    queryKey: ['bookmark-ids'],
+    queryFn: getBookmarkIds,
+    enabled: !!user,
+    staleTime: 60000,
+  })
+
   const applyMutation = useMutation({
     mutationFn: () => createFreeRegistration(id),
     onSuccess: (res) => {
@@ -398,6 +406,7 @@ export default function EventDetail() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+
   if (isLoading) {
     return (
       <div className="max-w-3xl mx-auto">
@@ -443,12 +452,17 @@ export default function EventDetail() {
           </svg>
         </button>
 
-        {/* 좋아요 버튼 */}
-        <button className="absolute top-3.5 right-3.5 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full shadow-sm flex items-center justify-center text-gray-300 hover:text-red-400 transition-colors">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-          </svg>
-        </button>
+        {/* 즐겨찾기 버튼 */}
+        <div className="absolute top-3.5 right-3.5 flex flex-col items-center gap-0.5">
+          <BookmarkButton
+            eventId={event.id}
+            isBookmarked={bookmarkedIds.includes(event.id)}
+            className="w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full shadow-sm hover:bg-white"
+          />
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-black/40 text-white backdrop-blur-sm">
+            {bookmarkedIds.includes(event.id) ? '저장됨' : '즐겨찾기'}
+          </span>
+        </div>
       </div>
 
       {/* ── 본문 2컬럼 ── */}

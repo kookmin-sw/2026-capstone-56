@@ -101,6 +101,11 @@ export default function Login() {
             무료로 가입하기
           </Link>
         </p>
+        <p className="text-center mt-3">
+          <Link to="/" className="text-xs text-gray-400 hover:text-gray-600 transition underline underline-offset-2">
+            로그인 없이 행사 둘러보기 →
+          </Link>
+        </p>
       </div>
     </div>
   )

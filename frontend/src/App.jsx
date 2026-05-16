@@ -21,6 +21,8 @@ import EventCreate from './pages/EventCreate'
 import EventEdit from './pages/EventEdit'
 import EventManage from './pages/EventManage'
 import MyTickets from './pages/MyTickets'
+import MyBookmarks from './pages/MyBookmarks'
+import SchoolEvents from './pages/SchoolEvents'
 import MyEvents from './pages/MyEvents'
 import CheckIn from './pages/CheckIn'
 import Profile from './pages/Profile'
@@ -52,7 +54,7 @@ export default function App() {
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><Home /></div></PrivateRoute>} />
+        <Route path="/" element={<div className="max-w-6xl mx-auto px-4 py-6"><Home /></div>} />
         <Route path="/events/create" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><EventCreate /></div></PrivateRoute>} />
         <Route path="/events/:id/edit" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><EventEdit /></div></PrivateRoute>} />
         <Route path="/events/:id/manage" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><EventManage /></div></PrivateRoute>} />
@@ -64,6 +66,8 @@ export default function App() {
         <Route path="/events/new" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><EventCreate /></div></PrivateRoute>} />
         {/* UC-13 내 티켓 */}
         <Route path="/my-tickets" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><MyTickets /></div></PrivateRoute>} />
+        <Route path="/my-bookmarks" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><MyBookmarks /></div></PrivateRoute>} />
+        <Route path="/schools/:schoolId/events" element={<SchoolEvents />} />
         <Route path="/my-events" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><MyEvents /></div></PrivateRoute>} />
         <Route path="/events/:id/checkin" element={<PrivateRoute><div className="max-w-6xl mx-auto px-4 py-6"><CheckIn /></div></PrivateRoute>} />
         <Route path="/admin" element={<OperatorRoute><div className="max-w-6xl mx-auto px-4 py-6"><OperatorDashboard /></div></OperatorRoute>} />
