@@ -575,6 +575,19 @@ export default function SchoolAdminDashboard() {
                             )}
                           </div>
                         )}
+                        {req.organizationType && (
+                          <div className={`rounded-xl px-3 py-2.5 ${req.organizationType === 'STUDENT_COUNCIL' ? 'bg-purple-50' : 'bg-gray-50'}`}>
+                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">구분</p>
+                            <p className={`text-sm font-semibold ${req.organizationType === 'STUDENT_COUNCIL' ? 'text-purple-700' : 'text-gray-700'}`}>
+                              {req.organizationType === 'STUDENT_COUNCIL' ? '학생회' : '동아리'}
+                            </p>
+                            {req.expiresAt && (
+                              <p className="text-xs text-purple-500 mt-0.5">
+                                임기 만료일: {new Date(req.expiresAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
+                              </p>
+                            )}
+                          </div>
+                        )}
                         {req.message && (
                           <div className="bg-blue-50 rounded-xl px-3 py-2.5">
                             <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-wide mb-0.5">신청 사유</p>

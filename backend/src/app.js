@@ -22,6 +22,7 @@ const delegationRoutes = require('./routes/delegation')
 const eventInteractionRoutes = require('./routes/eventInteractions')
 const { start: startRefundWorker } = require('./workers/refundWorker')
 const { start: startReleaseWorker } = require('./workers/releaseWorker')
+const { start: startRoleExpiryWorker } = require('./workers/roleExpiryWorker')
 
 const app = express()
 
@@ -61,4 +62,5 @@ app.listen(PORT, () => {
   console.log(`Auth server running on port ${PORT}`)
   startRefundWorker()
   startReleaseWorker()
+  startRoleExpiryWorker()
 })
