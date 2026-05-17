@@ -185,6 +185,14 @@ export default function AdminEvents() {
                           </button>
                         )}
                         {event.status !== 'CANCELLED' && (
+                          <Link
+                            to={`/events/${event.id}/edit`}
+                            className="text-xs text-primary-600 hover:underline font-medium"
+                          >
+                            수정
+                          </Link>
+                        )}
+                        {event.status !== 'CANCELLED' && (
                           <button
                             onClick={() => {
                               if (confirm(`"${event.title}" 행사를 삭제하시겠습니까?\n신청자가 있으면 자동 취소 처리됩니다.`))
