@@ -30,7 +30,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
     const { message, organization, contact, organizationType, expiresAt, targetAdminId } = req.body
     if (!organization?.trim()) return res.status(400).json({ message: '소속 단체/직책을 입력해주세요.' })
     if (!contact?.trim()) return res.status(400).json({ message: '연락처를 입력해주세요.' })
-    if (!targetAdminId) return res.status(400).json({ message: '신청할 관리자를 선택해주세요.' })
+    if (!targetAdminId && targetAdminId !== null) return res.status(400).json({ message: '신청할 관리자를 선택해주세요.' })
     if (!['STUDENT_COUNCIL', 'CLUB'].includes(organizationType)) {
       return res.status(400).json({ message: '구분을 선택해주세요.' })
     }
@@ -60,12 +60,19 @@ router.post('/', authMiddleware, async (req, res, next) => {
       return res.status(409).json({ message: '이미 처리 중인 신청이 있습니다.' })
     }
 
-    const targetAdmin = await prisma.user.findFirst({
-      where: { id: targetAdminId, schoolId: user.schoolId, role: 'SCHOOL_ADMIN', deletedAt: null },
-      select: { id: true, name: true }
-    })
-    if (!targetAdmin) {
-      return res.status(400).json({ message: '유효하지 않은 관리자입니다.' })
+    // targetAdminId가 null이면 운영자에게 직접 신청
+    const toOperator = !targetAdminId
+    let resolvedTargetAdminId = null
+
+    if (!toOperator) {
+      const targetAdmin = await prisma.user.findFirst({
+        where: { id: targetAdminId, schoolId: user.schoolId, role: 'SCHOOL_ADMIN', deletedAt: null },
+        select: { id: true, name: true }
+      })
+      if (!targetAdmin) {
+        return res.status(400).json({ message: '유효하지 않은 관리자입니다.' })
+      }
+      resolvedTargetAdminId = targetAdminId
     }
 
     const request = await prisma.certificationRequest.create({
@@ -77,17 +84,34 @@ router.post('/', authMiddleware, async (req, res, next) => {
         contact: contact?.trim() || null,
         organizationType,
         expiresAt: organizationType === 'STUDENT_COUNCIL' ? new Date(expiresAt) : null,
-        targetAdminId,
+        targetAdminId: resolvedTargetAdminId,
       }
     })
 
-    createNotifications({
-      receiverIds: [targetAdminId],
-      type: 'CERT_REQUEST',
-      title: '인증주최자 신청이 접수되었습니다',
-      content: `${user.name}님이 인증주최자 신청을 했습니다.`,
-      relatedTargetId: request.id,
-    }).catch(e => console.error('[notify cert]', e.message))
+    if (toOperator) {
+      // 운영자 전원에게 알림
+      const operators = await prisma.user.findMany({
+        where: { role: 'OPERATOR', deletedAt: null },
+        select: { id: true }
+      })
+      if (operators.length > 0) {
+        createNotifications({
+          receiverIds: operators.map(o => o.id),
+          type: 'CERT_REQUEST',
+          title: '인증주최자 신청이 접수되었습니다 (운영자)',
+          content: `${user.name}님이 운영자에게 인증주최자 신청을 했습니다.`,
+          relatedTargetId: request.id,
+        }).catch(e => console.error('[notify cert operator]', e.message))
+      }
+    } else {
+      createNotifications({
+        receiverIds: [resolvedTargetAdminId],
+        type: 'CERT_REQUEST',
+        title: '인증주최자 신청이 접수되었습니다',
+        content: `${user.name}님이 인증주최자 신청을 했습니다.`,
+        relatedTargetId: request.id,
+      }).catch(e => console.error('[notify cert]', e.message))
+    }
 
     res.status(201).json(request)
   } catch (err) { next(err) }

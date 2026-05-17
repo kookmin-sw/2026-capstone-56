@@ -246,6 +246,115 @@ router.post('/registrations/:id/cancel', authMiddleware, OPERATOR, async (req, r
   } catch (err) { next(err) }
 })
 
+// GET /api/admin/cert-requests — 인증주최자 신청 전체 조회 (운영자)
+router.get('/cert-requests', authMiddleware, OPERATOR, async (req, res, next) => {
+  try {
+    const { status, schoolId, search } = req.query
+    const where = {}
+    if (status) where.status = status
+    if (schoolId) where.schoolId = schoolId
+    if (search) {
+      where.OR = [
+        { user: { name: { contains: search, mode: 'insensitive' } } },
+        { user: { email: { contains: search, mode: 'insensitive' } } },
+        { organization: { contains: search, mode: 'insensitive' } },
+      ]
+    }
+
+    const requests = await prisma.certificationRequest.findMany({
+      where,
+      include: {
+        user: { select: { id: true, name: true, email: true, studentId: true } },
+        school: { select: { id: true, name: true } },
+        targetAdmin: { select: { id: true, name: true } },
+        reviewedBy: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 300,
+    })
+    res.json(requests)
+  } catch (err) { next(err) }
+})
+
+// POST /api/admin/cert-requests/:id/approve — 운영자 직접 승인
+router.post('/cert-requests/:id/approve', authMiddleware, OPERATOR, async (req, res, next) => {
+  try {
+    const { memo } = req.body
+    if (!memo?.trim()) return res.status(400).json({ message: '승인 메모를 입력해주세요.' })
+
+    const request = await prisma.certificationRequest.findFirst({
+      where: { id: req.params.id },
+      include: { user: { select: { id: true, name: true, role: true } } }
+    })
+    if (!request) return res.status(404).json({ message: '신청을 찾을 수 없습니다.' })
+    if (request.status !== 'PENDING') return res.status(400).json({ message: '처리 중인 신청만 승인할 수 있습니다.' })
+
+    const { createNotifications } = require('../services/notificationService')
+
+    await prisma.$transaction([
+      prisma.certificationRequest.update({
+        where: { id: req.params.id },
+        data: { status: 'APPROVED', reviewedById: req.user.id, reviewNote: memo.trim() }
+      }),
+      prisma.user.update({
+        where: { id: request.userId },
+        data: {
+          role: 'CERTIFIED',
+          roleMemo: memo.trim(),
+          organizationType: request.organizationType,
+          roleExpiresAt: request.organizationType === 'STUDENT_COUNCIL' ? request.expiresAt : null,
+        }
+      })
+    ])
+
+    createNotifications({
+      receiverIds: [request.userId],
+      type: 'CERT_APPROVED',
+      title: '인증주최자 신청이 승인되었습니다',
+      content: memo.trim(),
+      relatedTargetId: request.id,
+    }).catch(e => console.error('[notify cert approve]', e.message))
+
+    audit(req.user.id, 'CHANGE_ROLE', 'USER', request.userId,
+      `ATTENDEE → CERTIFIED (${request.user.name}) · 운영자 직접 승인`)
+    res.json({ message: '승인되었습니다.' })
+  } catch (err) { next(err) }
+})
+
+// POST /api/admin/cert-requests/:id/reject — 운영자 직접 거절
+router.post('/cert-requests/:id/reject', authMiddleware, OPERATOR, async (req, res, next) => {
+  try {
+    const { reason } = req.body
+    if (!reason?.trim()) return res.status(400).json({ message: '거절 사유를 입력해주세요.' })
+
+    const request = await prisma.certificationRequest.findFirst({
+      where: { id: req.params.id },
+      include: { user: { select: { id: true, name: true } } }
+    })
+    if (!request) return res.status(404).json({ message: '신청을 찾을 수 없습니다.' })
+    if (request.status !== 'PENDING') return res.status(400).json({ message: '처리 중인 신청만 거절할 수 있습니다.' })
+
+    const { createNotifications } = require('../services/notificationService')
+
+    await prisma.certificationRequest.update({
+      where: { id: req.params.id },
+      data: { status: 'REJECTED', reviewedById: req.user.id, reviewNote: reason.trim() }
+    })
+
+    createNotifications({
+      receiverIds: [request.userId],
+      type: 'CERT_REJECTED',
+      title: '인증주최자 신청이 거절되었습니다',
+      content: reason.trim().slice(0, 100),
+      relatedTargetId: request.id,
+    }).catch(e => console.error('[notify cert reject]', e.message))
+
+    audit(req.user.id, 'REJECT_CERT', 'USER', request.userId,
+      `${request.user.name} 인증 신청 거절 · ${reason.trim()}`)
+    res.json({ message: '거절되었습니다.' })
+  } catch (err) { next(err) }
+})
+
 // GET /api/admin/audit-logs — 감사 로그 조회 (운영자)
 router.get('/audit-logs', authMiddleware, OPERATOR, async (req, res, next) => {
   try {
