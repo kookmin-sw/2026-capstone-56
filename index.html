@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -48,8 +48,49 @@
 
     /* ─────────────────────────────── Utility ─── */
     .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
-    .section { padding: 96px 0; }
-    .section-sm { padding: 64px 0; }
+    .section { padding: 96px 0; position: relative; }
+    .section-sm { padding: 64px 0; position: relative; }
+
+    /* 섹션 디바이더 — 가운데 보라 도트 + 좌우로 페이드되는 라인 */
+    .section + .section::before,
+    .section-sm + .section::before,
+    .section + .section-sm::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(640px, 80%);
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(124,58,237,0.18) 25%,
+        rgba(124,58,237,0.32) 50%,
+        rgba(124,58,237,0.18) 75%,
+        transparent 100%
+      );
+      pointer-events: none;
+    }
+    /* 가운데 보라 도트 */
+    .section + .section::after,
+    .section-sm + .section::after,
+    .section + .section-sm::after {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow:
+        0 0 0 3px rgba(255,255,255,0.7),
+        0 0 0 4px rgba(124,58,237,0.18),
+        0 0 12px rgba(124,58,237,0.4);
+      pointer-events: none;
+    }
     .text-gradient {
       background: linear-gradient(90deg, #7c3aed 0%, #6366f1 50%, #3b82f6 100%);
       -webkit-background-clip: text;
@@ -371,12 +412,12 @@
       border: 1px solid rgba(124,58,237,0.1);
     }
     .mock-topbar {
-      background: #e9e4ff;
+      background: #ffffff;
       padding: 14px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid rgba(124,58,237,0.08);
+      border-bottom: 1px solid rgba(124,58,237,0.25);
     }
     .mock-logo-row { display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 14px; color: var(--primary); }
     .mock-logo-row img { height: 22px; }
@@ -438,6 +479,8 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 26px;
       margin-bottom: 16px;
+      font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', sans-serif;
+      line-height: 1;
     }
     .feature-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: #1e1b4b; }
     .feature-card p { font-size: 14px; color: #6b63a0; line-height: 1.65; }
@@ -461,40 +504,107 @@
     .steps {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
+      gap: 16px;
       position: relative;
+      counter-reset: step;
     }
     @media (max-width: 768px) { .steps { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 480px) { .steps { grid-template-columns: 1fr; } }
+
     .step {
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      padding: 32px 16px;
+      padding: 24px 14px 28px;
       position: relative;
+      background: rgba(255,255,255,0.55);
+      border: 1px solid rgba(255,255,255,0.7);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s;
+      z-index: 1;
     }
+    .step:hover {
+      transform: translateY(-6px);
+      border-color: rgba(124,58,237,0.35);
+      box-shadow: 0 16px 40px rgba(124,58,237,0.18);
+    }
+
     .step-num {
       width: 62px; height: 62px; border-radius: 50%;
-      background: var(--primary);
+      background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
       color: white;
       font-size: 22px;
       font-weight: 900;
       display: flex; align-items: center; justify-content: center;
-      margin-bottom: 20px;
-      box-shadow: 0 6px 20px rgba(124,58,237,0.35);
+      margin-bottom: 18px;
+      box-shadow:
+        0 6px 20px rgba(124,58,237,0.45),
+        0 0 0 6px rgba(255,255,255,0.85),
+        0 0 0 7px rgba(124,58,237,0.18);
       flex-shrink: 0;
+      position: relative;
+      z-index: 3;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-    .step-icon { font-size: 38px; margin-bottom: 12px; }
+    .step:hover .step-num {
+      transform: scale(1.08);
+      box-shadow:
+        0 10px 28px rgba(124,58,237,0.55),
+        0 0 0 6px rgba(255,255,255,0.95),
+        0 0 0 8px rgba(124,58,237,0.3);
+    }
+    /* 첫 step에 펄스 링 */
+    .step:first-child .step-num::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid rgba(124,58,237,0.5);
+      animation: stepPulse 2.2s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes stepPulse {
+      0%   { transform: scale(1);   opacity: 0.6; }
+      70%  { transform: scale(1.4); opacity: 0;   }
+      100% { transform: scale(1.4); opacity: 0;   }
+    }
+
+    .step-icon {
+      font-size: 38px;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 4px 8px rgba(124,58,237,0.18));
+      transition: transform 0.3s ease;
+    }
+    .step:hover .step-icon { transform: scale(1.1) rotate(-4deg); }
+
     .step h3 { font-size: 18px; font-weight: 700; color: #1e1b4b; margin-bottom: 8px; }
-    .step p { font-size: 15px; color: #6b63a0; line-height: 1.6; }
+    .step p { font-size: 14.5px; color: #6b63a0; line-height: 1.6; }
+
+    /* 화살표 — 단계 사이 step-num 사이를 잇는 위치, 진행 효과 */
     .step-arrow {
       position: absolute;
-      right: -6px; top: 42px;
-      font-size: 20px;
-      color: rgba(124,58,237,0.3);
-      z-index: 1;
+      right: -16px; top: 41px;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: white;
+      border: 2px solid rgba(124,58,237,0.4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      color: var(--primary);
+      font-weight: 900;
+      z-index: 3;
+      box-shadow: 0 4px 10px rgba(124,58,237,0.18);
+      transition: transform 0.3s ease, background 0.3s ease, color 0.3s ease;
     }
+    .step:hover .step-arrow {
+      background: var(--primary);
+      color: white;
+      transform: scale(1.15);
+      border-color: var(--primary);
+    }
+    @media (max-width: 768px) { .step-arrow { display: none; } }
 
     /* 흐름 탭 */
     .flow-tabs {
@@ -523,45 +633,156 @@
     .flow-panel { display: none; }
     .flow-panel.active { display: grid; }
 
-    /* ─────────────────────────────── TECH STACK ─── */
+    /* ─────────────────────────────── TECH STACK (Marquee + Icon Cards) ─── */
     #tech { background: transparent; }
-    .tech-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
+
+    .tech-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
     }
-    @media (max-width: 640px) { .tech-grid { grid-template-columns: 1fr; } }
-    .tech-group {
-      background: rgba(255,255,255,0.7);
-      border: 1px solid rgba(255,255,255,0.8);
-      border-radius: 20px;
-      padding: 28px 24px;
-      box-shadow: 0 4px 16px rgba(99,60,237,0.07);
+
+    .tech-stream-row {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
     }
-    .tech-group-title {
-      font-size: 11px;
-      font-weight: 700;
+
+    /* 상단 헤더: [● TAG]  [영문 타이틀]  ............ [한글 설명] */
+    .tech-stream-header {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed rgba(124,58,237,0.18);
+    }
+    .tech-stream-label-tag {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
       text-transform: uppercase;
-      letter-spacing: 1.2px;
-      color: var(--primary);
-      margin-bottom: 16px;
-    }
-    .tech-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-    .tech-chip {
+      color: var(--text);
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      padding: 7px 14px;
-      border-radius: 99px;
-      background: #f3f0ff;
-      color: #4c3b99;
-      border: 1px solid rgba(124,58,237,0.12);
+      gap: 10px;
+      flex-shrink: 0;
     }
-    .tech-chip span { font-size: 16px; }
-    .tech-chip img { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
-    .tech-chip svg { flex-shrink: 0; }
+    .tech-stream-label-tag::before {
+      content: '';
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--row-accent, var(--primary));
+      box-shadow: 0 0 0 5px color-mix(in srgb, var(--row-accent, var(--primary)) 18%, transparent);
+    }
+    .tech-stream-label-name {
+      display: none;
+    }
+    .tech-stream-label-desc {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 500;
+      margin-left: auto;
+      text-align: right;
+    }
+
+    .tech-stream-viewport {
+      width: 100%;
+      overflow: hidden;
+      -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 4%, #000 96%, transparent 100%);
+      mask-image: linear-gradient(90deg, transparent 0%, #000 4%, #000 96%, transparent 100%);
+      padding: 8px 0;
+    }
+    .tech-stream-track {
+      display: flex;
+      gap: 14px;
+      width: max-content;
+      animation: techStreamMove 38s linear infinite;
+    }
+    .tech-stream-track.reverse { animation-direction: reverse; }
+    .tech-stream-track.fast    { animation-duration: 28s; }
+    .tech-stream-track.slow    { animation-duration: 50s; }
+    .tech-stream-row:hover .tech-stream-track { animation-play-state: paused; }
+    @keyframes techStreamMove {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* 큰 아이콘 카드 (마퀴 트랙 안에 들어감) */
+    .tech-card {
+      flex-shrink: 0;
+      width: 130px;
+      height: 130px;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1.5px solid rgba(255,255,255,0.85);
+      border-radius: 18px;
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 16px rgba(99,60,237,0.08);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+    .tech-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 0%, var(--accent, transparent) 0%, transparent 65%);
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .tech-card:hover {
+      transform: translateY(-6px) scale(1.04);
+      box-shadow: 0 18px 40px rgba(99,60,237,0.22);
+      border-color: rgba(124,58,237,0.35);
+      z-index: 2;
+    }
+    .tech-card:hover::before { opacity: 0.22; }
+
+    .tech-card-icon {
+      width: 48px; height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform 0.3s ease;
+      position: relative;
+      z-index: 1;
+    }
+    .tech-card:hover .tech-card-icon { transform: scale(1.15); }
+    .tech-card-icon img { width: 100%; height: 100%; object-fit: contain; }
+    .tech-card-icon svg { width: 100%; height: 100%; }
+
+    .tech-card-name {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+      line-height: 1.25;
+      letter-spacing: -0.2px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* 행 색상 */
+    .tech-stream-row.row-frontend { --row-accent: #3b82f6; }
+    .tech-stream-row.row-backend  { --row-accent: #10b981; }
+    .tech-stream-row.row-infra    { --row-accent: #f59e0b; }
+    .tech-stream-row.row-external { --row-accent: #ec4899; }
+
+    @media (max-width: 720px) {
+      .tech-stream-header { flex-wrap: wrap; gap: 8px; }
+      .tech-stream-label-desc { width: 100%; margin-left: 0; text-align: left; }
+      .tech-card { width: 110px; height: 110px; }
+      .tech-card-icon { width: 40px; height: 40px; }
+    }
 
     /* ─────────────────────────────── DEMO ─── */
     #demo { background: transparent; }
@@ -576,10 +797,65 @@
       background: #1e1b4b;
       border-radius: 40px;
       padding: 16px;
-      box-shadow: 0 32px 80px rgba(30,27,75,0.35);
-      max-width: 300px;
+      box-shadow:
+        0 32px 80px rgba(30,27,75,0.35),
+        0 0 0 1.5px rgba(255,255,255,0.06) inset;
+      max-width: 360px;
       margin: 0 auto;
+      position: relative;
+      transform: rotate(-3deg);
+      animation: phoneFloat 6s ease-in-out infinite;
+      transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s ease;
+      cursor: default;
     }
+    @keyframes phoneFloat {
+      0%, 100% { transform: rotate(-3deg) translateY(0); }
+      50%      { transform: rotate(-3deg) translateY(-10px); }
+    }
+
+    /* 폰 주변 보라 글로우 오브 */
+    .demo-phone::before {
+      content: '';
+      position: absolute;
+      inset: -40px;
+      background: radial-gradient(
+        ellipse at center,
+        rgba(124,58,237,0.35) 0%,
+        rgba(99,102,241,0.22) 30%,
+        transparent 65%
+      );
+      filter: blur(30px);
+      z-index: -1;
+      opacity: 0.7;
+      animation: phoneGlowPulse 5s ease-in-out infinite;
+    }
+    @keyframes phoneGlowPulse {
+      0%, 100% { opacity: 0.55; transform: scale(1); }
+      50%      { opacity: 0.85; transform: scale(1.08); }
+    }
+
+    /* 폰 후광 — 배경 핑크 보조 글로우 */
+    .demo-phone::after {
+      content: '';
+      position: absolute;
+      width: 180px; height: 180px;
+      bottom: -30px; right: -50px;
+      background: radial-gradient(circle, rgba(236,72,153,0.3) 0%, transparent 60%);
+      filter: blur(25px);
+      z-index: -1;
+      animation: phoneGlowPulse 7s ease-in-out infinite 1.5s;
+    }
+
+    /* 호버 시 똑바로 서면서 살짝 떠오르고 글로우 강화 */
+    .demo-phone:hover {
+      animation-play-state: paused;
+      transform: rotate(0deg) translateY(-6px) scale(1.03);
+      box-shadow:
+        0 48px 100px rgba(30,27,75,0.45),
+        0 0 0 1.5px rgba(255,255,255,0.1) inset,
+        0 0 60px rgba(124,58,237,0.4);
+    }
+
     .demo-screen {
       background: #e9e4ff;
       border-radius: 28px;
@@ -587,6 +863,51 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      position: relative;
+    }
+
+    /* 화면 위 미세한 빛 반사 — 호버 시에만 슬라이드 */
+    .demo-screen::after {
+      content: '';
+      position: absolute;
+      top: -100%;
+      left: -50%;
+      width: 50%;
+      height: 200%;
+      background: linear-gradient(
+        115deg,
+        transparent 30%,
+        rgba(255,255,255,0.18) 50%,
+        transparent 70%
+      );
+      transform: rotate(15deg);
+      pointer-events: none;
+      transition: top 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: 10;
+    }
+    .demo-phone:hover .demo-screen::after {
+      top: 100%;
+    }
+
+    /* 호버 시 화면 안 카드들 살짝 차례로 들썩 */
+    .demo-phone:hover .demo-event-card,
+    .demo-phone:hover .demo-qr {
+      animation: cardLift 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .demo-phone:hover .demo-event-card:nth-child(1) { animation-delay: 0.05s; }
+    .demo-phone:hover .demo-event-card:nth-child(2) { animation-delay: 0.12s; }
+    .demo-phone:hover .demo-event-card:nth-child(3) { animation-delay: 0.19s; }
+    .demo-phone:hover .demo-event-card:nth-child(4) { animation-delay: 0.26s; }
+    @keyframes cardLift {
+      from { transform: translateY(4px); opacity: 0.7; }
+      to   { transform: translateY(0);   opacity: 1;   }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .demo-phone { animation: none; transform: none; }
+      .demo-phone::before, .demo-phone::after { animation: none; }
+      .demo-phone:hover .demo-event-card,
+      .demo-phone:hover .demo-qr { animation: none; }
     }
     .demo-screen-bar {
       background: white;
@@ -685,29 +1006,68 @@
     .story-tabs {
       display: flex;
       justify-content: center;
-      gap: 10px;
-      margin-bottom: 36px;
+      gap: 6px;
+      margin: 0 auto 40px;
+      padding: 6px;
+      background: rgba(255,255,255,0.6);
+      border: 1.5px solid rgba(124,58,237,0.15);
+      border-radius: 99px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 6px 24px rgba(99,60,237,0.08);
+      width: fit-content;
+      max-width: 100%;
     }
+
     .story-tab {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 8px;
       font-size: 14px;
-      font-weight: 600;
-      padding: 12px 24px;
+      font-weight: 700;
+      padding: 12px 26px;
       border-radius: 99px;
-      border: 1.5px solid rgba(124,58,237,0.2);
-      background: rgba(255,255,255,0.5);
+      border: none;
+      background: transparent;
       color: #6b63a0;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+      position: relative;
+      letter-spacing: -0.2px;
+      font-family: 'Pretendard', -apple-system, sans-serif;
+      white-space: nowrap;
     }
-    .story-tab:hover { background: rgba(255,255,255,0.85); }
+    .story-tab:hover {
+      color: var(--primary);
+      transform: translateY(-1px);
+    }
+
+    /* 비활성 탭 호버 시 미묘한 배경 */
+    .story-tab:not(.active):hover {
+      background: rgba(124,58,237,0.06);
+    }
+
+    /* 활성 탭 — 그라디언트 + 입체감 */
     .story-tab.active {
-      background: var(--primary);
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6366f1 100%);
       color: white;
-      border-color: var(--primary);
-      box-shadow: 0 4px 16px rgba(124,58,237,0.35);
+      box-shadow:
+        0 6px 18px rgba(124,58,237,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.25);
+      transform: translateY(-1px);
+    }
+
+    /* 활성 탭 이모지 살짝 키우기 */
+    .story-tab.active::first-letter {
+      font-size: 1.1em;
+    }
+
+    @media (max-width: 640px) {
+      .story-tabs {
+        flex-wrap: wrap;
+        max-width: 100%;
+        padding: 6px;
+      }
+      .story-tab { padding: 10px 18px; font-size: 13px; }
     }
 
     .story-panel { display: none; }
@@ -823,6 +1183,194 @@
       color: white;
     }
 
+    .story-compare {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 20px;
+      align-items: stretch;
+      max-width: 880px;
+      margin: 60px auto 0;
+      position: relative;
+      padding-top: 40px;
+    }
+    @media (max-width: 760px) {
+      .story-compare { grid-template-columns: 1fr; gap: 16px; padding-top: 30px; }
+    }
+
+    /* Upgrade 화살표 배지 */
+    .story-upgrade-badge {
+      position: absolute;
+      top: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 28px 10px 22px;
+      background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+      color: white;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(124,58,237,0.35);
+      clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
+      z-index: 2;
+    }
+    .story-upgrade-badge::before {
+      content: '↑';
+      font-size: 16px;
+    }
+
+    /* 카드 공통 */
+    .story-card {
+      border-radius: 20px;
+      padding: 32px 24px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    /* Before 카드 — 작고 흐릿 */
+    .story-card-before {
+      background: #efeaf5;
+      transform: scale(0.94);
+      transform-origin: right center;
+      opacity: 0.85;
+    }
+    @media (max-width: 760px) {
+      .story-card-before { transform: scale(1); transform-origin: center; }
+    }
+
+    /* After 카드 — 크고 강조 */
+    .story-card-after {
+      background: white;
+      border: 2px solid #7c3aed;
+      box-shadow: 0 16px 48px rgba(124,58,237,0.18), 0 4px 12px rgba(124,58,237,0.08);
+    }
+    .story-card-after:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 24px 60px rgba(124,58,237,0.28);
+    }
+
+    .story-card-label {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      margin-bottom: 4px;
+    }
+    .story-card-before .story-card-label { color: #6b6580; }
+    .story-card-after .story-card-label {
+      color: #7c3aed;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .story-card-after .story-card-label::before {
+      content: 'NEW';
+      background: #7c3aed;
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .story-card-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .story-card-before .story-card-title { color: #4a4560; }
+    .story-card-after .story-card-title { color: #1e1b4b; }
+
+    .story-card-sub {
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+    .story-card-before .story-card-sub { color: #8a8499; }
+    .story-card-after .story-card-sub { color: #7c6fa0; }
+
+    /* 아이콘 영역 (이모지 박스) */
+    .story-card-visual {
+      width: 100%;
+      max-width: 200px;
+      aspect-ratio: 1;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 80px;
+      margin-bottom: 22px;
+      filter: grayscale(0);
+    }
+    .story-card-before .story-card-visual {
+      background: #e3def0;
+      filter: grayscale(0.4) brightness(0.95);
+    }
+    .story-card-after .story-card-visual {
+      background: linear-gradient(135deg, #f3edff 0%, #ede4ff 50%, #e0d0ff 100%);
+      box-shadow: inset 0 2px 12px rgba(124,58,237,0.08);
+    }
+
+    /* 항목 리스트 - pill 형태 */
+    .story-pills {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+    .story-pills li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-radius: 99px;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.4;
+      text-align: left;
+    }
+    .story-card-before .story-pills li {
+      background: #fff;
+      color: #7a7390;
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+    .story-card-after .story-pills li {
+      background: linear-gradient(135deg, #f3edff 0%, #ede4ff 100%);
+      color: #4c3b99;
+      border: 1px solid rgba(124,58,237,0.15);
+    }
+
+    .story-pill-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .story-pill-icon svg {
+      width: 10px;
+      height: 10px;
+      display: block;
+    }
+    .story-card-before .story-pill-icon {
+      background: #b0a8c4;
+      color: white;
+    }
+    .story-card-after .story-pill-icon {
+      background: #7c3aed;
+      color: white;
+    }
+
     /* ─────────────────────────────── TEAM ─── */
     #team { background: transparent; }
     .team-grid {
@@ -832,35 +1380,141 @@
     }
     @media (max-width: 900px) { .team-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 480px) { .team-grid { grid-template-columns: 1fr; } }
+
     .team-card {
-      background: rgba(255,255,255,0.75);
+      background: rgba(255,255,255,0.85);
       backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.7);
-      border-radius: 20px;
-      padding: 28px 20px;
+      -webkit-backdrop-filter: blur(12px);
+      border: 1.5px solid rgba(255,255,255,0.8);
+      border-radius: 22px;
+      padding: 32px 20px 26px;
       text-align: center;
-      box-shadow: 0 4px 20px rgba(99,60,237,0.07);
-      transition: transform 0.25s, box-shadow 0.25s;
+      box-shadow: 0 4px 20px rgba(99,60,237,0.08);
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s;
+      position: relative;
+      overflow: hidden;
+      cursor: default;
     }
-    .team-card:hover { transform: translateY(-4px); box-shadow: 0 14px 40px rgba(99,60,237,0.14); }
-    .team-avatar { display: none; }
-    .team-name { font-size: 16px; font-weight: 800; color: #1e1b4b; margin-bottom: 4px; }
-    .team-role { font-size: 12px; font-weight: 600; color: var(--primary); margin-bottom: 8px; }
-    .team-id { font-size: 11px; color: #8a7fc0; }
-    .team-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin-top: 12px; }
-    .team-tag {
-      font-size: 10px;
-      font-weight: 600;
-      padding: 3px 9px;
-      border-radius: 99px;
-      background: rgba(124,58,237,0.1);
+
+    /* 카드 상단 컬러 액센트 바 */
+    .team-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 5px;
+      background: var(--avatar-bg, linear-gradient(135deg, #7c3aed, #6366f1));
+      border-radius: 22px 22px 0 0;
+    }
+
+    /* 호버 시 하단에서 올라오는 컬러 후광 */
+    .team-card::after {
+      content: '';
+      position: absolute;
+      bottom: -50%; left: 50%;
+      width: 200%; height: 100%;
+      transform: translateX(-50%);
+      background: radial-gradient(ellipse at center top, var(--avatar-color, rgba(124,58,237,0.3)) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.4s, bottom 0.4s;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .team-card:hover::after {
+      opacity: 0.45;
+      bottom: -20%;
+    }
+
+    .team-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(124,58,237,0.25);
+      box-shadow: 0 24px 50px rgba(99,60,237,0.2);
+    }
+
+    .team-avatar {
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      width: 72px; height: 72px;
+      margin: 0 auto 18px;
+      border-radius: 50%;
+      font-size: 34px;
+      line-height: 1;
+      font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', sans-serif;
+      color: white;
+      background: var(--avatar-bg, linear-gradient(135deg, #7c3aed, #6366f1));
+      box-shadow:
+        0 8px 24px var(--avatar-color, rgba(124,58,237,0.35)),
+        0 0 0 4px rgba(255,255,255,0.85),
+        0 0 0 5px rgba(0,0,0,0.05);
+      position: relative;
+      z-index: 1;
+      transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    /* 이모지 글리프 시각 보정 — 폰트 박스 하단 공간이 있어 살짝 위로 올림 */
+    .team-avatar > .team-avatar-emoji {
+      display: block;
+      transform: translateY(-3px);
+      line-height: 1;
+    }
+    .team-card:hover .team-avatar {
+      transform: scale(1.1) rotate(-4deg);
+    }
+
+    .team-name {
+      font-size: 17px;
+      font-weight: 800;
+      color: #1e1b4b;
+      margin-bottom: 6px;
+      position: relative;
+      z-index: 1;
+      letter-spacing: -0.3px;
+    }
+    .team-role {
+      font-size: 12.5px;
+      font-weight: 700;
       color: var(--primary);
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+      line-height: 1.4;
+    }
+    .team-id {
+      font-size: 11px;
+      color: #9088b8;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      position: relative;
+      z-index: 1;
+    }
+    .team-tags {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 5px;
+      margin-top: 14px;
+      position: relative;
+      z-index: 1;
+    }
+    .team-tag {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 99px;
+      background: rgba(124,58,237,0.08);
+      color: var(--primary);
+      border: 1px solid rgba(124,58,237,0.12);
+      transition: background 0.2s, transform 0.2s;
+    }
+    .team-card:hover .team-tag {
+      background: rgba(124,58,237,0.14);
     }
 
     /* ─────────────────────────────── CTA BANNER ─── */
     #cta {
       margin: 0 24px;
       background: linear-gradient(135deg, #7c3aed 0%, #6366f1 50%, #3b82f6 100%);
+      background-size: 240% 240%;
+      animation: ctaGradFlow 14s ease-in-out infinite;
       border-radius: 32px;
       padding: 72px 32px;
       text-align: center;
@@ -868,14 +1522,82 @@
       position: relative;
       overflow: hidden;
     }
+    @keyframes ctaGradFlow {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* 도트 패턴 (기존) */
     #cta::before {
       content: '';
       position: absolute; inset: 0;
       background-image: radial-gradient(circle, rgba(255,255,255,0.08) 1.5px, transparent 1.5px);
       background-size: 32px 32px;
+      pointer-events: none;
+      z-index: 1;
     }
-    #cta h2 { font-size: clamp(24px, 4vw, 40px); font-weight: 800; line-height: 1.2; margin-bottom: 12px; position: relative; }
-    #cta p { font-size: 16px; opacity: 0.8; margin-bottom: 32px; position: relative; }
+
+    /* 마우스 따라가는 글로우 오브 */
+    #cta::after {
+      content: '';
+      position: absolute;
+      width: 420px; height: 420px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.22) 0%, transparent 60%);
+      pointer-events: none;
+      top: var(--cta-my, 50%);
+      left: var(--cta-mx, 50%);
+      transform: translate(-50%, -50%);
+      transition: top 0.3s, left 0.3s;
+      z-index: 1;
+      mix-blend-mode: screen;
+    }
+
+    #cta h2 { font-size: clamp(24px, 4vw, 40px); font-weight: 800; line-height: 1.2; margin-bottom: 12px; position: relative; z-index: 3; }
+    #cta p { font-size: 16px; opacity: 0.85; margin-bottom: 32px; position: relative; z-index: 3; }
+
+    /* 떠다니는 스파클 컨테이너 */
+    .cta-sparkles {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+      overflow: hidden;
+    }
+    .cta-spark {
+      position: absolute;
+      font-size: var(--sz, 22px);
+      font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+      animation: ctaFloat var(--dur, 8s) ease-in-out infinite var(--delay, 0s);
+      opacity: 0;
+      line-height: 1;
+      filter: drop-shadow(0 0 8px rgba(255,255,255,0.4));
+    }
+    @keyframes ctaFloat {
+      0%   { transform: translateY(20px) rotate(0deg)  scale(0.7); opacity: 0; }
+      15%  { opacity: 0.85; }
+      50%  { transform: translateY(-30px) rotate(15deg) scale(1.05); opacity: 0.9; }
+      85%  { opacity: 0.7; }
+      100% { transform: translateY(-70px) rotate(-10deg) scale(0.6); opacity: 0; }
+    }
+
+    /* 빛나는 광점 (별 모양 SVG 대체용 점) */
+    .cta-glint {
+      position: absolute;
+      width: var(--sz, 6px);
+      height: var(--sz, 6px);
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 0 12px 2px rgba(255,255,255,0.85);
+      animation: ctaGlint var(--dur, 4s) ease-in-out infinite var(--delay, 0s);
+      opacity: 0;
+    }
+    @keyframes ctaGlint {
+      0%, 100% { opacity: 0; transform: scale(0.5); }
+      50%      { opacity: 1; transform: scale(1.2); }
+    }
+
     .cta-btn {
       display: inline-flex;
       align-items: center;
@@ -887,38 +1609,239 @@
       padding: 14px 32px;
       border-radius: 16px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-      transition: transform 0.2s;
+      transition: transform 0.2s, box-shadow 0.2s;
       position: relative;
+      z-index: 3;
     }
-    .cta-btn:hover { transform: translateY(-2px); }
+    .cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 32px rgba(0,0,0,0.25), 0 0 30px rgba(255,255,255,0.4);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #cta { animation: none; }
+      .cta-spark, .cta-glint { animation: none; opacity: 0.5; }
+    }
 
     /* ─────────────────────────────── FOOTER ─── */
     footer {
-      background: rgba(255,255,255,0.5);
-      border-top: 1px solid rgba(124,58,237,0.1);
-      padding: 40px 0;
+      background: rgba(255,255,255,0.55);
+      border-top: 1px solid rgba(124,58,237,0.12);
+      padding: 56px 0 32px;
       margin-top: 80px;
+      backdrop-filter: blur(8px);
     }
-    .footer-inner {
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 40px;
+      align-items: start;
+    }
+    @media (max-width: 768px) {
+      .footer-grid { grid-template-columns: 1fr; gap: 28px; }
+    }
+
+    /* 좌측: 로고 + 설명 + 소셜 */
+    .footer-brand {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 20px;
-      text-align: center;
+      gap: 16px;
     }
     .footer-logo {
       display: flex; align-items: center; gap: 10px;
-      font-weight: 900; font-size: 18px; color: var(--primary);
+      font-weight: 900; font-size: 20px; color: var(--primary);
     }
-    .footer-logo img { height: 28px; }
-    .footer-links { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; }
-    .footer-links a { font-size: 13px; color: #8a7fc0; transition: color 0.15s; }
-    .footer-links a:hover { color: var(--primary); }
-    .footer-copy { font-size: 12px; color: #a89fc0; }
+    .footer-logo img { height: 32px; }
+    .footer-tagline {
+      font-size: 13.5px;
+      color: #6b63a0;
+      line-height: 1.7;
+      max-width: 320px;
+    }
+
+    /* 소셜 아이콘 */
+    .footer-social {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .footer-social a {
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.85);
+      border: 1.5px solid rgba(124,58,237,0.18);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--primary);
+      transition: transform 0.2s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .footer-social a:hover {
+      transform: translateY(-3px);
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      box-shadow: 0 8px 20px rgba(124,58,237,0.35);
+    }
+    .footer-social a svg { width: 18px; height: 18px; }
+
+    /* 컬럼 공통 */
+    .footer-col-title {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: var(--primary);
+      margin-bottom: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .footer-col-title::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+    .footer-col-list {
+      list-style: none;
+      padding: 0; margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .footer-col-list a, .footer-col-list span {
+      font-size: 13.5px;
+      color: #6b63a0;
+      transition: color 0.15s, transform 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      padding-left: 0;
+    }
+    .footer-col-list a:hover {
+      color: var(--primary);
+      transform: translateX(2px);
+    }
+    .footer-col-list a::before {
+      content: '→';
+      position: absolute;
+      left: -14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity 0.15s, left 0.15s;
+      color: var(--primary);
+    }
+    .footer-col-list a:hover::before {
+      opacity: 1;
+      left: -16px;
+    }
+
+    /* 하단 카피라이트 + 추가 정보 */
+    .footer-bottom {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(124,58,237,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .footer-copy { font-size: 12px; color: #9088b8; }
+    .footer-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: #9088b8;
+    }
+    .footer-meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .footer-meta-item .live-pulse {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 0 0 rgba(16,185,129,0.4);
+      animation: livePing 2s ease-in-out infinite;
+    }
 
     /* ─────────────────────────────── Scroll animation ─── */
     .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease, transform 0.7s ease; }
     .reveal.visible { opacity: 1; transform: none; }
+
+    /* 상단 스크롤 진행 바 */
+    .scroll-progress {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 3px;
+      background: transparent;
+      z-index: 200;
+      pointer-events: none;
+    }
+    .scroll-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #7c3aed 0%, #6366f1 50%, #ec4899 100%);
+      box-shadow: 0 0 12px rgba(124,58,237,0.6);
+      transition: width 0.08s linear;
+    }
+
+    /* 우측 섹션 점프 점 */
+    .section-dots {
+      position: fixed;
+      right: 22px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 90;
+    }
+    .section-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: rgba(124,58,237,0.25);
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+      position: relative;
+    }
+    .section-dot:hover {
+      transform: scale(1.3);
+      background: rgba(124,58,237,0.5);
+    }
+    .section-dot.active {
+      background: var(--primary);
+      border-color: rgba(124,58,237,0.25);
+      transform: scale(1.3);
+    }
+    .section-dot::after {
+      content: attr(data-label);
+      position: absolute;
+      right: 22px; top: 50%;
+      transform: translateY(-50%) translateX(6px);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+      background: rgba(255,255,255,0.95);
+      padding: 4px 10px;
+      border-radius: 99px;
+      white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(124,58,237,0.18);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .section-dot:hover::after {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
+    }
+    @media (max-width: 768px) { .section-dots { display: none; } }
 
     /* Mobile nav */
     @media (max-width: 640px) {
@@ -1035,7 +1958,7 @@
     /* ─── FEATURE MODAL ─── */
     .fm-overlay {
       position: fixed; inset: 0; z-index: 9999;
-      background: rgba(15,10,40,0.55);
+      background: rgba(124,90,200,0.22);
       backdrop-filter: blur(6px);
       display: flex; align-items: center; justify-content: center;
       padding: 20px;
@@ -1178,6 +2101,26 @@
       animation: shimmerSweep 3.5s linear infinite !important;
     }
 
+    /* 히어로 강조어 — 선셋 그라디언트 (보라→마젠타→핑크→코랄) */
+    @keyframes heroAccentFlow {
+      0%, 100% { background-position: 0% center; }
+      50%      { background-position: 100% center; }
+    }
+    .hero-title .hero-accent {
+      background: linear-gradient(120deg,
+        #6d28d9 0%,
+        #a855f7 28%,
+        #ec4899 58%,
+        #f97316 100%
+      );
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+      animation: heroAccentFlow 8s ease-in-out infinite;
+    }
+
     /* 마우스 글로우 오브 (index2 from) */
     .mouse-glow {
       position: fixed;
@@ -1314,6 +2257,21 @@
 </head>
 <body>
 
+<!-- ─────────── SCROLL PROGRESS ─────────── -->
+<div class="scroll-progress"><div class="scroll-progress-bar" id="scroll-progress-bar"></div></div>
+
+<!-- ─────────── SECTION JUMP DOTS ─────────── -->
+<div class="section-dots" id="section-dots">
+  <a class="section-dot" href="#hero"     data-label="홈"></a>
+  <a class="section-dot" href="#about"    data-label="소개"></a>
+  <a class="section-dot" href="#features" data-label="기능"></a>
+  <a class="section-dot" href="#stories"  data-label="스토리"></a>
+  <a class="section-dot" href="#how"      data-label="흐름"></a>
+  <a class="section-dot" href="#demo"     data-label="화면"></a>
+  <a class="section-dot" href="#tech"     data-label="기술"></a>
+  <a class="section-dot" href="#team"     data-label="팀"></a>
+</div>
+
 <!-- ─────────── NAV ─────────── -->
 <nav>
   <div class="container nav-inner">
@@ -1325,6 +2283,7 @@
       <li><a href="#about">소개</a></li>
       <li><a href="#features">기능</a></li>
       <li><a href="#stories">스토리</a></li>
+      <li><a href="#demo">주요 화면</a></li>
       <li><a href="#tech">기술</a></li>
       <li><a href="#team">팀</a></li>
       <li><a href="https://staging.d25a68jt9cg4tx.amplifyapp.com/login" target="_blank" class="nav-demo-btn">데모 보기 →</a></li>
@@ -1363,7 +2322,7 @@
 
       <h1 class="hero-title">
         캠퍼스의 모든 행사,<br>
-        <span class="text-gradient">한 곳에서</span>
+        <span class="hero-accent">한 곳에서</span>
       </h1>
 
       <p class="hero-sub">
@@ -1435,7 +2394,7 @@
       </div>
 
       <!-- Mock UI -->
-      <div class="mock-ui" style="transform: rotate(1.5deg);">
+      <div class="mock-ui">
         <div class="mock-topbar">
           <div class="mock-logo-row">
             <img src="logo6.png" alt="로고" onerror="this.style.display='none'" />
@@ -1501,6 +2460,7 @@
     </div>
 
     <div class="features-grid reveal">
+      <!-- Row 1: 티켓 · 체크인 -->
       <div class="feature-card" onclick="openFM('qr-ticket')">
         <div class="feature-icon ic-purple">🎟️</div>
         <h3>QR 티켓 발급</h3>
@@ -1513,6 +2473,14 @@
         <p>행사장에서 카메라로 QR을 스캔하면 즉시 체크인. 대기줄 없이 빠른 입장이 가능합니다.</p>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
+      <div class="feature-card" onclick="openFM('release')">
+        <div class="feature-icon ic-purple">⏱️</div>
+        <h3>취소표 자동 릴리즈</h3>
+        <p>취소된 자리를 설정한 간격(15분 등)마다 자동으로 재오픈합니다. 대기자도 놓치지 않고 신청 기회를 얻을 수 있습니다.</p>
+        <span class="fm-hint">🔍 클릭해서 미리보기</span>
+      </div>
+
+      <!-- Row 2: 결제 · 정산 -->
       <div class="feature-card" onclick="openFM('payment')">
         <div class="feature-icon" style="background:#f0f4ff">
           <img id="toss-feature-icon" src="logo-toss-symbol-alpha.png" alt="토스" style="width:36px;height:36px;object-fit:contain;">
@@ -1521,28 +2489,70 @@
         <p>유료 행사도 간편하게. 토스페이먼츠 연동으로 카드·계좌이체·간편결제를 지원합니다.</p>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
-      <div class="feature-card" onclick="openFM('school')">
-        <div class="feature-icon ic-pink">🏫</div>
-        <h3>학교별 행사 분리</h3>
-        <p>대학 이메일로 소속 학교를 인증합니다. 내 학교 행사만 모아보고, 신뢰할 수 있는 주최자를 확인하세요.</p>
+      <div class="feature-card" onclick="openFM('refund')">
+        <div class="feature-icon ic-green">💰</div>
+        <h3>환불 관리</h3>
+        <p>참가자는 행사 전 환불 신청, 주최자는 환불 처리를 한 곳에서. 토스페이먼츠와 자동 연동됩니다.</p>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
+      <div class="feature-card" onclick="openFM('whitelist')">
+        <div class="feature-icon ic-green">✅</div>
+        <h3>화이트리스트</h3>
+        <p>특정 학번을 지정해 무료 신청 또는 우선 신청 혜택을 부여합니다. CSV 일괄 업로드도 지원합니다.</p>
+        <span class="fm-hint">🔍 클릭해서 미리보기</span>
+      </div>
+
+      <!-- Row 3: 운영 · 권한 -->
       <div class="feature-card" onclick="openFM('dashboard')">
         <div class="feature-icon ic-amber">📊</div>
         <h3>실시간 운영 대시보드</h3>
         <p>신청 현황, 체크인율, 환불 요청까지 한눈에. 주최자라면 대시보드에서 모든 것을 관리하세요.</p>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
-      <div class="feature-card" onclick="openFM('notification')">
-        <div class="feature-icon ic-indigo">🔔</div>
-        <h3>알림 & 공지 & 문의</h3>
-        <p>행사 변경·티켓 확정 알림, 학교·글로벌 공지, 1:1 문의까지. 중요한 정보를 한 곳에서 놓치지 않습니다.</p>
+      <div class="feature-card" onclick="openFM('cohost')">
+        <div class="feature-icon ic-blue">👥</div>
+        <h3>공동 호스트</h3>
+        <p>행사에 공동 주최자를 추가해 함께 관리할 수 있습니다. 대규모 행사도 팀으로 운영하세요.</p>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
       <div class="feature-card" onclick="openFM('roles')">
         <div class="feature-icon ic-purple">🛡️</div>
         <h3>다양한 역할 권한</h3>
         <p>일반 참가자부터 인증 주최자, 학교 관리자, 슈퍼 운영자까지 세분화된 역할 기반 접근 제어를 제공합니다.</p>
+        <span class="fm-hint">🔍 클릭해서 미리보기</span>
+      </div>
+
+      <!-- Row 4: 소통 · 피드백 -->
+      <div class="feature-card" onclick="openFM('notification')">
+        <div class="feature-icon ic-indigo">🔔</div>
+        <h3>알림 & 공지 & 문의</h3>
+        <p>행사 변경·티켓 확정 알림, 학교·글로벌 공지, 1:1 문의까지. 중요한 정보를 한 곳에서 놓치지 않습니다.</p>
+        <span class="fm-hint">🔍 클릭해서 미리보기</span>
+      </div>
+      <div class="feature-card" onclick="openFM('qna')">
+        <div class="feature-icon ic-indigo">💬</div>
+        <h3>행사 Q&A</h3>
+        <p>행사 페이지에서 참가자가 직접 질문을 남기고, 주최자가 답변합니다. 익명 질문도 지원합니다.</p>
+        <span class="fm-hint">🔍 클릭해서 미리보기</span>
+      </div>
+      <div class="feature-card" onclick="openFM('review')">
+        <div class="feature-icon ic-amber">⭐</div>
+        <h3>리뷰 & 별점</h3>
+        <p>행사 종료 후 참가자가 1-5점 별점과 후기를 남길 수 있습니다. 익명 작성도 지원해 솔직한 피드백을 받아보세요.</p>
+        <span class="fm-hint">🔍 클릭해서 미리보기</span>
+      </div>
+
+      <!-- Row 5: 탐색 · 접근 -->
+      <div class="feature-card" onclick="openFM('school')">
+        <div class="feature-icon ic-pink">🏫</div>
+        <h3>학교별 행사 분리</h3>
+        <p>대학 이메일로 소속 학교를 인증합니다. 내 학교 행사만 모아보고, 신뢰할 수 있는 주최자를 확인하세요.</p>
+        <span class="fm-hint">🔍 클릭해서 미리보기</span>
+      </div>
+      <div class="feature-card" onclick="openFM('bookmark')">
+        <div class="feature-icon ic-pink">🔖</div>
+        <h3>즐겨찾기</h3>
+        <p>관심 있는 행사를 즐겨찾기에 추가하고, 모아보기 탭에서 한 번에 확인하세요. 놓치고 싶지 않은 행사를 저장해두세요.</p>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
       <div class="feature-card" onclick="openFM('kakao')">
@@ -1553,48 +2563,6 @@
         </div>
         <h3>카카오 소셜 로그인</h3>
         <p>카카오 계정으로 빠르게 가입하고 로그인하세요. 학교 이메일 인증까지 연동해 소속을 확인합니다.</p>
-        <span class="fm-hint">🔍 클릭해서 미리보기</span>
-      </div>
-      <div class="feature-card" onclick="openFM('refund')">
-        <div class="feature-icon ic-green">💰</div>
-        <h3>환불 관리</h3>
-        <p>참가자는 행사 전 환불 신청, 주최자는 환불 처리를 한 곳에서. 토스페이먼츠와 자동 연동됩니다.</p>
-        <span class="fm-hint">🔍 클릭해서 미리보기</span>
-      </div>
-      <div class="feature-card" onclick="openFM('review')">
-        <div class="feature-icon ic-amber">⭐</div>
-        <h3>리뷰 & 별점</h3>
-        <p>행사 종료 후 참가자가 1-5점 별점과 후기를 남길 수 있습니다. 익명 작성도 지원해 솔직한 피드백을 받아보세요.</p>
-        <span class="fm-hint">🔍 클릭해서 미리보기</span>
-      </div>
-      <div class="feature-card" onclick="openFM('qna')">
-        <div class="feature-icon ic-indigo">💬</div>
-        <h3>행사 Q&A</h3>
-        <p>행사 페이지에서 참가자가 직접 질문을 남기고, 주최자가 답변합니다. 익명 질문도 지원합니다.</p>
-        <span class="fm-hint">🔍 클릭해서 미리보기</span>
-      </div>
-      <div class="feature-card" onclick="openFM('release')">
-        <div class="feature-icon ic-purple">⏱️</div>
-        <h3>취소표 자동 릴리즈</h3>
-        <p>취소된 자리를 설정한 간격(15분 등)마다 자동으로 재오픈합니다. 대기자도 놓치지 않고 신청 기회를 얻을 수 있습니다.</p>
-        <span class="fm-hint">🔍 클릭해서 미리보기</span>
-      </div>
-      <div class="feature-card" onclick="openFM('bookmark')">
-        <div class="feature-icon ic-pink">🔖</div>
-        <h3>즐겨찾기</h3>
-        <p>관심 있는 행사를 즐겨찾기에 추가하고, 모아보기 탭에서 한 번에 확인하세요. 놓치고 싶지 않은 행사를 저장해두세요.</p>
-        <span class="fm-hint">🔍 클릭해서 미리보기</span>
-      </div>
-      <div class="feature-card" onclick="openFM('cohost')">
-        <div class="feature-icon ic-blue">👥</div>
-        <h3>공동 호스트</h3>
-        <p>행사에 공동 주최자를 추가해 함께 관리할 수 있습니다. 대규모 행사도 팀으로 운영하세요.</p>
-        <span class="fm-hint">🔍 클릭해서 미리보기</span>
-      </div>
-      <div class="feature-card" onclick="openFM('whitelist')">
-        <div class="feature-icon ic-green">✅</div>
-        <h3>화이트리스트</h3>
-        <p>특정 학번을 지정해 무료 신청 또는 우선 신청 혜택을 부여합니다. CSV 일괄 업로드도 지원합니다.</p>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
     </div>
@@ -1619,40 +2587,34 @@
 
     <!-- 학교 총관리자 -->
     <div id="story-admin" class="story-panel active reveal">
-      <div class="story-split">
-        <div class="story-side-before">
-          <div class="story-persona">
-            <div class="story-persona-icon" style="background:rgba(100,80,140,0.12)">🏫</div>
-            <div>
-              <div class="story-persona-name" style="color:#1e1b4b">총학생회 / 동아리연합회</div>
-              <div class="story-persona-sub" style="color:#6b63a0">교내 행사 전반 관리·감독</div>
-            </div>
-          </div>
-          <span class="story-side-label">⛔ Before</span>
-          <ul class="story-list">
-            <li><span class="story-bullet">✗</span>자교 행사 현황을 파악하려면 직접 조사해야 함</li>
-            <li><span class="story-bullet">✗</span>참가비 관리가 제대로 되는지 알 방법이 없음</li>
-            <li><span class="story-bullet">✗</span>민원이 들어온 뒤에야 문제를 파악하는 구조</li>
-            <li><span class="story-bullet">✗</span>동아리별 행사 이력·데이터가 어디에도 없음</li>
+      <div class="story-compare">
+        <div class="story-upgrade-badge">Upgrade</div>
+
+        <!-- Before -->
+        <div class="story-card story-card-before">
+          <div class="story-card-label">BEFORE</div>
+          <div class="story-card-title">기존 운영 방식</div>
+          <div class="story-card-sub">수기 · 사후 대응</div>
+          <div class="story-card-visual">🏫</div>
+          <ul class="story-pills">
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>자교 행사 현황 직접 조사</li>
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>참가비 관리 사각지대</li>
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>민원 발생 후 사후 인지</li>
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>행사 이력·데이터 미보존</li>
           </ul>
         </div>
-        <div class="story-side-divider">
-          <div class="story-arrow-circle">→</div>
-        </div>
-        <div class="story-side-after">
-          <div class="story-persona">
-            <div class="story-persona-icon" style="background:rgba(255,255,255,0.2)">📊</div>
-            <div>
-              <div class="story-persona-name" style="color:white">페스티켓 도입 후</div>
-              <div class="story-persona-sub" style="color:rgba(255,255,255,0.7)">선제적 관리 · 데이터 보존</div>
-            </div>
-          </div>
-          <span class="story-side-label">✅ After</span>
-          <ul class="story-list">
-            <li><span class="story-bullet">✓</span>대시보드 하나로 전체 행사 목록·진행상태 실시간 확인</li>
-            <li><span class="story-bullet">✓</span>누가 어떤 행사를 열었고 참가자 몇 명인지 한눈에</li>
-            <li><span class="story-bullet">✓</span>문제 생기기 전 선제적 인지·대응 가능</li>
-            <li><span class="story-bullet">✓</span>인증주최자 권한 직접 관리, 연도별 데이터 자동 보존</li>
+
+        <!-- After -->
+        <div class="story-card story-card-after">
+          <div class="story-card-label">페스티켓 도입 후</div>
+          <div class="story-card-title">통합 관리 대시보드</div>
+          <div class="story-card-sub">선제적 관리 · 데이터 자동 보존</div>
+          <div class="story-card-visual">📊</div>
+          <ul class="story-pills">
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>전체 행사 현황 실시간 확인</li>
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>참가자 정보·수익 한눈에</li>
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>문제 발생 전 선제 대응</li>
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>연도별 데이터 자동 보존</li>
           </ul>
         </div>
       </div>
@@ -1660,40 +2622,34 @@
 
     <!-- 인증 주최자 -->
     <div id="story-host" class="story-panel reveal">
-      <div class="story-split">
-        <div class="story-side-before">
-          <div class="story-persona">
-            <div class="story-persona-icon" style="background:rgba(100,80,140,0.12)">🎤</div>
-            <div>
-              <div class="story-persona-name" style="color:#1e1b4b">동아리 · 학생회 주최자</div>
-              <div class="story-persona-sub" style="color:#6b63a0">행사 기획부터 운영까지 직접 담당</div>
-            </div>
-          </div>
-          <span class="story-side-label">⛔ Before</span>
-          <ul class="story-list">
-            <li><span class="story-bullet">✗</span>에브리타임 홍보 → 구글폼 신청 → 계좌이체 → 수기 명단 (4개 플랫폼 병행)</li>
-            <li><span class="story-bullet">✗</span>입금 확인·명단 대조 수작업 반복</li>
-            <li><span class="story-bullet">✗</span>환불 요청은 DM·문자로 개별 처리</li>
-            <li><span class="story-bullet">✗</span>행사 종료 후 결과 정리 별도 작업 필요</li>
+      <div class="story-compare">
+        <div class="story-upgrade-badge">Upgrade</div>
+
+        <!-- Before -->
+        <div class="story-card story-card-before">
+          <div class="story-card-label">BEFORE</div>
+          <div class="story-card-title">기존 운영 방식</div>
+          <div class="story-card-sub">여러개의 플랫폼 병행</div>
+          <div class="story-card-visual">📝</div>
+          <ul class="story-pills">
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>에타·구글폼·계좌이체 분산</li>
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>입금 확인 수작업 반복</li>
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>환불 DM·문자로 개별 처리</li>
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>결과 정리 별도 작업 필요</li>
           </ul>
         </div>
-        <div class="story-side-divider">
-          <div class="story-arrow-circle">→</div>
-        </div>
-        <div class="story-side-after">
-          <div class="story-persona">
-            <div class="story-persona-icon" style="background:rgba(255,255,255,0.2)">🚀</div>
-            <div>
-              <div class="story-persona-name" style="color:white">페스티켓 도입 후</div>
-              <div class="story-persona-sub" style="color:rgba(255,255,255,0.7)">행사 개설부터 마감까지 완결</div>
-            </div>
-          </div>
-          <span class="story-side-label">✅ After</span>
-          <ul class="story-list">
-            <li><span class="story-bullet">✓</span>페스티켓 하나로 홍보·신청·결제·명단 관리 완결</li>
-            <li><span class="story-bullet">✓</span>토스페이먼츠 자동결제, 신청자·납부현황 실시간 정리</li>
-            <li><span class="story-bullet">✓</span>화이트리스트로 학생회비 납부자 필터링 등 현실 문제 해결</li>
-            <li><span class="story-bullet">✓</span>CSV/PDF 리포트 다운로드로 행정 처리까지 원스톱</li>
+
+        <!-- After -->
+        <div class="story-card story-card-after">
+          <div class="story-card-label">페스티켓 도입 후</div>
+          <div class="story-card-title">올인원 행사 운영</div>
+          <div class="story-card-sub">개설부터 마감까지 한 번에</div>
+          <div class="story-card-visual">🚀</div>
+          <ul class="story-pills">
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>홍보·신청·결제·명단 통합</li>
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>토스페이먼츠 자동 정산</li>
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>화이트리스트로 회비 필터</li>
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>CSV·PDF 리포트 원스톱</li>
           </ul>
         </div>
       </div>
@@ -1701,40 +2657,34 @@
 
     <!-- 참여자 -->
     <div id="story-user" class="story-panel reveal">
-      <div class="story-split">
-        <div class="story-side-before">
-          <div class="story-persona">
-            <div class="story-persona-icon" style="background:rgba(100,80,140,0.12)">🙋</div>
-            <div>
-              <div class="story-persona-name" style="color:#1e1b4b">일반 학생 참여자</div>
-              <div class="story-persona-sub" style="color:#6b63a0">행사에 신청하고 참가하는 학생</div>
-            </div>
-          </div>
-          <span class="story-side-label">⛔ Before</span>
-          <ul class="story-list">
-            <li><span class="story-bullet">✗</span>에타·인스타·카카오톡 각각 뒤져야 행사 파악 가능</li>
-            <li><span class="story-bullet">✗</span>행사마다 신청 방식이 달라 매번 새로 파악해야 함</li>
-            <li><span class="story-bullet">✗</span>폼 작성 + 계좌이체 + 입금 캡쳐 전송까지 번거로움</li>
-            <li><span class="story-bullet">✗</span>환불 시 주최자에게 직접 연락해 소통해야 함</li>
+      <div class="story-compare">
+        <div class="story-upgrade-badge">Upgrade</div>
+
+        <!-- Before -->
+        <div class="story-card story-card-before">
+          <div class="story-card-label">BEFORE</div>
+          <div class="story-card-title">기존 참여 방식</div>
+          <div class="story-card-sub">분산된 정보 · 번거로운 절차</div>
+          <div class="story-card-visual">😩</div>
+          <ul class="story-pills">
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>에타·인스타·카톡 다 뒤져야</li>
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>행사마다 신청 방식 제각각</li>
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>폼·이체·캡쳐 반복 번거로움</li>
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>환불은 주최자 직접 연락</li>
           </ul>
         </div>
-        <div class="story-side-divider">
-          <div class="story-arrow-circle">→</div>
-        </div>
-        <div class="story-side-after">
-          <div class="story-persona">
-            <div class="story-persona-icon" style="background:rgba(255,255,255,0.2)">🎫</div>
-            <div>
-              <div class="story-persona-name" style="color:white">페스티켓 도입 후</div>
-              <div class="story-persona-sub" style="color:rgba(255,255,255,0.7)">클릭 한 번으로 신청·입장까지</div>
-            </div>
-          </div>
-          <span class="story-side-label">✅ After</span>
-          <ul class="story-list">
-            <li><span class="story-bullet">✓</span>학교 행사 한 곳에 모여 몰라서 못 신청하는 경우 없음</li>
-            <li><span class="story-bullet">✓</span>클릭 한 번으로 신청 완료, 즉시 QR 티켓 발급</li>
-            <li><span class="story-bullet">✓</span>QR 스캔 한 번에 입장, 종이 티켓·현장 대기 불필요</li>
-            <li><span class="story-bullet">✓</span>환불은 취소 버튼 하나로, 주최자 연락 없이 간편하게</li>
+
+        <!-- After -->
+        <div class="story-card story-card-after">
+          <div class="story-card-label">페스티켓 도입 후</div>
+          <div class="story-card-title">클릭 한 번에 입장까지</div>
+          <div class="story-card-sub">신청 · 결제 · 입장 · 환불 자동</div>
+          <div class="story-card-visual">🎫</div>
+          <ul class="story-pills">
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>학교 행사 한 곳에 모아보기</li>
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>클릭 한 번에 QR 티켓 발급</li>
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>QR 스캔으로 즉시 입장</li>
+            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>취소 버튼 하나로 환불</li>
           </ul>
         </div>
       </div>
@@ -1764,21 +2714,21 @@
         <div class="step-icon">🔍</div>
         <h3>행사 탐색</h3>
         <p>학교, 날짜, 무료/유료 필터로 내게 맞는 행사를 빠르게 찾기</p>
-        <span class="step-arrow">›</span>
+        <span class="step-arrow">→</span>
       </div>
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-icon">✍️</div>
         <h3>간편 신청</h3>
         <p>로그인 후 클릭 한 번으로 신청 완료. 유료 행사는 결제까지</p>
-        <span class="step-arrow">›</span>
+        <span class="step-arrow">→</span>
       </div>
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-icon">🎫</div>
         <h3>QR 티켓 수령</h3>
         <p>신청 즉시 고유 QR 코드 발급. 내 티켓 탭에서 언제든 확인</p>
-        <span class="step-arrow">›</span>
+        <span class="step-arrow">→</span>
       </div>
       <div class="step">
         <div class="step-num">4</div>
@@ -1795,21 +2745,21 @@
         <div class="step-icon">📋</div>
         <h3>인증 신청</h3>
         <p>학생회·동아리 인증 신청 후 학교 관리자 승인으로 주최자 권한 획득</p>
-        <span class="step-arrow">›</span>
+        <span class="step-arrow">→</span>
       </div>
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-icon">🎪</div>
         <h3>행사 개설</h3>
         <p>무료·유료 설정, 정원, 화이트리스트, 공동 호스트까지 상세 설정 후 발행</p>
-        <span class="step-arrow">›</span>
+        <span class="step-arrow">→</span>
       </div>
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-icon">📊</div>
         <h3>실시간 관리</h3>
         <p>신청자 목록, 체크인 현황, Q&A 답변, 취소표 자동 릴리즈까지 대시보드에서 한 번에</p>
-        <span class="step-arrow">›</span>
+        <span class="step-arrow">→</span>
       </div>
       <div class="step">
         <div class="step-num">4</div>
@@ -2235,8 +3185,8 @@
     </div>
 
     <div class="team-grid reveal">
-      <div class="team-card">
-        <div class="team-avatar" style="background:linear-gradient(135deg,#10b981,#059669)">결</div>
+      <div class="team-card" style="--avatar-bg:linear-gradient(135deg,#10b981,#059669);--avatar-color:rgba(16,185,129,0.45)">
+        <div class="team-avatar"><span class="team-avatar-emoji">🎨</span></div>
         <div class="team-name">이한결</div>
         <div class="team-role">UI/UX · 편의 도메인</div>
         <div class="team-id">20235277</div>
@@ -2246,8 +3196,8 @@
         </div>
       </div>
 
-      <div class="team-card">
-        <div class="team-avatar" style="background:linear-gradient(135deg,#ec4899,#f43f5e)">엽</div>
+      <div class="team-card" style="--avatar-bg:linear-gradient(135deg,#ec4899,#f43f5e);--avatar-color:rgba(236,72,153,0.45)">
+        <div class="team-avatar"><span class="team-avatar-emoji">🎪</span></div>
         <div class="team-name">이주엽</div>
         <div class="team-role">AWS · 행사 도메인</div>
         <div class="team-id">20213058</div>
@@ -2257,8 +3207,8 @@
         </div>
       </div>
 
-      <div class="team-card">
-        <div class="team-avatar" style="background:linear-gradient(135deg,#7c3aed,#6366f1)">창</div>
+      <div class="team-card" style="--avatar-bg:linear-gradient(135deg,#7c3aed,#6366f1);--avatar-color:rgba(124,58,237,0.45)">
+        <div class="team-avatar"><span class="team-avatar-emoji">💳</span></div>
         <div class="team-name">이창민</div>
         <div class="team-role">GIT · 결제 도메인</div>
         <div class="team-id">20235275</div>
@@ -2268,8 +3218,8 @@
         </div>
       </div>
 
-      <div class="team-card">
-        <div class="team-avatar" style="background:linear-gradient(135deg,#3b82f6,#6366f1)">형</div>
+      <div class="team-card" style="--avatar-bg:linear-gradient(135deg,#3b82f6,#6366f1);--avatar-color:rgba(59,130,246,0.45)">
+        <div class="team-avatar"><span class="team-avatar-emoji">👥</span></div>
         <div class="team-name">김준형</div>
         <div class="team-role">DB · 사용자 도메인</div>
         <div class="team-id">20235272</div>
@@ -2290,6 +3240,26 @@
 <!-- ─────────── CTA BANNER ─────────── -->
 <section class="section-sm">
   <div id="cta">
+    <!-- 떠다니는 스파클 -->
+    <div class="cta-sparkles">
+      <span class="cta-spark" style="--sz:24px;left:8%;top:78%;--dur:9s;--delay:0s">🎉</span>
+      <span class="cta-spark" style="--sz:18px;left:18%;top:82%;--dur:11s;--delay:2.5s">✨</span>
+      <span class="cta-spark" style="--sz:22px;left:30%;top:75%;--dur:10s;--delay:1.2s">⭐</span>
+      <span class="cta-spark" style="--sz:20px;left:48%;top:85%;--dur:12s;--delay:3.8s">🎊</span>
+      <span class="cta-spark" style="--sz:18px;left:62%;top:80%;--dur:9.5s;--delay:0.8s">✨</span>
+      <span class="cta-spark" style="--sz:24px;left:78%;top:78%;--dur:11.5s;--delay:2.2s">🎉</span>
+      <span class="cta-spark" style="--sz:18px;left:90%;top:84%;--dur:10.5s;--delay:4.5s">⭐</span>
+
+      <span class="cta-glint" style="--sz:5px;left:12%;top:25%;--dur:3.2s;--delay:0s"></span>
+      <span class="cta-glint" style="--sz:7px;left:25%;top:18%;--dur:4s;--delay:1s"></span>
+      <span class="cta-glint" style="--sz:4px;left:40%;top:30%;--dur:3.5s;--delay:2s"></span>
+      <span class="cta-glint" style="--sz:6px;left:55%;top:22%;--dur:4.2s;--delay:0.5s"></span>
+      <span class="cta-glint" style="--sz:5px;left:70%;top:28%;--dur:3.8s;--delay:1.8s"></span>
+      <span class="cta-glint" style="--sz:7px;left:85%;top:20%;--dur:4.5s;--delay:2.5s"></span>
+      <span class="cta-glint" style="--sz:4px;left:8%;top:50%;--dur:3.6s;--delay:1.4s"></span>
+      <span class="cta-glint" style="--sz:5px;left:92%;top:55%;--dur:4.1s;--delay:0.3s"></span>
+    </div>
+
     <h2>캠퍼스 행사, 이제 페스티켓으로<br>더 스마트하게 🎉</h2>
     <p>주최자도 참가자도 모두 만족하는 대학 행사 플랫폼</p>
     <a href="https://staging.d25a68jt9cg4tx.amplifyapp.com/login" target="_blank" class="cta-btn">
@@ -2300,18 +3270,72 @@
 
 <!-- ─────────── FOOTER ─────────── -->
 <footer>
-  <div class="container footer-inner">
-    <div class="footer-logo">
-      <img src="logo6.png" alt="페스티켓" onerror="this.style.display='none'" />
-      페스티켓
+  <div class="container">
+    <div class="footer-grid">
+      <!-- 좌측: 브랜드 -->
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <img src="logo6.png" alt="페스티켓" onerror="this.style.display='none'" />
+          페스티켓
+        </div>
+        <p class="footer-tagline">
+          캠퍼스의 모든 행사, 한 곳에서. 신청부터 QR 체크인까지 완결된 대학 행사 플랫폼.
+        </p>
+        <div class="footer-social">
+          <a href="https://github.com/kookmin-sw/2026-capstone-56" target="_blank" aria-label="GitHub">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-2.06c-3.2.7-3.87-1.36-3.87-1.36-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.69 1.25 3.34.95.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18a10.95 10.95 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.84 1.18 3.1 0 4.43-2.7 5.4-5.27 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.55C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/>
+            </svg>
+          </a>
+          <a href="https://staging.d25a68jt9cg4tx.amplifyapp.com/login" target="_blank" aria-label="데모 사이트">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+          </a>
+          <a href="mailto:capstone56@kookmin.ac.kr" aria-label="이메일">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+              <rect x="3" y="5" width="18" height="14" rx="2"/>
+              <polyline points="3 7 12 13 21 7"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- 중앙: 둘러보기 -->
+      <div class="footer-col">
+        <div class="footer-col-title">둘러보기</div>
+        <ul class="footer-col-list">
+          <li><a href="#about">프로젝트 소개</a></li>
+          <li><a href="#features">핵심 기능</a></li>
+          <li><a href="#stories">Before / After</a></li>
+          <li><a href="#how">사용 흐름</a></li>
+          <li><a href="#demo">주요 화면</a></li>
+          <li><a href="#tech">기술 스택</a></li>
+          <li><a href="#team">팀 소개</a></li>
+        </ul>
+      </div>
+
+      <!-- 우측: 프로젝트 정보 -->
+      <div class="footer-col">
+        <div class="footer-col-title">프로젝트</div>
+        <ul class="footer-col-list">
+          <li><a href="https://github.com/kookmin-sw/2026-capstone-56" target="_blank">GitHub 저장소</a></li>
+          <li><a href="https://staging.d25a68jt9cg4tx.amplifyapp.com/login" target="_blank">데모 사이트</a></li>
+          <li><span>국민대학교 캡스톤 2026</span></li>
+          <li><span>56팀 · 4인 협업</span></li>
+        </ul>
+      </div>
     </div>
-    <div class="footer-links">
-      <a href="https://github.com/kookmin-sw/2026-capstone-56" target="_blank">GitHub</a>
-      <a href="https://staging.d25a68jt9cg4tx.amplifyapp.com/login" target="_blank">데모 사이트</a>
-      <a href="#features">기능 소개</a>
-      <a href="#team">팀 소개</a>
+
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2026 페스티켓 · 국민대학교 캡스톤 56팀</div>
+      <div class="footer-meta">
+        <span class="footer-meta-item"><span class="live-pulse"></span> 데모 운영 중</span>
+        <span class="footer-meta-item">v0.1.0 · MVP</span>
+      </div>
     </div>
-    <div class="footer-copy">© 2026 페스티켓 · 국민대학교 캡스톤 56팀 · All rights reserved.</div>
   </div>
 </footer>
 
@@ -2355,8 +3379,168 @@
   const tossFeatureImg = document.getElementById('toss-feature-icon');
   if (tossChipImg && tossFeatureImg) tossFeatureImg.src = tossChipImg.src;
 
+  // ── CTA 배너: 마우스 따라가는 글로우 ──
+  (function ctaMouseGlow() {
+    const cta = document.getElementById('cta');
+    if (!cta) return;
+    let raf = 0;
+    cta.addEventListener('mousemove', (e) => {
+      const rect = cta.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        cta.style.setProperty('--cta-mx', x + '%');
+        cta.style.setProperty('--cta-my', y + '%');
+      });
+    });
+    cta.addEventListener('mouseleave', () => {
+      cta.style.setProperty('--cta-mx', '50%');
+      cta.style.setProperty('--cta-my', '50%');
+    });
+  })();
+
+  // ── 스크롤 진행 바 + 섹션 점프 점 활성화 ──
+  (function scrollIndicators() {
+    const bar = document.getElementById('scroll-progress-bar');
+    const dots = Array.from(document.querySelectorAll('.section-dot'));
+    if (!bar && !dots.length) return;
+
+    const sections = dots
+      .map(d => document.querySelector(d.getAttribute('href')))
+      .filter(Boolean);
+
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+      if (bar) bar.style.width = progress + '%';
+
+      // 현재 섹션 (뷰포트 1/3 지점 기준)
+      const probe = scrollTop + window.innerHeight * 0.35;
+      let activeIdx = 0;
+      sections.forEach((sec, i) => {
+        if (sec.offsetTop <= probe) activeIdx = i;
+      });
+      dots.forEach((d, i) => d.classList.toggle('active', i === activeIdx));
+    };
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(update);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    update();
+  })();
+
   // 주요 화면 탭 초기화
   switchScreen(0);
+
+  // ── 기술 스택: 카테고리별 흐르는 마퀴 + 큰 아이콘 카드 ──
+  (function transformTechToStream() {
+    const grid = document.querySelector('.tech-grid');
+    if (!grid) return;
+
+    const CATS = [
+      { key: 'frontend', label: 'Frontend',  desc: '사용자 인터페이스를 구성하는 라이브러리·프레임워크', accent: '#3b82f6', match: 'Frontend',                  speed: 'fast', dir: '' },
+      { key: 'backend',  label: 'Backend',   desc: '서버 로직과 데이터 계층을 담당하는 스택',          accent: '#10b981', match: 'Backend',                   speed: '',     dir: 'reverse' },
+      { key: 'infra',    label: 'Infra',     desc: '배포 · 호스팅 · 자동화 파이프라인',                accent: '#f59e0b', match: 'Infrastructure & Services', speed: 'slow', dir: '' },
+      { key: 'external', label: 'External',  desc: '결제 · 소셜 로그인 · 이메일 등 외부 연동',          accent: '#ec4899', match: '외부 서비스 연동',           speed: '',     dir: 'reverse' },
+    ];
+
+    const parseChip = (chip) => {
+      const img = chip.querySelector('img');
+      const svg = chip.querySelector('svg');
+      let name = '';
+      chip.childNodes.forEach(n => {
+        if (n.nodeType === Node.TEXT_NODE) name += n.textContent;
+      });
+      return { name: name.trim(), img, svg };
+    };
+
+    const buildCard = ({ name, img, svg, accent }) => {
+      const card = document.createElement('div');
+      card.className = 'tech-card';
+      card.style.setProperty('--accent', accent);
+
+      const iconBox = document.createElement('div');
+      iconBox.className = 'tech-card-icon';
+      if (img) {
+        const newImg = document.createElement('img');
+        newImg.src = img.src;
+        newImg.alt = img.alt || name;
+        iconBox.appendChild(newImg);
+      } else if (svg) {
+        const cloned = svg.cloneNode(true);
+        cloned.removeAttribute('width');
+        cloned.removeAttribute('height');
+        iconBox.appendChild(cloned);
+      } else {
+        iconBox.textContent = '🔧';
+        iconBox.style.fontSize = '34px';
+      }
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'tech-card-name';
+      nameEl.textContent = name;
+
+      card.appendChild(iconBox);
+      card.appendChild(nameEl);
+      return card;
+    };
+
+    const stream = document.createElement('div');
+    stream.className = 'tech-stream reveal visible';
+
+    CATS.forEach(cat => {
+      const group = Array.from(grid.querySelectorAll('.tech-group')).find(g =>
+        g.querySelector('.tech-group-title')?.textContent?.trim() === cat.match
+      );
+      if (!group) return;
+
+      const chips = Array.from(group.querySelectorAll('.tech-chip'));
+      if (!chips.length) return;
+
+      const row = document.createElement('div');
+      row.className = 'tech-stream-row row-' + cat.key;
+
+      // 헤더 (상단)
+      const header = document.createElement('div');
+      header.className = 'tech-stream-header';
+      header.innerHTML = `
+        <span class="tech-stream-label-tag">${cat.label}</span>
+        <span class="tech-stream-label-name">${cat.label === 'Frontend' ? '프론트엔드' : cat.label === 'Backend' ? '백엔드' : cat.label === 'Infra' ? '인프라' : '외부 연동'}</span>
+        <span class="tech-stream-label-desc">${cat.desc}</span>`;
+
+      // 마퀴 트랙
+      const viewport = document.createElement('div');
+      viewport.className = 'tech-stream-viewport';
+
+      const track = document.createElement('div');
+      track.className = 'tech-stream-track';
+      if (cat.speed) track.classList.add(cat.speed);
+      if (cat.dir)   track.classList.add(cat.dir);
+
+      // 카드 만들고 무한 루프용으로 두 번 반복
+      const cards = chips.map(chip => {
+        const data = parseChip(chip);
+        return buildCard({ ...data, accent: cat.accent });
+      });
+      cards.forEach(c => track.appendChild(c));
+      cards.forEach(c => track.appendChild(c.cloneNode(true)));
+
+      viewport.appendChild(track);
+      row.appendChild(header);
+      row.appendChild(viewport);
+      stream.appendChild(row);
+    });
+
+    grid.parentNode.replaceChild(stream, grid);
+  })();
 
   // ── Feature Modal ──
   const FM_DATA = {
