@@ -209,8 +209,8 @@
       border: 1px solid rgba(124,58,237,0.2);
       border-radius: 99px;
       padding: 8px 20px;
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 17px;
+      font-weight: 700;
       color: #4c3b99;
       margin-bottom: 28px;
     }
@@ -1145,6 +1145,171 @@
     .mock-notif-dot.read { background: #e5e7eb; }
     .mock-role-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0ecff; }
     .mock-role-row:last-child { border-bottom: none; }
+
+    /* ═══════════════════════════════════ MIX EFFECTS (v3) ═══════════════════════════════════ */
+
+    /* 배경 색상 서서히 변환 (index2 from) */
+    @keyframes bgColorShift {
+      0%   { background-color: #ede9ff; }   /* 보라 */
+      20%  { background-color: #e4ecff; }   /* 파랑 */
+      40%  { background-color: #e0fff8; }   /* 민트 */
+      60%  { background-color: #f5e6ff; }   /* 라벤더 */
+      80%  { background-color: #ffe4f0; }   /* 로즈 */
+      100% { background-color: #ede9ff; }   /* 보라 */
+    }
+    body { animation: bgColorShift 18s ease-in-out infinite; }
+
+    /* 헤드라인 — 흰 빛줄기 shimmer (index2 from) */
+    @keyframes shimmerSweep {
+      0%   { background-position: -250% center; }
+      100% { background-position: 250% center; }
+    }
+    .hero-title .text-gradient {
+      background: linear-gradient(
+        90deg,
+        #7c3aed 0%, #6366f1 20%,
+        #c4b5fd 38%, #ffffff 48%, #c4b5fd 58%,
+        #ec4899 76%, #7c3aed 100%
+      ) !important;
+      background-size: 250% auto !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      animation: shimmerSweep 3.5s linear infinite !important;
+    }
+
+    /* 마우스 글로우 오브 (index2 from) */
+    .mouse-glow {
+      position: fixed;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(124,58,237,0.11) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 1;
+      transform: translate(-50%, -50%);
+    }
+
+    /* 마우스 스파크 트레일 (index from — 개수 줄임) */
+    .sp-dot {
+      position: fixed;
+      pointer-events: none;
+      border-radius: 50%;
+      z-index: 9999;
+      animation: spFade 0.8s ease-out forwards;
+    }
+    @keyframes spFade {
+      0%   { opacity: 0.9; transform: translateY(0)     scale(1);   }
+      100% { opacity: 0;   transform: translateY(-28px) scale(0.1); }
+    }
+
+    /* 피처카드 — 3D 틸트 + 네온 글로우 (둘 다) */
+    .features-grid { perspective: 1200px; }
+    .feature-card  { transform-style: preserve-3d; will-change: transform; }
+    @keyframes neonBorderPulse {
+      0%,100% {
+        box-shadow: 0 4px 20px rgba(99,60,237,0.07),
+                    0 0 0 1px rgba(124,58,237,0.15),
+                    0 0 18px rgba(124,58,237,0.1);
+      }
+      50% {
+        box-shadow: 0 8px 40px rgba(124,58,237,0.22),
+                    0 0 0 1.5px rgba(124,58,237,0.45),
+                    0 0 45px rgba(124,58,237,0.2),
+                    0 0 80px rgba(124,58,237,0.08);
+      }
+    }
+    .feature-card:hover { animation: neonBorderPulse 2s ease-in-out infinite; }
+    .feature-card:hover .feature-icon {
+      filter: drop-shadow(0 0 10px rgba(124,58,237,0.55));
+      transition: filter 0.4s;
+    }
+
+    /* 섹션 배경 ambient glow (index2 from) */
+    #features, #how, #story { position: relative; }
+    #features::before, #how::before, #story::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 650px; height: 450px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      animation: ambientPulse 7s ease-in-out infinite;
+    }
+    #features::before { background: radial-gradient(ellipse, rgba(124,58,237,0.07) 0%, transparent 65%); transform: translate(-50%,-50%); }
+    #how::before      { background: radial-gradient(ellipse, rgba(99,102,241,0.07) 0%, transparent 65%); transform: translate(-50%,-50%); animation-delay: 2.5s; }
+    #story::before    { background: radial-gradient(ellipse, rgba(236,72,153,0.05) 0%, transparent 65%); transform: translate(-50%,-50%); animation-delay: 5s; }
+    @keyframes ambientPulse {
+      0%,100% { opacity: 0.6; scale: 1;    }
+      50%     { opacity: 1;   scale: 1.3;  }
+    }
+
+    /* 버튼 shimmer + ripple (index2 from) */
+    @keyframes btnShimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    .btn-primary {
+      background: linear-gradient(90deg, #6d28d9, #7c3aed, #a855f7, #7c3aed, #6d28d9) !important;
+      background-size: 250% auto !important;
+      animation: btnShimmer 3s linear infinite !important;
+      position: relative; overflow: hidden;
+    }
+    .btn-secondary { position: relative; overflow: hidden; }
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.38);
+      transform: scale(0);
+      animation: rippleAnim 0.65s linear;
+      pointer-events: none;
+    }
+    @keyframes rippleAnim { to { transform: scale(5); opacity: 0; } }
+
+    /* 스크롤 reveal */
+    .reveal {
+      opacity: 0;
+      transform: translateY(36px);
+      transition: opacity 0.75s ease, transform 0.75s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* blob — 중간 속도 */
+    .blob-1 { animation: blobMix1 15s ease-in-out infinite !important; }
+    .blob-2 { animation: blobMix2 11s ease-in-out infinite !important; }
+    .blob-3 { animation: blobMix3 9s  ease-in-out infinite 2s !important; }
+    @keyframes blobMix1 {
+      0%,100% { transform: scale(1)    translate(0,0);        opacity: 0.48; }
+      40%     { transform: scale(1.16) translate(45px,-35px); opacity: 0.66; }
+      70%     { transform: scale(0.90) translate(-28px,40px); opacity: 0.42; }
+    }
+    @keyframes blobMix2 {
+      0%,100% { transform: scale(1)    translate(0,0);        opacity: 0.42; }
+      50%     { transform: scale(1.26) translate(-38px,22px); opacity: 0.58; }
+    }
+    @keyframes blobMix3 {
+      0%,100% { transform: scale(1)    translate(0,0);        opacity: 0.35; }
+      50%     { transform: scale(1.30) translate(22px,-28px); opacity: 0.52; }
+    }
+
+    /* 히어로 태그 — 느린 글로우 (index2 from) */
+    @keyframes tagGlow {
+      0%,100% { box-shadow: none;                            color: #5b4f8a; }
+      50%     { box-shadow: 0 0 16px rgba(124,58,237,0.42); color: #7c3aed; }
+    }
+    .hero-tag              { animation: tagGlow 4s ease-in-out infinite; }
+    .hero-tag:nth-child(2) { animation-delay: 0.6s; }
+    .hero-tag:nth-child(3) { animation-delay: 1.2s; }
+    .hero-tag:nth-child(4) { animation-delay: 1.8s; }
+    .hero-tag:nth-child(5) { animation-delay: 2.4s; }
+    .hero-tag:nth-child(6) { animation-delay: 3.0s; }
+
+    /* nav 네온 라인 (index2 from) */
+    @keyframes navGlow {
+      0%,100% { box-shadow: 0 1px 0 rgba(124,58,237,0.15), 0 2px 18px rgba(124,58,237,0.04); }
+      50%     { box-shadow: 0 1px 0 rgba(124,58,237,0.38), 0 2px 28px rgba(124,58,237,0.11); }
+    }
+    nav { animation: navGlow 5s ease-in-out infinite; }
   </style>
 </head>
 <body>
@@ -2961,10 +3126,11 @@
   }, { passive: true });
 </script>
 
-<!-- 폭죽 효과 -->
-<canvas id="fw-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9998;"></canvas>
+<!-- 폭죽 효과 제거됨 -->
 <script>
 (function() {
+  // disabled
+  return;
   const canvas = document.getElementById('fw-canvas');
   const ctx = canvas.getContext('2d');
 
@@ -3129,6 +3295,159 @@
     requestAnimationFrame(loop);
   }
   loop();
+})();
+</script>
+
+
+<!-- ════════════════════════════════════════════════
+     MIX 효과 v3 — confetti + sparkle + glow
+════════════════════════════════════════════════ -->
+<script>
+/* ── 1. 마우스 글로우 오브 (부드러운 lerp 추적) ── */
+(function () {
+  const glow = document.createElement('div');
+  glow.className = 'mouse-glow';
+  document.body.appendChild(glow);
+  let tx = innerWidth / 2, ty = innerHeight / 2, cx = tx, cy = ty;
+  document.addEventListener('mousemove', e => { tx = e.clientX; ty = e.clientY; });
+  (function lerp() {
+    cx += (tx - cx) * 0.07; cy += (ty - cy) * 0.07;
+    glow.style.left = cx + 'px'; glow.style.top = cy + 'px';
+    requestAnimationFrame(lerp);
+  })();
+})();
+
+/* ── 2. 마우스 파티클 폭발 ── */
+(function () {
+  const COLS = ['#7c3aed','#ec4899','#f59e0b','#10b981','#3b82f6','#a78bfa','#f43f5e','#fbbf24','#34d399','#fff'];
+  let last = 0;
+  document.addEventListener('mousemove', e => {
+    const now = Date.now();
+    if (now - last < 35) return;
+    last = now;
+    for (let i = 0; i < 3; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'sp-dot';
+      const sz  = 4 + Math.random() * 10;
+      const col = COLS[Math.floor(Math.random() * COLS.length)];
+      const dur = 0.5 + Math.random() * 0.5;
+      dot.style.cssText = [
+        `left:${e.clientX + (Math.random()-.5)*20 - sz/2}px`,
+        `top:${e.clientY  + (Math.random()-.5)*20 - sz/2}px`,
+        `width:${sz}px`, `height:${sz}px`,
+        `background:${col}`,
+        `box-shadow:0 0 ${sz*2}px ${col}`,
+        `animation-duration:${dur}s`,
+      ].join(';');
+      document.body.appendChild(dot);
+      setTimeout(() => dot.remove(), (dur + .12) * 1000);
+    }
+  });
+})();
+
+/* ── 3. 피처카드 3D 틸트 ── */
+document.querySelectorAll('.feature-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const r  = card.getBoundingClientRect();
+    const dx = (e.clientX - r.left - r.width  / 2) / (r.width  / 2);
+    const dy = (e.clientY - r.top  - r.height / 2) / (r.height / 2);
+    card.style.transition = 'box-shadow 0.25s';
+    card.style.transform  = `perspective(800px) rotateY(${dx*10}deg) rotateX(${-dy*10}deg) translateY(-5px) scale(1.025)`;
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transition = 'transform 0.55s cubic-bezier(.23,1,.32,1), box-shadow 0.25s';
+    card.style.transform  = '';
+    setTimeout(() => { card.style.transition = ''; }, 600);
+  });
+});
+
+/* ── 4. 버튼 ripple ── */
+document.querySelectorAll('.btn-primary, .btn-secondary, .nav-demo-btn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    const r   = btn.getBoundingClientRect();
+    const rip = document.createElement('span');
+    rip.className = 'ripple';
+    const sz = Math.max(r.width, r.height);
+    rip.style.cssText = `width:${sz}px;height:${sz}px;left:${e.clientX-r.left-sz/2}px;top:${e.clientY-r.top-sz/2}px;`;
+    btn.appendChild(rip);
+    setTimeout(() => rip.remove(), 750);
+  });
+});
+
+/* ── 5. 스크롤 reveal ── */
+(function () {
+  const els = document.querySelectorAll(
+    '.section-title, .feature-card, .step, .story-split, .mock-ui, .about-text'
+  );
+  els.forEach((el, i) => {
+    el.classList.add('reveal');
+    el.style.transitionDelay = `${(i % 4) * 0.09}s`;
+  });
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (en.isIntersecting) { en.target.classList.add('visible'); obs.unobserve(en.target); }
+    });
+  }, { threshold: 0.08 });
+  els.forEach(el => obs.observe(el));
+})();
+
+/* ── 6. 컨페티 비 (더 적고 투명하게) ── */
+(function () {
+  const cv  = document.createElement('canvas');
+  cv.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;';
+  document.body.appendChild(cv);
+  const ctx = cv.getContext('2d');
+
+  function resize() { cv.width = innerWidth; cv.height = innerHeight; }
+  resize();
+  window.addEventListener('resize', resize, { passive: true });
+
+  const COLS = ['#7c3aed','#ec4899','#f59e0b','#10b981','#3b82f6','#f43f5e','#a78bfa','#fbbf24'];
+
+  class Piece {
+    reset(init) {
+      this.x    = Math.random() * cv.width;
+      this.y    = init ? Math.random() * cv.height - cv.height : -14;
+      this.w    = 4 + Math.random() * 7;
+      this.h    = 2 + Math.random() * 4;
+      this.c    = COLS[Math.floor(Math.random() * COLS.length)];
+      this.vy   = 0.5 + Math.random() * 1.0;
+      this.vx   = (Math.random() - .5) * 0.6;
+      this.rot  = Math.random() * Math.PI * 2;
+      this.rs   = (Math.random() - .5) * 0.035;
+      this.al   = 0.18 + Math.random() * 0.22;   /* 더 투명하게 */
+      this.circ = Math.random() < 0.3;
+    }
+    update() {
+      this.y += this.vy; this.x += this.vx; this.rot += this.rs;
+      if (this.y > cv.height + 14) this.reset(false);
+    }
+    draw() {
+      ctx.save();
+      ctx.globalAlpha = this.al;
+      ctx.fillStyle   = this.c;
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.rot);
+      if (this.circ) {
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.w/2, this.h/2, 0, 0, Math.PI*2);
+        ctx.fill();
+      } else {
+        ctx.fillRect(-this.w/2, -this.h/2, this.w, this.h);
+      }
+      ctx.restore();
+    }
+  }
+
+  const mob = innerWidth < 768;
+  const CNT = mob ? 50 : 100;
+  const pieces = Array.from({ length: CNT }, () => { const p = new Piece(); p.reset(true); return p; });
+
+  (function loop() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    pieces.forEach(p => { p.update(); p.draw(); });
+    requestAnimationFrame(loop);
+  })();
 })();
 </script>
 
