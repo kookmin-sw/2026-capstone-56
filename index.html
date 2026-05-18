@@ -17,13 +17,20 @@
   <style>
     /* ─────────────────────────────── Reset & Base ─── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
+    html {
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+      width: 100%;
+    }
     body {
       font-family: 'Pretendard', -apple-system, sans-serif;
       background: #e9e4ff;
       color: #1e1b4b;
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
+      position: relative;
       cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><text y='28' font-size='26'>🎉</text></svg>") 4 4, auto;
     }
     a, button, [onclick], input, select, textarea, label {
@@ -1843,9 +1850,311 @@
     }
     @media (max-width: 768px) { .section-dots { display: none; } }
 
+    /* 햄버거 버튼 (모바일에서만 보임) */
+    .nav-burger {
+      display: none;
+      width: 38px; height: 38px;
+      border: none;
+      background: rgba(124,58,237,0.08);
+      border-radius: 10px;
+      cursor: pointer;
+      padding: 0;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 5px;
+      transition: background 0.2s;
+      position: relative;
+      z-index: 1001;
+      font-family: inherit;
+    }
+    .nav-burger:hover { background: rgba(124,58,237,0.16); }
+    .nav-burger-line {
+      width: 18px;
+      height: 2px;
+      background: var(--primary);
+      border-radius: 2px;
+      transition: transform 0.35s cubic-bezier(0.6, 0.05, 0.28, 0.91),
+                  opacity 0.2s ease,
+                  width 0.3s ease;
+    }
+    .nav-burger.open .nav-burger-line:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+    .nav-burger.open .nav-burger-line:nth-child(2) {
+      opacity: 0;
+      width: 0;
+    }
+    .nav-burger.open .nav-burger-line:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
+    }
+
+    /* 모바일 풀스크린 드로어 */
+    .mobile-drawer {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(233,228,255,0.96);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px 40px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .mobile-drawer.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .mobile-drawer-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 100%;
+      max-width: 320px;
+      list-style: none;
+      padding: 0;
+      margin: 0 0 32px;
+    }
+    .mobile-drawer-list li {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .mobile-drawer.open .mobile-drawer-list li {
+      opacity: 1;
+      transform: none;
+    }
+    .mobile-drawer.open .mobile-drawer-list li:nth-child(1) { transition-delay: 0.08s; }
+    .mobile-drawer.open .mobile-drawer-list li:nth-child(2) { transition-delay: 0.14s; }
+    .mobile-drawer.open .mobile-drawer-list li:nth-child(3) { transition-delay: 0.20s; }
+    .mobile-drawer.open .mobile-drawer-list li:nth-child(4) { transition-delay: 0.26s; }
+    .mobile-drawer.open .mobile-drawer-list li:nth-child(5) { transition-delay: 0.32s; }
+    .mobile-drawer.open .mobile-drawer-list li:nth-child(6) { transition-delay: 0.38s; }
+    .mobile-drawer.open .mobile-drawer-list li:nth-child(7) { transition-delay: 0.44s; }
+
+    .mobile-drawer-list a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      padding: 18px 4px;
+      border-bottom: 1px solid rgba(124,58,237,0.1);
+      letter-spacing: -0.5px;
+      transition: color 0.2s, transform 0.2s, padding-left 0.2s;
+    }
+    .mobile-drawer-list a:hover,
+    .mobile-drawer-list a:active {
+      color: var(--primary);
+      padding-left: 12px;
+    }
+    .mobile-drawer-list a::after {
+      content: '→';
+      font-size: 18px;
+      color: var(--primary);
+      opacity: 0.5;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .mobile-drawer-list a:hover::after,
+    .mobile-drawer-list a:active::after {
+      opacity: 1;
+      transform: translateX(4px);
+    }
+    .mobile-drawer-cta {
+      width: 100%;
+      max-width: 320px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.4s ease 0.5s, transform 0.4s ease 0.5s;
+    }
+    .mobile-drawer.open .mobile-drawer-cta {
+      opacity: 1;
+      transform: none;
+    }
+    .mobile-drawer-cta a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 16px;
+      background: var(--primary);
+      color: white;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      box-shadow: 0 8px 24px rgba(124,58,237,0.4);
+    }
+    .mobile-drawer-tagline {
+      font-size: 12px;
+      color: #6b63a0;
+      margin-top: 24px;
+      letter-spacing: 0.3px;
+      opacity: 0;
+      transition: opacity 0.4s ease 0.6s;
+    }
+    .mobile-drawer.open .mobile-drawer-tagline { opacity: 0.7; }
+
+    /* 드로어 열렸을 때 body 스크롤 잠금 */
+    body.drawer-open { overflow: hidden; }
+
     /* Mobile nav */
-    @media (max-width: 640px) {
+    @media (max-width: 768px) {
       .nav-links { display: none; }
+      .nav-burger { display: inline-flex; }
+    }
+
+    /* ═════════ 모바일 종합 스타일 (PC 영향 없음) ═════════ */
+    @media (max-width: 768px) {
+      /* 가로 오버플로우 방지 — 모든 요소가 화면을 벗어나지 못하게 */
+      html, body { max-width: 100vw; overflow-x: hidden; }
+      .hero-bg, .particles { max-width: 100vw; overflow: hidden; }
+      .blob { max-width: 100vw; }
+      /* mouse-glow는 모바일에서 불필요 */
+      .mouse-glow { display: none !important; }
+      /* 모든 섹션이 가로폭을 절대 못 넘게 */
+      section, footer { overflow-x: clip; max-width: 100vw; }
+      .container { max-width: 100%; }
+
+      /* 섹션 패딩 축소 */
+      .section { padding: 64px 0; }
+      .section-sm { padding: 48px 0; }
+
+      /* HERO */
+      #hero { padding-top: 80px; padding-bottom: 60px; }
+      .hero-title { letter-spacing: -1px; }
+      .hero-eyebrow { font-size: 13px; padding: 6px 14px; margin-bottom: 20px; }
+      .hero-cta { gap: 10px; margin-bottom: 40px; }
+      .hero-cta .btn-primary,
+      .hero-cta .btn-secondary {
+        padding: 12px 22px;
+        font-size: 14px;
+      }
+      .hero-tags { gap: 7px; }
+      .hero-tag { font-size: 11.5px; padding: 5px 12px; }
+      /* 파티클 일부만 보이게 */
+      .particles .particle:nth-child(n+6) { display: none; }
+      .scroll-indicator { display: none; }
+
+      /* ABOUT */
+      .about-text h2 { font-size: 30px; }
+      .about-text p  { font-size: 15px; line-height: 1.75; }
+      .stat-num { font-size: 26px; }
+      .mock-ui { max-width: 360px; margin: 0 auto; }
+
+      /* SECTION TITLE */
+      .section-title { margin-bottom: 40px; }
+      .section-title h2 { font-size: 26px; }
+      .section-title p { font-size: 14px; }
+
+      /* FEATURES */
+      .feature-card { padding: 22px 18px; }
+      .feature-card h3 { font-size: 16px; }
+      .feature-card p { font-size: 13.5px; }
+
+      /* STORIES — 카드 사이즈 다이어트 */
+      .story-tabs { padding: 5px; gap: 4px; }
+      .story-tab { font-size: 12px; padding: 9px 14px; gap: 5px; }
+      .story-card { padding: 24px 18px 22px; }
+      .story-card-visual {
+        max-width: 130px;
+        font-size: 56px;
+        margin-bottom: 16px;
+      }
+      .story-card-title { font-size: 16px; }
+      .story-card-sub   { font-size: 12px; margin-bottom: 14px; }
+      .story-pills li   { font-size: 13px; padding: 9px 14px; }
+      .story-upgrade-badge { font-size: 12px; padding: 8px 22px 8px 18px; }
+
+      /* HOW */
+      #how { margin: 0 12px; }
+      .flow-tabs { flex-wrap: wrap; gap: 6px; }
+      .flow-tab  { font-size: 13px; padding: 8px 18px; }
+      .step      { padding: 22px 14px 22px; }
+      .step h3   { font-size: 16px; }
+      .step p    { font-size: 13px; }
+
+      /* DEMO */
+      .demo-text h2 { font-size: 26px; }
+      .demo-text p  { font-size: 14px; }
+      .demo-phone   { max-width: 290px; transform: rotate(-2deg); }
+      .demo-phone:hover { transform: rotate(0deg); }
+      .screen-tabs-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
+      .screen-tabs { padding: 5px; }
+      .screen-tab { font-size: 12px; padding: 8px 14px; }
+
+      /* TECH */
+      .tech-stream-header { flex-wrap: wrap; gap: 8px 14px; }
+      .tech-stream-label-tag { font-size: 16px; }
+      .tech-stream-label-tag::before { width: 8px; height: 8px; }
+      .tech-stream-label-desc { width: 100%; margin-left: 0; text-align: left; font-size: 12px; }
+
+      /* TEAM */
+      .team-card { padding: 26px 16px 22px; }
+      .team-avatar { width: 64px; height: 64px; font-size: 30px; }
+      .team-name { font-size: 16px; }
+      .team-role { font-size: 12px; }
+
+      /* CTA */
+      #cta { margin: 0 12px; padding: 56px 24px; border-radius: 24px; }
+      #cta h2 { font-size: 22px; }
+      #cta p  { font-size: 14px; }
+      /* 모바일에서 스파클·광점 일부만 보이게 (성능·시각 정돈) */
+      .cta-sparkles .cta-spark:nth-child(n+5),
+      .cta-sparkles .cta-glint:nth-child(n+5) { display: none; }
+
+      /* FOOTER */
+      footer { padding: 40px 0 24px; margin-top: 60px; }
+      .footer-tagline { max-width: none; }
+      .footer-bottom  { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .footer-meta    { gap: 12px; flex-wrap: wrap; }
+
+      /* 섹션 디바이더 — 모바일에서는 더 짧게 */
+      .section + .section::before,
+      .section-sm + .section::before,
+      .section + .section-sm::before {
+        width: 60%;
+      }
+
+      /* 스토리 탭 가운데 점 충돌 방지 */
+      .scroll-progress { height: 2.5px; }
+    }
+
+    @media (max-width: 480px) {
+      /* HERO 추가 다이어트 */
+      .hero-tags .hero-tag:nth-child(n+5) { display: none; }
+      .hero-cta { flex-direction: column; align-items: stretch; }
+      .hero-cta .btn-primary,
+      .hero-cta .btn-secondary { justify-content: center; width: 100%; }
+
+      /* STORIES 비주얼 더 작게 */
+      .story-card-visual { max-width: 110px; font-size: 48px; }
+
+      /* TEAM 한 줄에 2개 유지 (1 column 대신) */
+      .team-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+      .team-card { padding: 22px 12px 18px; }
+      .team-avatar { width: 56px; height: 56px; font-size: 26px; }
+      .team-name { font-size: 14.5px; }
+      .team-role { font-size: 11px; line-height: 1.35; }
+      .team-id   { font-size: 10px; }
+      .team-tags { gap: 4px; margin-top: 10px; }
+      .team-tag  { font-size: 9.5px; padding: 3px 7px; }
+
+      /* SECTION TITLE 더 작게 */
+      .section-title h2 { font-size: 22px; }
+    }
+
+    @media (max-width: 360px) {
+      .hero-title { font-size: 38px !important; }
+      .section-title h2 { font-size: 20px; }
+      .nav-logo { font-size: 16px; }
+      .nav-logo img { height: 26px; }
     }
 
     /* ─────────────────────────────── ARCHITECTURE ─── */
@@ -2288,8 +2597,31 @@
       <li><a href="#team">팀</a></li>
       <li><a href="https://staging.d25a68jt9cg4tx.amplifyapp.com/login" target="_blank" class="nav-demo-btn">데모 보기 →</a></li>
     </ul>
+    <button class="nav-burger" id="nav-burger" aria-label="메뉴 열기" aria-expanded="false" aria-controls="mobile-drawer">
+      <span class="nav-burger-line"></span>
+      <span class="nav-burger-line"></span>
+      <span class="nav-burger-line"></span>
+    </button>
   </div>
 </nav>
+
+<!-- ─────────── MOBILE DRAWER ─────────── -->
+<div class="mobile-drawer" id="mobile-drawer" role="dialog" aria-label="모바일 메뉴">
+  <ul class="mobile-drawer-list">
+    <li><a href="#about" data-drawer-link>소개</a></li>
+    <li><a href="#features" data-drawer-link>핵심 기능</a></li>
+    <li><a href="#stories" data-drawer-link>스토리</a></li>
+    <li><a href="#demo" data-drawer-link>주요 화면</a></li>
+    <li><a href="#tech" data-drawer-link>기술 스택</a></li>
+    <li><a href="#team" data-drawer-link>팀 소개</a></li>
+  </ul>
+  <div class="mobile-drawer-cta">
+    <a href="https://staging.d25a68jt9cg4tx.amplifyapp.com/login" target="_blank" data-drawer-link>
+      🚀 데모 사이트 보기
+    </a>
+  </div>
+  <div class="mobile-drawer-tagline">국민대학교 캡스톤 2026 · 56팀</div>
+</div>
 
 <!-- ─────────── HERO ─────────── -->
 <section id="hero">
@@ -3435,6 +3767,48 @@
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
     update();
+  })();
+
+  // ── 모바일 햄버거 메뉴 ──
+  (function mobileDrawer() {
+    const burger = document.getElementById('nav-burger');
+    const drawer = document.getElementById('mobile-drawer');
+    if (!burger || !drawer) return;
+
+    const open = () => {
+      burger.classList.add('open');
+      drawer.classList.add('open');
+      document.body.classList.add('drawer-open');
+      burger.setAttribute('aria-expanded', 'true');
+      burger.setAttribute('aria-label', '메뉴 닫기');
+    };
+    const close = () => {
+      burger.classList.remove('open');
+      drawer.classList.remove('open');
+      document.body.classList.remove('drawer-open');
+      burger.setAttribute('aria-expanded', 'false');
+      burger.setAttribute('aria-label', '메뉴 열기');
+    };
+    const toggle = () => {
+      drawer.classList.contains('open') ? close() : open();
+    };
+
+    burger.addEventListener('click', toggle);
+
+    // 드로어 안 링크 클릭 시 자동 닫기
+    drawer.querySelectorAll('[data-drawer-link]').forEach(link => {
+      link.addEventListener('click', () => setTimeout(close, 150));
+    });
+
+    // ESC로 닫기
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && drawer.classList.contains('open')) close();
+    });
+
+    // 데스크탑 너비로 리사이즈되면 자동 닫기
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 768 && drawer.classList.contains('open')) close();
+    });
   })();
 
   // 주요 화면 탭 초기화
