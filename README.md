@@ -2,21 +2,36 @@
 
 <div align="center">
 
-<img src="logo6.png" alt="페스티켓 로고" width="120" />
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:7C3AED,50:6366F1,100:EC4899&height=220&section=header&text=FestiCket&fontSize=80&fontColor=ffffff&animation=fadeIn&fontAlignY=42" width="100%" />
 
-# 페스티켓 (FestiCket)
+<img src="logo6.png" alt="페스티켓 로고" width="100" />
 
-**캠퍼스의 모든 행사, 한 곳에서**
+### 🎪 페스티켓 (FestiCket) — 대학 축제 참여·관리 올인원 플랫폼
 
-대학 축제 참여·관리 올인원 플랫폼
+<a href="https://staging.d25a68jt9cg4tx.amplifyapp.com/login">
+  <img src="https://readme-typing-svg.demolab.com?font=Nanum+Gothic&weight=700&size=22&pause=1000&color=7C3AED&center=true&vCenter=true&width=700&height=50&lines=%EC%BA%A0%ED%8D%BC%EC%8A%A4%EC%9D%98+%EB%AA%A8%EB%93%A0+%ED%96%89%EC%82%AC%2C+%ED%95%9C+%EA%B3%B3%EC%97%90%EC%84%9C;%ED%81%B4%EB%A6%AD+%ED%95%9C+%EB%B2%88%EC%9C%BC%EB%A1%9C+QR+%ED%8B%B0%EC%BC%93+%EB%B0%9C%EA%B8%89;%ED%8C%80+%EB%8B%A8%EC%9C%84+%EC%9A%B4%EC%98%81%E3%83%BB%ED%99%94%EC%9D%B4%ED%8A%B8%EB%A6%AC%EC%8A%A4%ED%8A%B8%E3%83%BB%EA%B6%8C%ED%95%9C+%EC%9C%84%EC%9E%84;%ED%8E%98%EC%8A%A4%ED%8B%B0%EC%BC%93%EC%9D%B4+%EB%AA%A8%EB%91%90+%ED%95%B4%EA%B2%B0%ED%95%A9%EB%8B%88%EB%8B%A4" alt="Typing animation" />
+</a>
 
-[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-페스티켓_체험하기-7c3aed?style=for-the-badge)](https://staging.d25a68jt9cg4tx.amplifyapp.com/login)
-[![GitHub Pages](https://img.shields.io/badge/📄_GitHub_Pages-프로젝트_소개-6366f1?style=for-the-badge)](https://kookmin-sw.github.io/2026-capstone-56/)
+<p>
+  <a href="https://staging.d25a68jt9cg4tx.amplifyapp.com/login">
+    <img src="https://img.shields.io/badge/🚀_Live_Demo-페스티켓_체험하기-7c3aed?style=for-the-badge" />
+  </a>
+  <a href="https://kookmin-sw.github.io/2026-capstone-56/">
+    <img src="https://img.shields.io/badge/📄_GitHub_Pages-프로젝트_소개-6366f1?style=for-the-badge" />
+  </a>
+</p>
 
-![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Prisma-4169E1?logo=postgresql&logoColor=white)
-![AWS](https://img.shields.io/badge/AWS-Amplify-FF9900?logo=amazonaws&logoColor=white)
+<p>
+  <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white&style=flat-square" />
+  <img src="https://img.shields.io/badge/Node.js-Express-339933?logo=nodedotjs&logoColor=white&style=flat-square" />
+  <img src="https://img.shields.io/badge/PostgreSQL-Prisma-4169E1?logo=postgresql&logoColor=white&style=flat-square" />
+  <img src="https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white&style=flat-square" />
+  <img src="https://img.shields.io/badge/AWS_Amplify-FF9900?logo=awsamplify&logoColor=white&style=flat-square" />
+  <img src="https://img.shields.io/badge/Kakao_Login-FFCD00?logo=kakao&logoColor=000000&style=flat-square" />
+  <img src="https://img.shields.io/badge/TossPayments-0064FF?logo=tosspayments&logoColor=white&style=flat-square" />
+</p>
+
+<img src="https://capsule-render.vercel.app/api?type=rect&color=0:7C3AED,50:6366F1,100:EC4899&height=3" width="100%" />
 
 </div>
 
@@ -35,12 +50,19 @@
 |------|------|
 | 🎟️ **QR 티켓** | 신청 즉시 고유 QR 코드 티켓 발급 |
 | ⚡ **실시간 체크인** | QR 스캔으로 빠른 현장 입장 처리 |
-| 💳 **간편 결제** | 토스페이먼츠 연동 (카드·간편결제·계좌이체) |
-| 🏫 **학교 인증** | 대학 이메일 인증으로 소속 확인 |
-| 📊 **운영 대시보드** | 신청 현황·체크인율·환불 실시간 모니터링 |
-| 🔔 **알림 시스템** | 행사 변경·티켓 확정 등 실시간 알림 |
-| 🟡 **카카오 로그인** | 소셜 로그인 + 학교 이메일 인증 연동 |
-| 👥 **역할 기반 권한** | 참가자·인증주최자·학교관리자·운영자 |
+| ⏱️ **취소표 자동 릴리즈** | 취소 자리를 설정 간격마다 자동 재오픈 (60초 주기 워커) |
+| <img src="logo-toss-symbol-alpha.png" height="20" style="vertical-align:middle"> **간편 결제 & 환불** | 토스페이먼츠 연동 (카드·간편결제·계좌이체), 환불 자동 처리 |
+| ✅ **화이트리스트** | 특정 학번 대상 무료·우선 신청 설정, CSV 일괄 업로드 지원 |
+| 🏫 **학교 인증** | 대학 이메일 인증으로 소속 확인, 학교별 행사 분리 |
+| 📊 **운영 대시보드** | 신청 현황·체크인율·환불 현황 실시간 모니터링 |
+| 👥 **공동 호스트** | 행사에 공동 주최자 추가, 팀 단위 운영 가능 |
+| 🔔 **알림·공지·문의** | 행사 변경·티켓 확정 알림 / 학교·전체 공지 / 1:1 문의 |
+| <img src="kakao-icon.svg" height="20" style="vertical-align:middle"> **카카오 로그인** | 소셜 로그인 + 학교 이메일 인증 연동 |
+| 🛡️ **역할 기반 권한** | 참가자·인증주최자·학교관리자·운영자 4단계 |
+| ⭐ **즐겨찾기** | 관심 행사 북마크 및 목록 관리 |
+| 💬 **리뷰 & Q&A** | 행사별 별점·후기 작성 / 익명 질문·답변 |
+| 📥 **명단 다운로드** | 신청자 명단 XLSX · CSV 내보내기 |
+| 🔑 **권한 위임** | 인증주최자가 후임자에게 직접 위임 |
 
 ---
 
@@ -63,60 +85,111 @@
 
 ### 🏛️ 학교 총관리자 (총학생회 / 총동아리연합회)
 
-#### Before
-- 자교 내 행사 현황을 파악하려면 **직접 발로 뛰며 조사**해야 함
+<table>
+<thead>
+<tr>
+<th width="50%">😩 Before — 페스티켓 도입 전</th>
+<th width="50%">✨ After — 페스티켓 도입 후</th>
+</tr>
+</thead>
+<tbody>
+<tr valign="top">
+<td>
+
+- 자교 내 행사 현황 파악을 위해 **직접 발로 뛰며 조사** 필요
 - 행사가 제대로 열리고 있는지, 참가비 관리가 되고 있는지 알 방법이 없음
 - **민원이 들어온 뒤에야** 문제를 파악하는 사후 대응 구조
-- 어떤 동아리가 어떤 행사를 열었는지 정리된 데이터 자체가 부재
+- 어떤 동아리가 어떤 행사를 열었는지 정리된 데이터 부재
 
-#### After
-- **대시보드 하나**로 자교 행사 전체 목록, 개설자, 신청 현황, 진행 상태를 실시간 확인
-- 누가 어떤 행사를 열었고, 참가자가 몇 명인지, 정상 운영 중인지 한눈에 파악
-- 문제가 생기기 전 **선제적으로 인지** 가능
-- 인증주최자 권한 부여·회수로 적절한 행사 주최자를 직접 관리
+</td>
+<td>
 
-**CASE 1 — 행사 운영 과정을 파악하고 싶은 관리자·교수·총학·동아리연합**
+- **대시보드 하나**로 자교 행사 전체 목록·개설자·신청 현황·진행 상태를 실시간 확인
+- 누가 어떤 행사를 열었고, 참가자가 몇 명인지, 정상 운영 중인지 **한눈에 파악**
+- 문제가 생기기 전 **선제적 인지** 가능
+- 인증주최자 권한 부여·회수로 적절한 행사 주최자 직접 관리
+
+</td>
+</tr>
+</tbody>
+</table>
+
+> **CASE 1 — 행사 운영 과정을 파악하고 싶은 관리자·교수·총학·동아리연합**
 > "이 동아리가 이렇게 행사를 운영했구나. 다음 학번 학생들한테 레퍼런스로 보여줄 수 있겠다."
 
-**CASE 2 — 과정보단 최종 결과만 확인하고 싶은 담당자**
-> 각 행사와 인증 사용자의 데이터가 자동으로 누적되므로, 단일 양식의 파일로 다운받아 확인만 하면 됨. 권한은 동아리 단위로 자생적 인수인계가 이루어지므로, 동아리장 공체 시 기존 인증주최자가 후임자에게 직접 위임하는 구조로 운영 가능.
+> **CASE 2 — 과정보단 최종 결과만 확인하고 싶은 담당자**
+> 각 행사와 인증 사용자의 데이터가 자동으로 누적되므로, 단일 양식의 파일로 다운받아 확인만 하면 됨. 권한은 동아리 단위로 자생적 인수인계가 이루어지므로, 동아리장 공백 시 기존 인증주최자가 후임자에게 직접 위임하는 구조로 운영 가능.
 
 ---
 
 ### 🎪 인증사용자 (행사 주최자 — 동아리장, 학생회 등)
 
-#### Before
+<table>
+<thead>
+<tr>
+<th width="50%">😩 Before — 페스티켓 도입 전</th>
+<th width="50%">✨ After — 페스티켓 도입 후</th>
+</tr>
+</thead>
+<tbody>
+<tr valign="top">
+<td>
+
 홍보·신청·결제·관리가 **전부 다른 플랫폼**으로 분산:
 
-| 역할 | 기존 방식 |
-|------|-----------|
-| 홍보 | 에브리타임·인스타그램 게시 |
-| 신청 접수 | 구글 폼 |
-| 결제 | 계좌이체 요청 |
-| 명단·납부 확인 | 수기 관리 (엑셀 등) |
+- 📣 **홍보** — 에브리타임·인스타그램 게시
+- 📝 **신청 접수** — 구글 폼
+- 💸 **결제** — 계좌이체 요청
+- 📒 **명단·납부 확인** — 수기 관리 (엑셀)
 
-#### After
+</td>
+<td>
+
 **페스티켓 하나로 행사 개설부터 마감까지 완결:**
-- 에브리타임 홍보 불필요 → 플랫폼 내 행사 페이지가 홍보 역할 대체
-- 구글 폼 불필요 → 플랫폼 내 신청 버튼 하나로 참가자 모집
-- 계좌이체·수기 확인 불필요 → 토스페이먼츠 자동 결제로 신청자 명단과 납부 현황이 실시간 정리
-- **Excel / CSV / PDF 다운로드**로 행정 관리 가능
-- 화이트리스트 기반 학생회비 납부자 필터링 등 현실적 문제 해결 가능
+
+- 홍보 불필요 → 플랫폼 내 **행사 페이지**가 홍보 역할 대체
+- 구글 폼 불필요 → **신청 버튼 하나**로 참가자 모집
+- 계좌이체·수기 확인 불필요 → **토스페이먼츠** 자동 결제, 납부 현황 실시간 정리
+- **XLSX / CSV 다운로드**로 행정 관리 가능
+- **화이트리스트** 기반 학생회비 납부자 필터링 등 현실적 문제 해결
+- **취소표 자동 릴리즈**로 대기자도 놓치지 않고 신청 기회 확보
+
+</td>
+</tr>
+</tbody>
+</table>
 
 ---
 
 ### 🙋 참여자 (일반 학생)
 
-#### Before
-- 행사를 직접 찾아야 하고 (에브리타임, 인스타, 카카오톡 등 각자 따로)
-- 행사마다 참여 방식이 달라 구글 폼 작성 → 계좌 찾아 이체 → 확인 연락 등 매번 다른 절차 반복
-- 몰라서 신청을 못하는 경우 빈번
+<table>
+<thead>
+<tr>
+<th width="50%">😩 Before — 페스티켓 도입 전</th>
+<th width="50%">✨ After — 페스티켓 도입 후</th>
+</tr>
+</thead>
+<tbody>
+<tr valign="top">
+<td>
 
-#### After
-- 에타·인스타·카카오톡 따로 볼 필요 없이 **사이트 내 학교 행사가 한 곳에 집결**
-- "몰라서 신청 못하는" 경우가 사라질 것으로 전망
-- **클릭 한 번**으로 신청 완료, 즉시 발급받은 QR을 스캔 한 번으로 입장
-- 환불 시 주최자에게 따로 연락하는 번거로움 없이 **신청 취소 버튼**으로 간편 처리
+- 행사를 직접 찾아야 함 (에브리타임·인스타·카카오톡 각자 따로)
+- 행사마다 참여 방식이 달라 **구글 폼 작성 → 계좌 이체 → 확인 연락** 매번 반복
+- 몰라서 **신청을 못하는 경우** 빈번
+
+</td>
+<td>
+
+- 에타·인스타·카카오톡 따로 볼 필요 없이 **사이트 내 학교 행사 한 곳에 집결**
+- "몰라서 신청 못하는" 경우 사라질 전망
+- **클릭 한 번**으로 신청 완료, 즉시 발급된 QR로 입장
+- 환불 시 주최자 연락 불필요 → **신청 취소 버튼**으로 간편 처리
+
+</td>
+</tr>
+</tbody>
+</table>
 
 ---
 
@@ -124,8 +197,17 @@
 
 페스티켓은 4단계 역할 권한 구조로 운영됩니다.
 
-```
-ATTENDEE (일반 참가자)  →  CERTIFIED (인증 주최자)  →  SCHOOL_ADMIN (학교 총관리자)  →  OPERATOR (슈퍼 운영자)
+```mermaid
+flowchart LR
+    D["⚙️ OPERATOR<br/>슈퍼 운영자"] -->|학교별 지정| C["🏛️ SCHOOL_ADMIN<br/>학교 총관리자"]
+    C -->|권한 부여·회수| B["🎪 CERTIFIED<br/>인증 주최자"]
+    A["👤 ATTENDEE<br/>일반 참가자"] -.->|인증주최자 신청| C
+    B -.->|권한 위임| B
+
+    style D fill:#8b5cf6,stroke:#5b21b6,stroke-width:2px,color:#ffffff
+    style C fill:#c4b5fd,stroke:#5b21b6,stroke-width:2px,color:#1e1b4b
+    style B fill:#ddd6fe,stroke:#7c3aed,stroke-width:2px,color:#1e1b4b
+    style A fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#1e1b4b
 ```
 
 ### 👤 ATTENDEE — 일반 참가자
@@ -135,9 +217,13 @@ ATTENDEE (일반 참가자)  →  CERTIFIED (인증 주최자)  →  SCHOOL_ADMI
 | 행사 탐색 | 학교·날짜·가격 필터로 행사 검색 |
 | 행사 신청 | 클릭 한 번으로 무료·유료 행사 신청 |
 | QR 티켓 | 신청 즉시 발급, 내 티켓 탭에서 확인 |
-| 알림 수신 | 행사 변경·확정 알림 수신 |
+| 알림 수신 | 행사 변경·확정·취소 등 알림 수신 |
 | 환불 신청 | 신청 취소 버튼으로 간편 환불 |
 | 프로필 관리 | 학교 이메일 인증으로 소속 확인 |
+| 즐겨찾기 | 관심 행사 북마크 저장 및 목록 조회 |
+| 리뷰 작성 | 참여 완료 행사에 별점·후기 작성 (익명 지원) |
+| Q&A | 행사 주최자에게 질문 및 답변 확인 (익명 지원) |
+| 1:1 문의 | 학교 관리자에게 문의 접수 |
 
 ### 🎪 CERTIFIED — 인증 주최자
 
@@ -148,9 +234,11 @@ ATTENDEE의 모든 기능 포함, 추가로:
 | 행사 개설 | 제목·일시·장소·정원·가격·이미지 설정 |
 | 행사 관리 | 신청자 목록·체크인율·환불 현황 실시간 확인 |
 | QR 체크인 | 카메라로 참가자 QR 스캔 → 즉시 입장 처리 |
-| 명단 다운로드 | 신청자 명단 Excel / CSV / PDF 내보내기 |
-| 화이트리스트 | 학생회비 납부자 등 특정 대상만 신청 허용 |
-| 공동 주최자 | 행사에 공동 주최자 추가 가능 |
+| 취소표 릴리즈 | 행사별 릴리즈 간격 설정, 취소 자리 자동 재오픈 |
+| 명단 다운로드 | 신청자 명단 XLSX · CSV 내보내기 |
+| 화이트리스트 | 학생회비 납부자 등 특정 학번 대상 무료·우선 신청 허용 (CSV 업로드) |
+| 공동 호스트 | 행사에 공동 주최자 추가, 팀 단위 운영 |
+| Q&A 답변 | 참가자 질문에 답변 |
 | 권한 위임 | 후임자에게 CERTIFIED 권한 직접 위임 |
 
 ### 🏛️ SCHOOL_ADMIN — 학교 총관리자
@@ -160,7 +248,7 @@ CERTIFIED의 모든 기능 포함, 추가로:
 | 기능 | 설명 |
 |------|------|
 | 자교 행사 전체 조회 | 학교 내 모든 행사 현황 한눈에 파악 |
-| 인증주최자 관리 | 인증주최자 권한 부여·회수 |
+| 인증주최자 관리 | 인증주최자 권한 부여·회수, 신청 승인 |
 | 공지사항 관리 | 학교 단위 공지 작성·관리 |
 | 문의 처리 | 학생 문의 확인 및 답변 |
 
@@ -184,25 +272,49 @@ CERTIFIED의 모든 기능 포함, 추가로:
 
 ### 🎪 인증주최자 인수인계
 
-**방법 1 — 기존 동아리장이 직접 위임** _(권장)_
+#### 방법 1 — 직접 위임 _(권장)_
 
-```
-기존 동아리장 (CERTIFIED)
-  → 헤더 메뉴 "권한 위임" 클릭
-  → 후임자 이름·학번 검색 후 선택
-  → 2차 확인 → 즉시 교체
-  결과: 기존 동아리장 ATTENDEE로 강등 / 후임자 CERTIFIED 승격
-  알림: 학교 총관리자·후임자에게 자동 알림 발송
+```mermaid
+flowchart TB
+    A1["기존 동아리장<br/>(CERTIFIED)"] --> A2["헤더 메뉴<br/>'권한 위임' 클릭"]
+    A2 --> A3["같은 학교 ATTENDEE<br/>이름·학번으로 검색"]
+    A3 --> A4["이전될 행사 미리보기<br/>초안 + 종료된 행사 건수"]
+    A4 --> A5{"진행 중 행사<br/>있음?"}
+    A5 -->|있음| A6["❌ 위임 불가<br/>먼저 마감/취소 필요"]
+    A5 -->|없음| A7{"2차 확인"}
+    A7 -->|승인| A8["🔄 트랜잭션 실행"]
+    A8 --> A9["기존: CERTIFIED → ATTENDEE 강등<br/>후임자: ATTENDEE → CERTIFIED 승격<br/>행사 hostId 일괄 이전<br/>(초안 + 종료된 행사)<br/>delegationRequest 기록"]
+    A9 --> A10["📨 후임자 + 학교 총관리자<br/>자동 알림 발송<br/>(DELEGATION_DONE)"]
+    A10 --> A11["📋 감사 로그 기록"]
+
+    style A1 fill:#ddd6fe,stroke:#7c3aed,color:#1e1b4b
+    style A5 fill:#fef9c3,stroke:#eab308,color:#1e1b4b
+    style A6 fill:#fee2e2,stroke:#dc2626,color:#1e1b4b
+    style A7 fill:#fef9c3,stroke:#eab308,color:#1e1b4b
+    style A8 fill:#fef3c7,stroke:#f59e0b,color:#1e1b4b
+    style A9 fill:#fef3c7,stroke:#f59e0b,color:#1e1b4b
+    style A10 fill:#dcfce7,stroke:#10b981,color:#1e1b4b
+    style A11 fill:#e0f2fe,stroke:#0ea5e9,color:#1e1b4b
 ```
 
-**방법 2 — 후임자가 직접 신청** _(기존 담당자 연락이 어려울 때)_
+#### 방법 2 — 후임자 직접 신청 _(기존 담당자 연락이 어려울 때)_
 
-```
-후임자
-  → 헤더 메뉴 "인증주최자 신청" 클릭
-  → 소속·직책·연락처 입력
-  → 학교 총관리자 승인
-  → CERTIFIED 승격
+```mermaid
+flowchart TB
+    B1["후임자<br/>(ATTENDEE)"] --> B2["헤더 메뉴<br/>'인증주최자 신청' 클릭"]
+    B2 --> B3["소속 유형·소속명·<br/>직책·연락처 입력"]
+    B3 --> B4["🏛️ 학교 총관리자<br/>대시보드에 신청 접수"]
+    B4 --> B5{"총관리자 심사"}
+    B5 -->|승인| B6["CERTIFIED 승격"]
+    B5 -->|거절| B7["❌ 거절 사유<br/>알림 발송"]
+    B6 --> B8["📨 신청자에게<br/>승인 알림 발송"]
+
+    style B1 fill:#ede9fe,stroke:#7c3aed,color:#1e1b4b
+    style B4 fill:#c4b5fd,stroke:#5b21b6,color:#1e1b4b
+    style B5 fill:#fef9c3,stroke:#eab308,color:#1e1b4b
+    style B6 fill:#fef3c7,stroke:#f59e0b,color:#1e1b4b
+    style B7 fill:#fee2e2,stroke:#dc2626,color:#1e1b4b
+    style B8 fill:#dcfce7,stroke:#10b981,color:#1e1b4b
 ```
 
 > 💡 **팁:** 동아리당 인증주최자를 **2명 이상** 등록해두는 것을 권장합니다. 한 명이 갑작스럽게 연락이 닿지 않더라도 나머지 한 명이 권한을 위임할 수 있습니다.
@@ -231,14 +343,48 @@ CERTIFIED의 모든 기능 포함, 추가로:
 
 ## 6. 팀 소개
 
+<div align="center">
+
 **국민대학교 소프트웨어융합대학 2026 캡스톤 56팀**
 
-| | 이름 | 학번 | 담당 |
-|---|---|---|---|
-| 👤 | **이한결** | 20235277 | UI/UX · 편의 도메인 구현 |
-| 👤 | **이주엽** | 20213058 | AWS 인프라 · 행사 관리 도메인 구현 |
-| 👤 | **이창민** | 20235275 | GIT 관리 · 결제 도메인 구현 |
-| 👤 | **김준형** | 20235272 | DB 설계 · 사용자 관리 도메인 구현 |
+<table align="center">
+  <tr>
+    <td align="center" width="180">
+      <h1>🎨</h1>
+      <h3>이한결</h3>
+      <code>20235277</code>
+      <br/><br/>
+      <b>UI/UX 디자인</b><br/>
+      <sub>편의 도메인 구현</sub>
+    </td>
+    <td align="center" width="180">
+      <h1>🎪</h1>
+      <h3>이주엽</h3>
+      <code>20213058</code>
+      <br/><br/>
+      <b>AWS 인프라</b><br/>
+      <sub>행사 관리 도메인 구현</sub>
+    </td>
+    <td align="center" width="180">
+      <h1>💳</h1>
+      <h3>이창민</h3>
+      <code>20235275</code>
+      <br/><br/>
+      <b>GIT 관리</b><br/>
+      <sub>결제 도메인 구현</sub>
+    </td>
+    <td align="center" width="180">
+      <h1>👥</h1>
+      <h3>김준형</h3>
+      <code>20235272</code>
+      <br/><br/>
+      <b>DB 설계</b><br/>
+      <sub>사용자 관리 도메인 구현</sub>
+    </td>
+  </tr>
+</table>
+
+</div>
 
 ---
 
@@ -323,23 +469,71 @@ node scripts/create-test-user.js
 
 ---
 
-## 8. 기타
+## 8. 기술 스택
 
-### 기술 스택
+### 시스템 아키텍처
+
+```mermaid
+flowchart TB
+    subgraph Client["🌐 Client (Browser)"]
+        FE["React 18 + Vite<br/>Tailwind CSS<br/>Framer Motion"]
+    end
+
+    subgraph Server["⚙️ Server (AWS Amplify)"]
+        BE["Node.js + Express<br/>Prisma ORM<br/>JWT Auth"]
+    end
+
+    subgraph External["🔗 External Services"]
+        Toss["💳 토스페이먼츠<br/>결제·환불"]
+        Kakao["🟡 Kakao OAuth<br/>소셜 로그인"]
+        Mail["📧 Gmail SMTP<br/>이메일 인증"]
+    end
+
+    subgraph DB["🗄️ Supabase"]
+        Pg[("PostgreSQL<br/>데이터베이스")]
+        Storage["Storage<br/>이미지 업로드"]
+    end
+
+    FE <-->|REST API + JWT| BE
+    BE -->|결제 요청| Toss
+    BE -->|OAuth 인증| Kakao
+    BE -->|메일 발송| Mail
+    BE <-->|쿼리| Pg
+    BE -->|파일 업로드| Storage
+
+    style FE fill:#ede9fe,stroke:#7c3aed,color:#1e1b4b
+    style BE fill:#ddd6fe,stroke:#7c3aed,color:#1e1b4b
+    style Toss fill:#dbeafe,stroke:#0064FF,color:#1e1b4b
+    style Kakao fill:#fef3c7,stroke:#FFCD00,color:#1e1b4b
+    style Mail fill:#fee2e2,stroke:#dc2626,color:#1e1b4b
+    style Pg fill:#dcfce7,stroke:#3ECF8E,color:#1e1b4b
+    style Storage fill:#dcfce7,stroke:#3ECF8E,color:#1e1b4b
+```
 
 **Frontend**
-- React 18, Vite, Tailwind CSS
-- React Query, React Router, Framer Motion
+
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white&style=flat-square)
+![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white&style=flat-square)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwindcss&logoColor=white&style=flat-square)
+![React Query](https://img.shields.io/badge/React_Query-FF4154?logo=reactquery&logoColor=white&style=flat-square)
+![React Router](https://img.shields.io/badge/React_Router-CA4245?logo=reactrouter&logoColor=white&style=flat-square)
+![Framer Motion](https://img.shields.io/badge/Framer_Motion-0055FF?logo=framer&logoColor=white&style=flat-square)
 
 **Backend**
-- Node.js, Express, Prisma ORM
-- JWT 인증, Nodemailer
+
+![Node.js](https://img.shields.io/badge/Node.js-339933?logo=nodedotjs&logoColor=white&style=flat-square)
+![Express](https://img.shields.io/badge/Express-555555?logo=express&logoColor=white&style=flat-square)
+![Prisma](https://img.shields.io/badge/Prisma-2D3748?logo=prisma&logoColor=white&style=flat-square)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white&style=flat-square)
+![JWT](https://img.shields.io/badge/JWT-D63AFF?logo=jsonwebtokens&logoColor=white&style=flat-square)
 
 **외부 서비스**
-- 토스페이먼츠 (결제)
-- 카카오 OAuth (소셜 로그인)
-- Supabase (DB + 스토리지)
-- AWS Amplify (배포)
+
+![TossPayments](https://img.shields.io/badge/TossPayments-0064FF?logo=tosspayments&logoColor=white&style=flat-square)
+![Kakao](https://img.shields.io/badge/Kakao_OAuth-FFCD00?logo=kakao&logoColor=000000&style=flat-square)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white&style=flat-square)
+![AWS Amplify](https://img.shields.io/badge/AWS_Amplify-FF9900?logo=awsamplify&logoColor=white&style=flat-square)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?logo=githubactions&logoColor=white&style=flat-square)
 
 ### 라이선스
 
@@ -349,8 +543,12 @@ node scripts/create-test-user.js
 
 <div align="center">
 
+<img src="https://capsule-render.vercel.app/api?type=rect&color=0:7C3AED,50:6366F1,100:EC4899&height=3" width="100%" />
+
 **© 2026 페스티켓 · 국민대학교 소프트웨어융합대학 캡스톤 56팀**
 
 [🌐 프로젝트 페이지](https://kookmin-sw.github.io/2026-capstone-56/) · [🚀 데모 사이트](https://staging.d25a68jt9cg4tx.amplifyapp.com/login)
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:EC4899,50:6366F1,100:7C3AED&height=120&section=footer" width="100%" />
 
 </div>
