@@ -407,7 +407,93 @@
       text-align: center;
       box-shadow: 0 2px 12px rgba(99,60,237,0.08);
     }
-    .stat-num { font-size: 32px; font-weight: 900; margin-bottom: 6px; }
+    .stat-num { font-size: 32px; font-weight: 900; margin-bottom: 6px; transition: transform 0.3s ease; }
+    .stat-num.is-infinity {
+      animation: infinityReveal 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    @keyframes infinityReveal {
+      0%   { transform: scale(0.6) rotate(-12deg); filter: drop-shadow(0 0 0 rgba(124,58,237,0)); opacity: 0.4; }
+      60%  { transform: scale(1.35) rotate(8deg); filter: drop-shadow(0 0 24px rgba(124,58,237,0.7)); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 10px rgba(124,58,237,0.35)); opacity: 1; }
+    }
+    .stat-num.is-infinity::after {
+      content: '';
+      position: absolute;
+    }
+
+    /* ── QR 글리치 + 스캔 라인 ── */
+    .stat-qr {
+      position: relative;
+      display: inline-block;
+      overflow: hidden;
+      padding: 0 4px;
+    }
+    .qr-glitch {
+      display: inline-block;
+      position: relative;
+    }
+    .stat-qr.is-active .qr-glitch {
+      animation: qrGlitch 1.4s steps(1, end) 1;
+    }
+    @keyframes qrGlitch {
+      0%   { transform: translate(0, 0);     opacity: 0.4; clip-path: inset(0 0 0 0); }
+      10%  { transform: translate(-2px, 1px); opacity: 1;   clip-path: inset(20% 0 40% 0); }
+      20%  { transform: translate(2px, -1px); opacity: 0.7; clip-path: inset(50% 0 10% 0); }
+      30%  { transform: translate(-1px, 0);   opacity: 1;   clip-path: inset(0 0 60% 0); }
+      40%  { transform: translate(1px, 0);    opacity: 0.85;clip-path: inset(30% 0 0 0); }
+      55%  { transform: translate(0, 0);      opacity: 1;   clip-path: inset(0 0 0 0); }
+      100% { transform: translate(0, 0);      opacity: 1;   clip-path: inset(0 0 0 0); }
+    }
+    .qr-scan-line {
+      position: absolute;
+      left: -10%;
+      right: -10%;
+      top: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent 0%, rgba(124,58,237,0.9) 50%, transparent 100%);
+      box-shadow: 0 0 12px rgba(124,58,237,0.7);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .stat-qr.is-active .qr-scan-line {
+      animation: qrScan 1.4s ease-in-out 1;
+    }
+    @keyframes qrScan {
+      0%   { top: -10%; opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { top: 110%; opacity: 0; }
+    }
+
+    /* ── 실시간 펄스 + LIVE 점 ── */
+    .stat-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .live-pulse-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ef4444;
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+      animation: livePulse 1.6s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes livePulse {
+      0%   { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); transform: scale(1); }
+      50%  { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);   transform: scale(1.15); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);     transform: scale(1); }
+    }
+    .live-text {
+      display: inline-block;
+      animation: liveTextBeat 1.6s ease-in-out infinite;
+    }
+    @keyframes liveTextBeat {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.04); }
+    }
+
     .stat-label { font-size: 14px; color: #8a7fc0; font-weight: 500; }
 
     /* mock UI card */
@@ -466,10 +552,425 @@
     .features-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
+      grid-auto-rows: minmax(200px, auto);
+      grid-auto-flow: dense;
       gap: 20px;
     }
-    @media (max-width: 900px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 560px) { .features-grid { grid-template-columns: 1fr; } }
+    /* Bento 사이즈 */
+    .feature-card.bento-2x2 { grid-column: span 2; grid-row: span 2; }
+    .feature-card.bento-wide { grid-column: span 2; }
+    .feature-card.bento-tall { grid-row: span 2; }
+
+    /* 큰 카드에서 본문 더 강조 */
+    .feature-card.bento-2x2 { padding: 36px 32px; display: flex; flex-direction: column; }
+    .feature-card.bento-2x2 h3 { font-size: 24px; margin-bottom: 12px; }
+    .feature-card.bento-2x2 > p { font-size: 17.5px; line-height: 1.7; }
+    .feature-card.bento-2x2 .feature-icon { width: 64px; height: 64px; font-size: 32px; border-radius: 18px; }
+    .feature-card.bento-wide { padding: 32px 28px; }
+    .feature-card.bento-wide h3 { font-size: 20px; }
+
+    /* QR 티켓 — 체크인 흐름 시각화 (신청 → 발급 → 입장) */
+    .bento-qr-flow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 20px 0 18px;
+      padding: 14px 18px;
+      background: rgba(124,58,237,0.05);
+      border: 1px solid rgba(124,58,237,0.12);
+      border-radius: 14px;
+    }
+    .bento-qr-flow-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .bento-qr-flow-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: white;
+      border: 1.5px solid rgba(124,58,237,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 2px 8px rgba(124,58,237,0.12);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .bento-qr-flow-step.is-mid .bento-qr-flow-icon {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      border-color: #7c3aed;
+      box-shadow: 0 4px 14px rgba(124,58,237,0.4);
+    }
+    .feature-card.bento-2x2:hover .bento-qr-flow-icon {
+      transform: scale(1.06);
+    }
+    .bento-qr-flow-label {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #4c3b99;
+      letter-spacing: -0.2px;
+    }
+    /* 단계 사이 점선 + 흘러가는 보라 점 */
+    .bento-qr-flow-line {
+      flex: 1;
+      height: 2px;
+      background-image: linear-gradient(90deg, rgba(124,58,237,0.3) 50%, transparent 50%);
+      background-size: 6px 2px;
+      position: relative;
+      align-self: flex-start;
+      margin-top: 17px;
+    }
+    .bento-qr-flow-line::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 6px;
+      height: 6px;
+      margin-top: -3px;
+      border-radius: 50%;
+      background: #7c3aed;
+      box-shadow: 0 0 8px rgba(124,58,237,0.7);
+      animation: qrFlowDot 2.4s linear infinite;
+    }
+    .bento-qr-flow-line:last-of-type::before {
+      animation-delay: 1.2s;
+    }
+    @keyframes qrFlowDot {
+      0%   { left: 0;    opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { left: 100%; opacity: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bento-qr-flow-line::before { animation: none; opacity: 0; }
+    }
+
+    /* 화이트리스트 미니 리스트 (학번 매칭 비주얼) */
+    .bento-wl-mini {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 12px 14px;
+      background: linear-gradient(135deg, rgba(16,185,129,0.06), rgba(16,185,129,0.03));
+      border: 1px dashed rgba(16,185,129,0.35);
+      border-radius: 12px;
+    }
+    .bento-wl-row {
+      display: flex !important;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 5px 8px;
+      background: rgba(255,255,255,0.7);
+      border-radius: 7px;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .feature-card:hover .bento-wl-row {
+      background: rgba(255,255,255,0.95);
+    }
+    .feature-card:hover .bento-wl-row:nth-child(1) { transform: translateX(2px); transition-delay: 0s; }
+    .feature-card:hover .bento-wl-row:nth-child(2) { transform: translateX(2px); transition-delay: 0.05s; }
+    .feature-card:hover .bento-wl-row:nth-child(3) { transform: translateX(2px); transition-delay: 0.1s; }
+    .feature-card:hover .bento-wl-row:nth-child(4) { transform: translateX(2px); transition-delay: 0.15s; }
+
+    .bento-wl-id {
+      font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: #1e1b4b;
+      letter-spacing: 0.3px;
+    }
+    .bento-wl-check {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #10b981;
+      color: white;
+      font-size: 11px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(16,185,129,0.35);
+    }
+    .bento-wl-row.is-csv {
+      background: rgba(16,185,129,0.08);
+      border: 1px dashed rgba(16,185,129,0.3);
+    }
+    .bento-wl-row.is-csv .bento-wl-id {
+      color: #047857;
+      font-family: 'Pretendard', -apple-system, sans-serif;
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+    .bento-wl-csv {
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      color: #047857;
+      background: white;
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid rgba(16,185,129,0.3);
+    }
+
+    /* QR 티켓 미니 비주얼 (bento-2x2 내부) */
+    .bento-qr-visual {
+      margin-top: auto;
+      display: flex; align-items: center; gap: 18px;
+      padding: 18px;
+      background: linear-gradient(135deg, rgba(124,58,237,0.07), rgba(99,102,241,0.07));
+      border: 1px dashed rgba(124,58,237,0.3);
+      border-radius: 16px;
+    }
+    .bento-qr-code {
+      width: 88px; height: 88px;
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 6px;
+      box-shadow: 0 4px 14px rgba(124,58,237,0.18);
+      flex-shrink: 0;
+    }
+    .bento-qr-code svg { display: block; width: 100%; height: 100%; }
+    .bento-qr-meta { flex: 1; min-width: 0; }
+    .bento-qr-meta-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .bento-qr-meta-title { font-size: 13px; font-weight: 700; color: #1e1b4b; }
+    .bento-qr-meta-sub { font-size: 11px; color: #6b63a0; line-height: 1.5; }
+    .bento-qr-dday {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      border-radius: 99px;
+      box-shadow: 0 2px 6px rgba(239,68,68,0.3);
+      flex-shrink: 0;
+    }
+    .bento-qr-meta-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .bento-qr-ticket-num {
+      font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+      font-size: 11px;
+      font-weight: 800;
+      color: #5b21b6;
+      letter-spacing: 0.5px;
+      background: rgba(124,58,237,0.08);
+      padding: 2px 7px;
+      border-radius: 5px;
+      border: 1px solid rgba(124,58,237,0.18);
+    }
+    .bento-qr-meta-status {
+      display: inline-flex; align-items: center; gap: 4px;
+      margin-top: 8px;
+      padding: 3px 8px;
+      background: rgba(16,185,129,0.12);
+      color: #047857;
+      font-size: 10px; font-weight: 700;
+      border-radius: 99px;
+    }
+
+    /* 대시보드 미니 차트 (bento-wide 내부) */
+    .bento-chart {
+      display: flex; align-items: flex-end; gap: 5px;
+      height: 44px;
+    }
+    .bento-chart-bar {
+      flex: 1;
+      background: linear-gradient(180deg, #7c3aed, #6366f1);
+      border-radius: 3px 3px 0 0;
+      opacity: 0.9;
+      transform-origin: bottom;
+      animation: bentoChartGrow 0.9s cubic-bezier(0.16,1,0.3,1) both;
+    }
+    @keyframes bentoChartGrow {
+      from { transform: scaleY(0); }
+      to   { transform: scaleY(1); }
+    }
+
+    /* 대시보드 헤더 (LIVE 뱃지 + 트렌드) */
+    .bento-dash-header {
+      display: flex; align-items: center; gap: 8px;
+      margin-top: 14px; margin-bottom: 10px;
+    }
+    .bento-live-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px;
+      background: rgba(239,68,68,0.1);
+      color: #dc2626;
+      font-size: 10px; font-weight: 800;
+      letter-spacing: 0.5px;
+      border-radius: 99px;
+      border: 1px solid rgba(239,68,68,0.25);
+    }
+    .bento-live-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #ef4444;
+      animation: bentoLivePulse 1.6s ease-out infinite;
+    }
+    @keyframes bentoLivePulse {
+      0%   { box-shadow: 0 0 0 0 rgba(239,68,68,0.6); }
+      70%  { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+      100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+    }
+    .bento-trend-up {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 4px 10px;
+      background: rgba(16,185,129,0.12);
+      color: #047857;
+      font-size: 10px; font-weight: 800;
+      border-radius: 99px;
+      border: 1px solid rgba(16,185,129,0.25);
+    }
+
+    /* KPI 미니카드 그리드 */
+    .bento-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .bento-kpi {
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(124,58,237,0.15);
+      border-radius: 12px;
+    }
+    .bento-kpi-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #6b63a0;
+      letter-spacing: 0.4px;
+      margin-bottom: 4px;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .bento-kpi-value {
+      font-size: 19px;
+      font-weight: 900;
+      color: #1e1b4b;
+      line-height: 1.1;
+    }
+    .bento-kpi-sub {
+      font-size: 10px;
+      font-weight: 700;
+      color: #6b63a0;
+    }
+    .bento-kpi-delta {
+      font-size: 9.5px;
+      font-weight: 800;
+      margin-top: 3px;
+    }
+    .bento-kpi-delta.up   { color: #047857; }
+    .bento-kpi-delta.down { color: #dc2626; }
+
+    /* 차트 컨테이너 */
+    .bento-chart-wrap {
+      padding: 10px 12px 6px;
+      background: rgba(124,58,237,0.05);
+      border-radius: 12px;
+      border: 1px solid rgba(124,58,237,0.1);
+    }
+    .bento-chart-title {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #6b63a0;
+      letter-spacing: 0.4px;
+      margin-bottom: 6px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .bento-chart-axis {
+      display: flex; justify-content: space-between;
+      margin-top: 4px;
+      font-size: 8.5px;
+      color: #9186c8;
+      font-weight: 600;
+    }
+
+    /* 토스 결제 wide 내부: 결제 수단 칩 */
+    .bento-pay-chips {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      margin-top: 14px;
+    }
+    .bento-pay-chip {
+      font-size: 11px; font-weight: 600;
+      padding: 5px 10px;
+      background: rgba(124,58,237,0.08);
+      color: #5b21b6;
+      border: 1px solid rgba(124,58,237,0.18);
+      border-radius: 99px;
+    }
+
+    /* 권한 위임 wide 내부: from → to 플로우 + 메타 */
+    .bento-delegation {
+      margin-top: 16px;
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px;
+      background: linear-gradient(135deg, rgba(59,130,246,0.06), rgba(124,58,237,0.06));
+      border: 1px dashed rgba(99,102,241,0.3);
+      border-radius: 14px;
+    }
+    .bento-delegation-person {
+      display: flex; align-items: center; gap: 8px;
+      flex: 1; min-width: 0;
+    }
+    .bento-delegation-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #ffffff; font-weight: 800; font-size: 14px;
+      flex-shrink: 0;
+    }
+    .bento-delegation-avatar.from { background: linear-gradient(135deg,#7c3aed,#6366f1); }
+    .bento-delegation-avatar.to   { background: linear-gradient(135deg,#3b82f6,#6366f1); }
+    .bento-delegation-name { font-size: 12px; font-weight: 700; color: #1e1b4b; line-height: 1.3; }
+    .bento-delegation-role { font-size: 10px; color: #6b63a0; }
+    .bento-delegation-arrow { font-size: 20px; color: #7c3aed; flex-shrink: 0; }
+    .bento-delegation-meta {
+      display: inline-flex; align-items: center; gap: 5px;
+      margin-left: 6px;
+      padding: 4px 10px;
+      background: rgba(16,185,129,0.12);
+      color: #047857;
+      font-size: 10px; font-weight: 700;
+      border-radius: 99px;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 900px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .feature-card.bento-2x2 { grid-column: span 2; grid-row: span 1; }
+      .feature-card.bento-wide { grid-column: span 2; }
+    }
+    @media (max-width: 560px) {
+      .features-grid { grid-template-columns: 1fr; grid-auto-rows: auto; }
+      .feature-card.bento-2x2,
+      .feature-card.bento-wide,
+      .feature-card.bento-tall { grid-column: auto; grid-row: auto; }
+      .feature-card.bento-2x2 { padding: 28px 22px; }
+      .feature-card.bento-2x2 h3 { font-size: 19px; }
+    }
     .feature-card {
       background: rgba(255,255,255,0.75);
       backdrop-filter: blur(12px);
@@ -489,8 +990,8 @@
       font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', sans-serif;
       line-height: 1;
     }
-    .feature-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: #1e1b4b; }
-    .feature-card p { font-size: 14px; color: #6b63a0; line-height: 1.65; }
+    .feature-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: #1e1b4b; word-break: keep-all; }
+    .feature-card p { font-size: 16px; color: #6b63a0; line-height: 1.7; word-break: keep-all; }
     .feature-card .fm-hint { font-size: 11px; color: #b0a8d8; margin-top: 10px; opacity: 0; transition: opacity 0.2s; }
     .feature-card:hover .fm-hint { opacity: 1; }
 
@@ -586,8 +1087,8 @@
     }
     .step:hover .step-icon { transform: scale(1.1) rotate(-4deg); }
 
-    .step h3 { font-size: 18px; font-weight: 700; color: #1e1b4b; margin-bottom: 8px; }
-    .step p { font-size: 14.5px; color: #6b63a0; line-height: 1.6; }
+    .step h3 { font-size: 18px; font-weight: 700; color: #1e1b4b; margin-bottom: 8px; word-break: keep-all; }
+    .step p { font-size: 14.5px; color: #6b63a0; line-height: 1.6; word-break: keep-all; }
 
     /* 화살표 — 단계 사이 step-num 사이를 잇는 위치, 진행 효과 */
     .step-arrow {
@@ -1806,26 +2307,63 @@
       transform: translateY(-50%);
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 18px;
       z-index: 90;
+      padding: 14px 0;
+    }
+    /* 점들을 잇는 세로 트랙 (배경) */
+    .section-dots::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 14px;
+      bottom: 14px;
+      width: 2px;
+      transform: translateX(-50%);
+      background: rgba(124,58,237,0.18);
+      border-radius: 2px;
+      pointer-events: none;
+    }
+    /* 스크롤 진척 만큼 차오르는 보라 라인 */
+    .section-dots-fill {
+      position: absolute;
+      left: 50%;
+      top: 14px;
+      width: 2px;
+      height: 0;
+      transform: translateX(-50%);
+      background: linear-gradient(180deg, #7c3aed 0%, #6366f1 100%);
+      border-radius: 2px;
+      box-shadow: 0 0 8px rgba(124,58,237,0.5);
+      pointer-events: none;
+      transition: height 0.18s ease-out;
     }
     .section-dot {
       width: 10px; height: 10px;
       border-radius: 50%;
-      background: rgba(124,58,237,0.25);
-      border: 2px solid transparent;
+      background: #ffffff;
+      border: 2px solid rgba(124,58,237,0.35);
       cursor: pointer;
-      transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+      transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
       position: relative;
+      z-index: 1;
     }
     .section-dot:hover {
       transform: scale(1.3);
-      background: rgba(124,58,237,0.5);
+      border-color: var(--primary);
+    }
+    /* 이미 지나간 섹션: 보라색으로 채움 */
+    .section-dot.passed {
+      background: var(--primary);
+      border-color: var(--primary);
     }
     .section-dot.active {
       background: var(--primary);
-      border-color: rgba(124,58,237,0.25);
-      transform: scale(1.3);
+      border-color: var(--primary);
+      transform: scale(1.4);
+      box-shadow:
+        0 0 0 4px rgba(124,58,237,0.18),
+        0 0 12px rgba(124,58,237,0.5);
     }
     .section-dot::after {
       content: attr(data-label);
@@ -2028,7 +2566,12 @@
 
       /* HERO */
       #hero { padding-top: 80px; padding-bottom: 60px; }
-      .hero-title { letter-spacing: -1px; }
+      .hero-title {
+        font-size: clamp(28px, 8.5vw, 44px);
+        letter-spacing: -1px;
+        word-break: keep-all;
+        overflow-wrap: anywhere;
+      }
       .hero-eyebrow { font-size: 13px; padding: 6px 14px; margin-bottom: 20px; }
       .hero-cta { gap: 10px; margin-bottom: 40px; }
       .hero-cta .btn-primary,
@@ -2037,7 +2580,7 @@
         font-size: 14px;
       }
       .hero-tags { gap: 7px; }
-      .hero-tag { font-size: 11.5px; padding: 5px 12px; }
+      .hero-tag { font-size: 12.5px; padding: 6px 12px; }
       /* 파티클 일부만 보이게 */
       .particles .particle:nth-child(n+6) { display: none; }
       .scroll-indicator { display: none; }
@@ -2046,6 +2589,8 @@
       .about-text h2 { font-size: 30px; }
       .about-text p  { font-size: 15px; line-height: 1.75; }
       .stat-num { font-size: 26px; }
+      .stat-card { word-break: keep-all; overflow-wrap: anywhere; }
+      .stat-card .stat-live { white-space: nowrap; }
       .mock-ui { max-width: 360px; margin: 0 auto; }
 
       /* SECTION TITLE */
@@ -2056,11 +2601,11 @@
       /* FEATURES */
       .feature-card { padding: 22px 18px; }
       .feature-card h3 { font-size: 16px; }
-      .feature-card p { font-size: 13.5px; }
+      .feature-card p { font-size: 15px; }
 
       /* STORIES — 카드 사이즈 다이어트 */
       .story-tabs { padding: 5px; gap: 4px; }
-      .story-tab { font-size: 12px; padding: 9px 14px; gap: 5px; }
+      .story-tab { font-size: 12px; padding: 11px 14px; gap: 5px; min-height: 44px; }
       .story-card { padding: 24px 18px 22px; }
       .story-card-visual {
         max-width: 130px;
@@ -2075,7 +2620,7 @@
       /* HOW */
       #how { margin: 0 12px; }
       .flow-tabs { flex-wrap: wrap; gap: 6px; }
-      .flow-tab  { font-size: 13px; padding: 8px 18px; }
+      .flow-tab  { font-size: 13px; padding: 11px 18px; min-height: 44px; }
       .step      { padding: 22px 14px 22px; }
       .step h3   { font-size: 16px; }
       .step p    { font-size: 13px; }
@@ -2087,7 +2632,9 @@
       .demo-phone:hover { transform: rotate(0deg); }
       .screen-tabs-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
       .screen-tabs { padding: 5px; }
-      .screen-tab { font-size: 12px; padding: 8px 14px; }
+      .screen-tab { font-size: 12px; padding: 11px 14px; min-height: 44px; }
+      .nav-burger { width: 44px; height: 44px; }
+      .nav-burger-line { width: 20px; }
 
       /* TECH */
       .tech-stream-header { flex-wrap: wrap; gap: 8px 14px; }
@@ -2124,6 +2671,26 @@
 
       /* 스토리 탭 가운데 점 충돌 방지 */
       .scroll-progress { height: 2.5px; }
+
+      /* 한국어 본문/제목 — 자모 단위 줄바꿈 방지 (모바일 한정) */
+      .section-title h2,
+      .about-text h2,
+      .about-text p,
+      .section-title p,
+      .demo-text h2,
+      .demo-text p,
+      .feature-card h3,
+      .feature-card p,
+      .story-card-title,
+      .story-card-sub,
+      .step h3,
+      .step p,
+      .hero-sub,
+      #cta h2,
+      #cta p {
+        word-break: keep-all;
+        overflow-wrap: anywhere;
+      }
     }
 
     @media (max-width: 480px) {
@@ -2159,110 +2726,652 @@
 
     /* ─────────────────────────────── ARCHITECTURE ─── */
     #architecture { background: transparent; }
-    .arch-flow {
+
+    .arch-stack {
+      max-width: 880px;
+      margin: 48px auto 0;
       display: flex;
+      flex-direction: column;
       align-items: stretch;
       gap: 0;
+      position: relative;
+    }
+
+    /* 레이어 그룹 박스 (Client / Server / 데이터·외부 서비스) */
+    .arch-layer {
+      position: relative;
+      padding: 22px 28px 26px;
+      border-radius: 22px;
+      border: 1.5px dashed rgba(124,58,237,0.28);
+      background: rgba(255,255,255,0.55);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(99,60,237,0.06);
+    }
+    .arch-layer-row {
+      display: flex;
+      gap: 18px;
+      align-items: stretch;
       justify-content: center;
       flex-wrap: nowrap;
-      margin-top: 48px;
     }
-    @media (max-width: 860px) {
-      .arch-flow { flex-direction: column; align-items: center; gap: 0; }
+    @media (max-width: 760px) {
+      .arch-layer-row { flex-wrap: wrap; }
     }
-    .arch-arrow {
+    .arch-layer-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      color: var(--primary);
+      margin-bottom: 14px;
+      text-transform: none;
+    }
+    .arch-layer-title-emoji { font-size: 14px; }
+
+    /* 코어 카드 (React, Node 등) */
+    .arch-card {
+      background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+      border: 1.5px solid rgba(124,58,237,0.35);
+      border-radius: 16px;
+      padding: 18px 22px;
+      min-width: 240px;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(124,58,237,0.14);
+      transition: transform 0.22s ease, box-shadow 0.22s ease;
+    }
+    .arch-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(124,58,237,0.22);
+    }
+    .arch-card-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #1e1b4b;
+      line-height: 1.55;
+      margin: 0;
+    }
+    .arch-card-title small {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #4c3b99;
+      margin-top: 2px;
+    }
+
+    /* 코어 카드 내부 로고 행 */
+    .arch-card-logos {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 4px;
-      color: var(--primary);
-      opacity: 0.45;
-      font-size: 22px;
-      flex-shrink: 0;
-      align-self: center;
-    }
-    @media (max-width: 860px) {
-      .arch-arrow { transform: rotate(90deg); padding: 4px 0; }
-    }
-    .arch-card {
-      background: rgba(255,255,255,0.78);
-      border: 1.5px solid rgba(255,255,255,0.85);
-      border-radius: 22px;
-      box-shadow: 0 4px 20px rgba(99,60,237,0.08);
-      padding: 28px 24px 24px;
-      width: 210px;
-      flex-shrink: 0;
-      transition: transform 0.22s, box-shadow 0.22s;
-      position: relative;
-      overflow: hidden;
-    }
-    @media (max-width: 860px) { .arch-card { width: 100%; max-width: 380px; } }
-    .arch-card:hover { transform: translateY(-6px); box-shadow: 0 12px 36px rgba(99,60,237,0.16); }
-    .arch-card-icon {
-      width: 46px; height: 46px;
-      border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
-      margin-bottom: 14px;
-    }
-    .arch-card-label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      color: var(--primary);
-      margin-bottom: 4px;
-    }
-    .arch-card-title {
-      font-size: 17px;
-      font-weight: 800;
-      color: var(--text);
-      margin-bottom: 8px;
-      line-height: 1.25;
-    }
-    .arch-card-desc {
-      font-size: 12.5px;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-    .arch-card-chips {
-      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
       flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 14px;
     }
-    .arch-chip {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 99px;
-      background: #f3f0ff;
-      color: #4c3b99;
-      border: 1px solid rgba(124,58,237,0.12);
+    .arch-card-logo {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
-    .arch-user-node {
+    .arch-card-logo img,
+    .arch-card-logo svg { width: 100%; height: 100%; object-fit: contain; }
+
+    /* 레이어 타이틀 옆 로고 */
+    .arch-layer-title-logo {
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .arch-layer-title-logo img,
+    .arch-layer-title-logo svg { width: 100%; height: 100%; object-fit: contain; }
+
+    /* 레이어 사이 화살표 + 라벨 */
+    .arch-connector {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 0 8px;
-      flex-shrink: 0;
+      gap: 2px;
+      padding: 10px 0;
+      pointer-events: none;
     }
-    .arch-user-circle {
-      width: 56px; height: 56px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #ede9fe, #c7d2fe);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 26px;
-      box-shadow: 0 4px 14px rgba(99,60,237,0.12);
-      border: 2px solid rgba(124,58,237,0.2);
-    }
-    .arch-user-label {
-      font-size: 11px;
+    .arch-connector-label {
+      font-size: 11.5px;
       font-weight: 700;
-      color: var(--muted);
+      color: #6b63a0;
+      background: rgba(255,255,255,0.85);
+      padding: 4px 12px;
+      border-radius: 99px;
+      border: 1px solid rgba(124,58,237,0.2);
+      letter-spacing: 0.2px;
+    }
+    .arch-connector-line {
+      width: 2px;
+      height: 28px;
+      background: linear-gradient(180deg, rgba(124,58,237,0.35), rgba(124,58,237,0.12));
+      position: relative;
+      overflow: hidden;
+      border-radius: 2px;
+    }
+    /* 데이터 흐름 점: 위 → 아래로 흐르는 보라 글로우 도트 */
+    .arch-connector-line::before,
+    .arch-connector-line::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: -8px;
+      width: 6px;
+      height: 6px;
+      margin-left: -3px;
+      border-radius: 50%;
+      background: #7c3aed;
+      box-shadow:
+        0 0 6px rgba(124,58,237,0.85),
+        0 0 12px rgba(124,58,237,0.55);
+      animation: archFlowDown 1.8s linear infinite;
+      pointer-events: none;
+    }
+    .arch-connector-line::after { animation-delay: 0.9s; }
+    @keyframes archFlowDown {
+      0%   { top: -8px;  opacity: 0; }
+      12%  { opacity: 1; }
+      88%  { opacity: 1; }
+      100% { top: 100%;  opacity: 0; }
+    }
+    /* 화살표가 점 도착할 때 살짝 펄스 */
+    .arch-connector-arrow {
+      animation: archArrowPulse 1.8s ease-in-out infinite;
+    }
+    @keyframes archArrowPulse {
+      0%, 70%, 100% {
+        filter: drop-shadow(0 0 0 rgba(124,58,237,0));
+        transform: scale(1);
+      }
+      85% {
+        filter: drop-shadow(0 0 6px rgba(124,58,237,0.7));
+        transform: scale(1.18);
+      }
+    }
+    /* 5갈래 분기: 각 흐름마다 다른 시작 시점 */
+    .arch-fanout-item:nth-child(1) .arch-connector-line::before { animation-delay: 0s;    }
+    .arch-fanout-item:nth-child(1) .arch-connector-line::after  { animation-delay: 0.9s;  }
+    .arch-fanout-item:nth-child(2) .arch-connector-line::before { animation-delay: 0.25s; }
+    .arch-fanout-item:nth-child(2) .arch-connector-line::after  { animation-delay: 1.15s; }
+    .arch-fanout-item:nth-child(3) .arch-connector-line::before { animation-delay: 0.5s;  }
+    .arch-fanout-item:nth-child(3) .arch-connector-line::after  { animation-delay: 1.4s;  }
+    .arch-fanout-item:nth-child(4) .arch-connector-line::before { animation-delay: 0.75s; }
+    .arch-fanout-item:nth-child(4) .arch-connector-line::after  { animation-delay: 1.65s; }
+    .arch-fanout-item:nth-child(5) .arch-connector-line::before { animation-delay: 1.0s;  }
+    .arch-fanout-item:nth-child(5) .arch-connector-line::after  { animation-delay: 1.9s;  }
+    .arch-fanout-item:nth-child(1) .arch-connector-arrow { animation-delay: 0s;    }
+    .arch-fanout-item:nth-child(2) .arch-connector-arrow { animation-delay: 0.25s; }
+    .arch-fanout-item:nth-child(3) .arch-connector-arrow { animation-delay: 0.5s;  }
+    .arch-fanout-item:nth-child(4) .arch-connector-arrow { animation-delay: 0.75s; }
+    .arch-fanout-item:nth-child(5) .arch-connector-arrow { animation-delay: 1.0s;  }
+
+    @media (prefers-reduced-motion: reduce) {
+      .arch-connector-line::before,
+      .arch-connector-line::after { animation: none; opacity: 0; }
+      .arch-connector-arrow { animation: none; }
+    }
+    .arch-connector-arrow {
+      width: 0; height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 8px solid rgba(124,58,237,0.55);
+      margin-top: -2px;
+    }
+
+    /* 5갈래 분기 라벨 (서버 → 하단 그룹) */
+    .arch-fanout {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      padding: 10px 8px 4px;
+    }
+    .arch-fanout-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .arch-fanout-item .arch-connector-label {
+      font-size: 11px;
+      padding: 3px 10px;
+    }
+    .arch-fanout-item .arch-connector-line {
+      height: 26px;
+    }
+    @media (max-width: 760px) {
+      .arch-fanout {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+    }
+
+    /* 레이어 그룹 색상 변형 (Supabase / External) */
+    .arch-layer.arch-group {
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 18px 18px 20px;
+    }
+    .arch-layer.arch-group-supabase {
+      border: 1.5px dashed rgba(16,185,129,0.4);
+      background: rgba(209,250,229,0.35);
+    }
+    .arch-layer.arch-group-supabase .arch-layer-title { color: #047857; }
+    .arch-layer.arch-group-external {
+      border: 1.5px dashed rgba(245,158,11,0.4);
+      background: rgba(254,243,199,0.35);
+    }
+    .arch-layer.arch-group-external .arch-layer-title { color: #b45309; }
+
+    /* 그룹 내부 작은 노드 */
+    .arch-node {
+      flex: 1 1 0;
+      min-width: 130px;
+      background: #ffffff;
+      border: 1.5px solid rgba(124,58,237,0.18);
+      border-radius: 14px;
+      padding: 14px 14px 12px;
       text-align: center;
+      box-shadow: 0 2px 10px rgba(99,60,237,0.06);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .arch-node:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px rgba(99,60,237,0.14);
+    }
+    .arch-node-icon {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      margin: 0 auto 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      overflow: hidden;
+      padding: 6px;
+    }
+    .arch-node-icon img,
+    .arch-node-icon svg {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .arch-node-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: #1e1b4b;
+      line-height: 1.3;
+      margin-bottom: 2px;
+    }
+    .arch-node-desc {
+      font-size: 11px;
+      color: #6b63a0;
+      line-height: 1.4;
+    }
+
+    /* 그룹별 노드 색상 */
+    .arch-node.n-postgres { border-color: rgba(65,105,225,0.35); }
+    .arch-node.n-postgres .arch-node-icon { background: #dbeafe; color: #1e40af; }
+    .arch-node.n-storage  { border-color: rgba(16,185,129,0.35); }
+    .arch-node.n-storage .arch-node-icon { background: #d1fae5; color: #047857; }
+    .arch-node.n-toss     { border-color: rgba(49,130,246,0.4); }
+    .arch-node.n-toss .arch-node-icon { background: #f0f4ff; color: #1d4ed8; }
+    .arch-node.n-kakao    { border-color: rgba(254,229,0,0.65); }
+    .arch-node.n-kakao .arch-node-icon { background: #fffbe5; color: #854d0e; }
+    .arch-node.n-gmail    { border-color: rgba(244,114,182,0.4); }
+    .arch-node.n-gmail .arch-node-icon { background: #fce7f3; color: #be185d; }
+
+    /* 하단 두 그룹 가로 배치 */
+    .arch-bottom-row {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+    @media (max-width: 760px) {
+      .arch-bottom-row { grid-template-columns: 1fr; }
+      .arch-card { min-width: auto; width: 100%; }
+    }
+
+    /* ── 시나리오 탭 ── */
+    .arch-scenario-tabs-wrap { text-align: center; margin-bottom: 28px; }
+    .arch-scenario-tabs {
+      display: inline-flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+      background: rgba(255,255,255,0.55);
+      padding: 6px;
+      border-radius: 99px;
+      border: 1px solid rgba(124,58,237,0.1);
+      box-shadow: 0 4px 16px rgba(99,60,237,0.06);
+    }
+    .arch-scenario-tab {
+      padding: 9px 18px;
+      border-radius: 99px;
+      border: none;
+      background: transparent;
+      color: #6b7280;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.22s;
+      font-family: 'Pretendard', -apple-system, sans-serif;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .arch-scenario-tab:hover { color: var(--primary); }
+    .arch-scenario-tab.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 14px rgba(124,58,237,0.35);
+    }
+
+    /* ── 시나리오별 dim (data-scenario != all 일 때만 작동) ── */
+    .arch-stack { transition: filter 0.3s; }
+    /* 기본: 모두 보임 */
+    [data-arch] {
+      transition: opacity 0.4s ease, filter 0.4s ease, transform 0.3s ease;
+    }
+    /* all 모드는 변화 없음 */
+    .arch-stack[data-scenario="login"] [data-arch]:not([data-arch~="login"]),
+    .arch-stack[data-scenario="apply"] [data-arch]:not([data-arch~="apply"]),
+    .arch-stack[data-scenario="payment"] [data-arch]:not([data-arch~="payment"]),
+    .arch-stack[data-scenario="create"] [data-arch]:not([data-arch~="create"]),
+    .arch-stack[data-scenario="checkin"] [data-arch]:not([data-arch~="checkin"]),
+    .arch-stack[data-scenario="refund"] [data-arch]:not([data-arch~="refund"]),
+    .arch-stack[data-scenario="delegation"] [data-arch]:not([data-arch~="delegation"]) {
+      opacity: 0.18;
+      filter: grayscale(0.7) blur(0.4px);
+    }
+    /* 활성 시 강조 (살짝 들어올리기 + 보라 외곽선 글로우) */
+    .arch-stack[data-scenario="login"]      [data-arch~="login"].arch-card,
+    .arch-stack[data-scenario="apply"]      [data-arch~="apply"].arch-card,
+    .arch-stack[data-scenario="payment"]    [data-arch~="payment"].arch-card,
+    .arch-stack[data-scenario="create"]     [data-arch~="create"].arch-card,
+    .arch-stack[data-scenario="checkin"]    [data-arch~="checkin"].arch-card,
+    .arch-stack[data-scenario="refund"]     [data-arch~="refund"].arch-card,
+    .arch-stack[data-scenario="delegation"] [data-arch~="delegation"].arch-card,
+    .arch-stack[data-scenario="login"]      [data-arch~="login"].arch-node,
+    .arch-stack[data-scenario="apply"]      [data-arch~="apply"].arch-node,
+    .arch-stack[data-scenario="payment"]    [data-arch~="payment"].arch-node,
+    .arch-stack[data-scenario="create"]     [data-arch~="create"].arch-node,
+    .arch-stack[data-scenario="checkin"]    [data-arch~="checkin"].arch-node,
+    .arch-stack[data-scenario="refund"]     [data-arch~="refund"].arch-node,
+    .arch-stack[data-scenario="delegation"] [data-arch~="delegation"].arch-node {
+      box-shadow: 0 8px 24px rgba(124,58,237,0.28), 0 0 0 2px rgba(124,58,237,0.4);
+    }
+
+    /* 스토리 단계 호버 시 다이어그램 요소 강조 */
+    .arch-stack .arch-step-hover {
+      transform: translateY(-3px) scale(1.04);
+      z-index: 4;
+    }
+    .arch-stack .arch-step-hover.arch-card,
+    .arch-stack .arch-step-hover.arch-node,
+    .arch-stack .arch-step-hover.arch-layer {
+      box-shadow: 0 12px 36px rgba(124,58,237,0.4), 0 0 0 3px rgba(124,58,237,0.55) !important;
+    }
+    /* dim된 요소의 흐름 점은 멈춤 */
+    .arch-stack[data-scenario="login"]      [data-arch]:not([data-arch~="login"])      .arch-connector-line::before,
+    .arch-stack[data-scenario="login"]      [data-arch]:not([data-arch~="login"])      .arch-connector-line::after,
+    .arch-stack[data-scenario="apply"]      [data-arch]:not([data-arch~="apply"])      .arch-connector-line::before,
+    .arch-stack[data-scenario="apply"]      [data-arch]:not([data-arch~="apply"])      .arch-connector-line::after,
+    .arch-stack[data-scenario="payment"]    [data-arch]:not([data-arch~="payment"])    .arch-connector-line::before,
+    .arch-stack[data-scenario="payment"]    [data-arch]:not([data-arch~="payment"])    .arch-connector-line::after,
+    .arch-stack[data-scenario="create"]     [data-arch]:not([data-arch~="create"])     .arch-connector-line::before,
+    .arch-stack[data-scenario="create"]     [data-arch]:not([data-arch~="create"])     .arch-connector-line::after,
+    .arch-stack[data-scenario="checkin"]    [data-arch]:not([data-arch~="checkin"])    .arch-connector-line::before,
+    .arch-stack[data-scenario="checkin"]    [data-arch]:not([data-arch~="checkin"])    .arch-connector-line::after,
+    .arch-stack[data-scenario="refund"]     [data-arch]:not([data-arch~="refund"])     .arch-connector-line::before,
+    .arch-stack[data-scenario="refund"]     [data-arch]:not([data-arch~="refund"])     .arch-connector-line::after,
+    .arch-stack[data-scenario="delegation"] [data-arch]:not([data-arch~="delegation"]) .arch-connector-line::before,
+    .arch-stack[data-scenario="delegation"] [data-arch]:not([data-arch~="delegation"]) .arch-connector-line::after {
+      animation: none; opacity: 0;
+    }
+
+    /* ── 단계 번호 배지 ── */
+    .arch-stack [data-id] { position: relative; }
+    .arch-step-badge {
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+      color: white;
+      font-weight: 900;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(124,58,237,0.45), 0 0 0 3px white;
+      z-index: 5;
+      opacity: 0;
+      transform: scale(0.5);
+      pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .arch-step-badge.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+    /* fanout / connector — 라벨 안쪽에 inline prefix로 표시 */
+    .arch-step-badge.arch-step-badge-inline {
+      position: static;
+      display: inline-flex;
+      width: 18px;
+      height: 18px;
+      font-size: 11px;
+      font-weight: 900;
+      margin-right: 6px;
+      vertical-align: middle;
+      box-shadow: 0 2px 8px rgba(124,58,237,0.4), 0 0 0 2px white;
+      flex-shrink: 0;
+      transform: scale(0.5);
+    }
+    .arch-step-badge.arch-step-badge-inline.show {
+      transform: scale(1);
+    }
+
+    /* ── 좌우 분할 컨테이너 ── */
+    .arch-split {
+      display: block;
+    }
+    /* 'all' 외 시나리오: viewport 폭 활용해 좌우로 펼침 (다이어그램 원래 크기 유지) */
+    .arch-split:not([data-scenario="all"]) {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: start;
+      /* 컨테이너를 viewport 폭으로 확장 (.container의 max-width 제약 깨기) */
+      width: 100vw;
+      max-width: 100vw;
+      position: relative;
+      left: 50%;
+      right: 50%;
+      margin-left: -50vw;
+      margin-right: -50vw;
+      padding: 0 32px;
+      box-sizing: border-box;
+    }
+    .arch-split:not([data-scenario="all"]) .arch-stack {
+      max-width: 880px;
+      margin: 0 0 0 auto;   /* 우측 정렬 (좌측 컬럼 안에서 우측 끝 = 가운데 갭) */
+      width: 100%;
+    }
+    .arch-split:not([data-scenario="all"]) .arch-story {
+      max-width: 880px;
+      margin: 0 auto 0 0;   /* 좌측 정렬 (우측 컬럼 안에서 좌측 끝 = 가운데 갭) */
+      width: 100%;
+      position: sticky;
+      top: 80px;
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
+    }
+
+    /* 'all' 모드: 스토리 숨김 */
+    .arch-split[data-scenario="all"] .arch-story {
+      display: none;
+    }
+    @media (max-width: 1280px) {
+      /* 화면이 좁아지면 좌우 분할 해제 */
+      .arch-split:not([data-scenario="all"]) {
+        display: block;
+        width: auto;
+        max-width: none;
+        position: static;
+        left: auto;
+        right: auto;
+        margin-left: 0;
+        margin-right: 0;
+        padding: 0;
+      }
+      .arch-split:not([data-scenario="all"]) .arch-stack {
+        margin: 0 auto;
+      }
+      .arch-split:not([data-scenario="all"]) .arch-story {
+        margin: 36px auto 0;
+        position: static;
+        max-height: none;
+      }
+    }
+
+    /* ── 시나리오 스토리 패널 ── */
+    .arch-story {
+      max-width: 880px;
+      margin: 36px auto 0;
+      background: rgba(255,255,255,0.75);
+      border: 1.5px solid rgba(124,58,237,0.18);
+      border-radius: 22px;
+      padding: 24px 28px;
+      box-shadow: 0 6px 24px rgba(99,60,237,0.08);
+      backdrop-filter: blur(10px);
+    }
+    .arch-story-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 14px;
+      padding-bottom: 14px;
+      border-bottom: 1px dashed rgba(124,58,237,0.18);
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .arch-story-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 17px;
+      font-weight: 800;
+      color: #1e1b4b;
+      letter-spacing: -0.3px;
+    }
+    .arch-story-emoji { font-size: 22px; }
+    .arch-story-meta {
+      font-size: 12px;
+      color: #6b63a0;
+      font-weight: 600;
+    }
+    .arch-story-steps {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      counter-reset: archstep;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .arch-story-step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.65);
+      border: 1px solid rgba(124,58,237,0.1);
+      border-radius: 12px;
+      cursor: default;
+      transition: background 0.2s, border-color 0.2s, transform 0.2s;
+      opacity: 0;
+      transform: translateY(8px);
+      animation: archStoryIn 0.4s ease forwards;
+    }
+    .arch-story-step:hover {
+      background: rgba(124,58,237,0.06);
+      border-color: rgba(124,58,237,0.3);
+      transform: translateX(2px);
+    }
+    @keyframes archStoryIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .arch-story-step-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      color: white;
+      font-weight: 900;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 3px 10px rgba(124,58,237,0.35);
+    }
+    .arch-story-step-body { flex: 1; min-width: 0; }
+    .arch-story-step-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #1e1b4b;
+      margin-bottom: 3px;
+      line-height: 1.4;
+    }
+    .arch-story-step-title code {
+      font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+      font-size: 12px;
+      background: #ede9fe;
+      color: #5b21b6;
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+    }
+    .arch-story-step-desc {
+      font-size: 12.5px;
+      color: #6b63a0;
+      line-height: 1.55;
+    }
+    .arch-story-step-tag {
+      display: inline-flex;
+      align-items: center;
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 99px;
+      background: rgba(124,58,237,0.1);
+      color: #5b21b6;
+      margin-left: 6px;
+      letter-spacing: 0.2px;
+    }
+
+    @media (max-width: 600px) {
+      .arch-story { padding: 20px 18px; margin-top: 24px; }
+      .arch-story-header { gap: 8px; }
+      .arch-story-title { font-size: 15px; }
+      .arch-story-step { padding: 10px 12px; gap: 10px; }
+      .arch-story-step-title { font-size: 13px; }
+      .arch-story-step-desc { font-size: 12px; }
     }
     /* ─── FEATURE MODAL ─── */
     .fm-overlay {
@@ -2416,18 +3525,7 @@
       50%      { background-position: 100% center; }
     }
     .hero-title .hero-accent {
-      background: linear-gradient(120deg,
-        #6d28d9 0%,
-        #a855f7 28%,
-        #ec4899 58%,
-        #f97316 100%
-      );
-      background-size: 200% auto;
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      color: transparent;
-      animation: heroAccentFlow 8s ease-in-out infinite;
+      color: #7c3aed;
     }
 
     /* 마우스 글로우 오브 (index2 from) */
@@ -2571,6 +3669,7 @@
 
 <!-- ─────────── SECTION JUMP DOTS ─────────── -->
 <div class="section-dots" id="section-dots">
+  <div class="section-dots-fill" id="section-dots-fill"></div>
   <a class="section-dot" href="#hero"     data-label="홈"></a>
   <a class="section-dot" href="#about"    data-label="소개"></a>
   <a class="section-dot" href="#features" data-label="기능"></a>
@@ -2578,6 +3677,7 @@
   <a class="section-dot" href="#how"      data-label="흐름"></a>
   <a class="section-dot" href="#demo"     data-label="화면"></a>
   <a class="section-dot" href="#tech"     data-label="기술"></a>
+  <a class="section-dot" href="#architecture" data-label="아키텍처"></a>
   <a class="section-dot" href="#team"     data-label="팀"></a>
 </div>
 
@@ -2594,6 +3694,7 @@
       <li><a href="#stories">스토리</a></li>
       <li><a href="#demo">주요 화면</a></li>
       <li><a href="#tech">기술</a></li>
+      <li><a href="#architecture">아키텍처</a></li>
       <li><a href="#team">팀</a></li>
       <li><a href="https://staging.d25a68jt9cg4tx.amplifyapp.com/login" target="_blank" class="nav-demo-btn">데모 보기 →</a></li>
     </ul>
@@ -2613,6 +3714,7 @@
     <li><a href="#stories" data-drawer-link>스토리</a></li>
     <li><a href="#demo" data-drawer-link>주요 화면</a></li>
     <li><a href="#tech" data-drawer-link>기술 스택</a></li>
+    <li><a href="#architecture" data-drawer-link>아키텍처</a></li>
     <li><a href="#team" data-drawer-link>팀 소개</a></li>
   </ul>
   <div class="mobile-drawer-cta">
@@ -2694,32 +3796,38 @@
   <div class="container">
     <div class="about-grid reveal">
       <div class="about-text">
-        <span class="badge">🎯 프로젝트 소개</span>
+        <span class="badge">프로젝트 소개</span>
         <h2 style="margin-top:16px;">
           대학 행사 참여,<br>
-          <span class="text-gradient">이제 더 쉽게</span>
+          <span style="color:#7c3aed;">이제 더 쉽게</span>
         </h2>
         <p>
           매 학기 진행되는 수백 개의 캠퍼스 행사들이 여전히 SNS 댓글, 구글 폼,
-          현장 줄서기로 운영되고 있습니다. 주최자는 참가자 관리에 지치고,
+          현장 줄서기로 운영되고 있습니다. 주최자는 참가자 관리에 지치고, <br>
           참가자는 정보를 찾기 어렵습니다.
         </p>
         <p>
           <strong>페스티켓</strong>은 행사 개설부터 참가 신청, 결제, QR 티켓 발급,
           현장 체크인까지 전 과정을 하나의 플랫폼에서 해결합니다.
-          학교 인증 시스템으로 신뢰도를 높이고, 실시간 대시보드로 운영 부담을 줄입니다.
+          학교 인증 시스템으로 <br> 신뢰도를 높이고, 실시간 대시보드로 운영 부담을 줄입니다.
         </p>
         <div class="stat-grid">
           <div class="stat-card">
-            <div class="stat-num text-gradient">∞</div>
+            <div class="stat-num" id="event-count-num" data-target="9999" style="color:#7c3aed;">0</div>
             <div class="stat-label">행사 등록 무제한</div>
           </div>
           <div class="stat-card">
-            <div class="stat-num text-gradient">QR</div>
+            <div class="stat-num stat-qr" id="stat-qr">
+              <span class="qr-glitch" style="color:#0ea5e9;">QR</span>
+              <span class="qr-scan-line"></span>
+            </div>
             <div class="stat-label">스마트 티켓</div>
           </div>
           <div class="stat-card">
-            <div class="stat-num text-gradient">실시간</div>
+            <div class="stat-num stat-live" id="stat-live">
+              <span class="live-pulse-dot"></span>
+              <span class="live-text" style="color:#14b8a6;">실시간</span>
+            </div>
             <div class="stat-label">체크인 현황</div>
           </div>
         </div>
@@ -2785,60 +3893,314 @@
 <section id="features" class="section">
   <div class="container">
     <div class="section-title reveal">
-      <span class="badge">✨ 핵심 기능</span>
-      <h2 style="margin-top:16px;">주최자와 참가자 모두를<br><span class="text-gradient">위한 기능</span></h2>
-      <p>복잡한 행사 운영을 간단하게. 참가 경험도 더 즐겁게.</p>
+      <span class="badge">핵심 기능</span>
+      <h2 style="margin-top:16px;">주최자와 참가자 모두를<br><span style="color:#7c3aed;">위한 기능</span></h2>
+      <p>복잡한 행사 운영을 간단하게. 참가 경험도 더 즐겁게</p>
       <p style="display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:10px 20px;background:rgba(124,58,237,0.08);border:1.5px dashed rgba(124,58,237,0.3);border-radius:99px;font-size:14px;font-weight:700;color:#7c3aed;">👆 카드를 클릭하면 기능을 미리 볼 수 있습니다</p>
     </div>
 
     <div class="features-grid reveal">
       <!-- Row 1: 티켓 · 체크인 -->
-      <div class="feature-card" onclick="openFM('qr-ticket')">
+      <div class="feature-card bento-2x2" onclick="openFM('qr-ticket')">
         <div class="feature-icon ic-purple">🎟️</div>
         <h3>QR 티켓 발급</h3>
         <p>신청 완료 즉시 고유 QR 코드 티켓이 발급됩니다. 종이 없이 스마트폰 하나로 입장하세요.</p>
+
+        <!-- 체크인 흐름 시각화: 신청 → 발급 → 입장 -->
+        <div class="bento-qr-flow">
+          <div class="bento-qr-flow-step">
+            <div class="bento-qr-flow-icon">📱</div>
+            <div class="bento-qr-flow-label">신청</div>
+          </div>
+          <div class="bento-qr-flow-line"></div>
+          <div class="bento-qr-flow-step is-mid">
+            <div class="bento-qr-flow-icon">🎫</div>
+            <div class="bento-qr-flow-label">QR 발급</div>
+          </div>
+          <div class="bento-qr-flow-line"></div>
+          <div class="bento-qr-flow-step">
+            <div class="bento-qr-flow-icon">✅</div>
+            <div class="bento-qr-flow-label">즉시 입장</div>
+          </div>
+        </div>
+
+        <!-- 티켓 비주얼 -->
+        <div class="bento-qr-visual">
+          <div class="bento-qr-code" aria-hidden="true">
+            <svg viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+              <!-- 파인더 패턴: 좌상단 -->
+              <rect x="0" y="0" width="7" height="7" fill="#1e1b4b"/>
+              <rect x="1" y="1" width="5" height="5" fill="#ffffff"/>
+              <rect x="2" y="2" width="3" height="3" fill="#1e1b4b"/>
+              <!-- 파인더 패턴: 우상단 -->
+              <rect x="14" y="0" width="7" height="7" fill="#1e1b4b"/>
+              <rect x="15" y="1" width="5" height="5" fill="#ffffff"/>
+              <rect x="16" y="2" width="3" height="3" fill="#1e1b4b"/>
+              <!-- 파인더 패턴: 좌하단 -->
+              <rect x="0" y="14" width="7" height="7" fill="#1e1b4b"/>
+              <rect x="1" y="15" width="5" height="5" fill="#ffffff"/>
+              <rect x="2" y="16" width="3" height="3" fill="#1e1b4b"/>
+              <g fill="#1e1b4b">
+                <rect x="8" y="0" width="1" height="1"/>
+                <rect x="10" y="0" width="1" height="1"/>
+                <rect x="11" y="0" width="1" height="1"/>
+                <rect x="13" y="0" width="1" height="1"/>
+                <rect x="9" y="1" width="1" height="1"/>
+                <rect x="12" y="1" width="1" height="1"/>
+                <rect x="8" y="2" width="1" height="1"/>
+                <rect x="9" y="2" width="1" height="1"/>
+                <rect x="11" y="2" width="1" height="1"/>
+                <rect x="13" y="2" width="1" height="1"/>
+                <rect x="10" y="3" width="1" height="1"/>
+                <rect x="12" y="3" width="1" height="1"/>
+                <rect x="8" y="4" width="1" height="1"/>
+                <rect x="11" y="4" width="1" height="1"/>
+                <rect x="13" y="4" width="1" height="1"/>
+                <rect x="9" y="5" width="1" height="1"/>
+                <rect x="10" y="5" width="1" height="1"/>
+                <rect x="12" y="5" width="1" height="1"/>
+                <rect x="8" y="6" width="1" height="1"/>
+                <rect x="11" y="6" width="1" height="1"/>
+                <rect x="13" y="6" width="1" height="1"/>
+                <rect x="8" y="6" width="1" height="1"/>
+                <rect x="10" y="6" width="1" height="1"/>
+                <rect x="12" y="6" width="1" height="1"/>
+                <rect x="6" y="8" width="1" height="1"/>
+                <rect x="6" y="10" width="1" height="1"/>
+                <rect x="6" y="12" width="1" height="1"/>
+                <rect x="0" y="8" width="1" height="1"/>
+                <rect x="2" y="8" width="1" height="1"/>
+                <rect x="3" y="8" width="1" height="1"/>
+                <rect x="5" y="8" width="1" height="1"/>
+                <rect x="8" y="8" width="1" height="1"/>
+                <rect x="10" y="8" width="1" height="1"/>
+                <rect x="11" y="8" width="1" height="1"/>
+                <rect x="14" y="8" width="1" height="1"/>
+                <rect x="15" y="8" width="1" height="1"/>
+                <rect x="17" y="8" width="1" height="1"/>
+                <rect x="19" y="8" width="1" height="1"/>
+                <rect x="20" y="8" width="1" height="1"/>
+                <rect x="1" y="9" width="1" height="1"/>
+                <rect x="4" y="9" width="1" height="1"/>
+                <rect x="7" y="9" width="1" height="1"/>
+                <rect x="9" y="9" width="1" height="1"/>
+                <rect x="12" y="9" width="1" height="1"/>
+                <rect x="13" y="9" width="1" height="1"/>
+                <rect x="16" y="9" width="1" height="1"/>
+                <rect x="18" y="9" width="1" height="1"/>
+                <rect x="0" y="10" width="1" height="1"/>
+                <rect x="3" y="10" width="1" height="1"/>
+                <rect x="5" y="10" width="1" height="1"/>
+                <rect x="8" y="10" width="1" height="1"/>
+                <rect x="11" y="10" width="1" height="1"/>
+                <rect x="14" y="10" width="1" height="1"/>
+                <rect x="15" y="10" width="1" height="1"/>
+                <rect x="17" y="10" width="1" height="1"/>
+                <rect x="20" y="10" width="1" height="1"/>
+                <rect x="2" y="11" width="1" height="1"/>
+                <rect x="4" y="11" width="1" height="1"/>
+                <rect x="7" y="11" width="1" height="1"/>
+                <rect x="9" y="11" width="1" height="1"/>
+                <rect x="10" y="11" width="1" height="1"/>
+                <rect x="13" y="11" width="1" height="1"/>
+                <rect x="16" y="11" width="1" height="1"/>
+                <rect x="18" y="11" width="1" height="1"/>
+                <rect x="19" y="11" width="1" height="1"/>
+                <rect x="1" y="12" width="1" height="1"/>
+                <rect x="3" y="12" width="1" height="1"/>
+                <rect x="8" y="12" width="1" height="1"/>
+                <rect x="11" y="12" width="1" height="1"/>
+                <rect x="12" y="12" width="1" height="1"/>
+                <rect x="15" y="12" width="1" height="1"/>
+                <rect x="17" y="12" width="1" height="1"/>
+                <rect x="20" y="12" width="1" height="1"/>
+                <rect x="0" y="13" width="1" height="1"/>
+                <rect x="4" y="13" width="1" height="1"/>
+                <rect x="5" y="13" width="1" height="1"/>
+                <rect x="7" y="13" width="1" height="1"/>
+                <rect x="9" y="13" width="1" height="1"/>
+                <rect x="10" y="13" width="1" height="1"/>
+                <rect x="14" y="13" width="1" height="1"/>
+                <rect x="16" y="13" width="1" height="1"/>
+                <rect x="19" y="13" width="1" height="1"/>
+                <rect x="14" y="13" width="1" height="1"/>
+                <rect x="8" y="14" width="1" height="1"/>
+                <rect x="10" y="14" width="1" height="1"/>
+                <rect x="13" y="14" width="1" height="1"/>
+                <rect x="14" y="14" width="1" height="1"/>
+                <rect x="15" y="14" width="1" height="1"/>
+                <rect x="17" y="14" width="1" height="1"/>
+                <rect x="19" y="14" width="1" height="1"/>
+                <rect x="20" y="14" width="1" height="1"/>
+                <rect x="9" y="15" width="1" height="1"/>
+                <rect x="11" y="15" width="1" height="1"/>
+                <rect x="12" y="15" width="1" height="1"/>
+                <rect x="16" y="15" width="1" height="1"/>
+                <rect x="18" y="15" width="1" height="1"/>
+                <rect x="8" y="16" width="1" height="1"/>
+                <rect x="10" y="16" width="1" height="1"/>
+                <rect x="13" y="16" width="1" height="1"/>
+                <rect x="15" y="16" width="1" height="1"/>
+                <rect x="17" y="16" width="1" height="1"/>
+                <rect x="19" y="16" width="1" height="1"/>
+                <rect x="20" y="16" width="1" height="1"/>
+                <rect x="9" y="17" width="1" height="1"/>
+                <rect x="11" y="17" width="1" height="1"/>
+                <rect x="14" y="17" width="1" height="1"/>
+                <rect x="16" y="17" width="1" height="1"/>
+                <rect x="18" y="17" width="1" height="1"/>
+                <rect x="8" y="18" width="1" height="1"/>
+                <rect x="12" y="18" width="1" height="1"/>
+                <rect x="13" y="18" width="1" height="1"/>
+                <rect x="15" y="18" width="1" height="1"/>
+                <rect x="17" y="18" width="1" height="1"/>
+                <rect x="20" y="18" width="1" height="1"/>
+                <rect x="9" y="19" width="1" height="1"/>
+                <rect x="10" y="19" width="1" height="1"/>
+                <rect x="14" y="19" width="1" height="1"/>
+                <rect x="16" y="19" width="1" height="1"/>
+                <rect x="19" y="19" width="1" height="1"/>
+                <rect x="8" y="20" width="1" height="1"/>
+                <rect x="11" y="20" width="1" height="1"/>
+                <rect x="13" y="20" width="1" height="1"/>
+                <rect x="15" y="20" width="1" height="1"/>
+                <rect x="17" y="20" width="1" height="1"/>
+                <rect x="18" y="20" width="1" height="1"/>
+                <rect x="20" y="20" width="1" height="1"/>
+              </g>
+            </svg>
+          </div>
+          <div class="bento-qr-meta">
+            <div class="bento-qr-meta-head">
+              <div class="bento-qr-meta-title">🎪 2026 KMU 봄축제</div>
+              <span class="bento-qr-dday">D-7</span>
+            </div>
+            <div class="bento-qr-meta-sub">📍 운동장 · 5/22 18:00</div>
+            <div class="bento-qr-meta-foot">
+              <span class="bento-qr-ticket-num">T-3015AB</span>
+              <span class="bento-qr-meta-status">● 발급 완료</span>
+            </div>
+          </div>
+        </div>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
       <div class="feature-card" onclick="openFM('checkin')">
         <div class="feature-icon ic-green">📷</div>
         <h3>실시간 QR 체크인</h3>
-        <p>행사장에서 카메라로 QR을 스캔하면 즉시 체크인. 대기줄 없이 빠른 입장이 가능합니다.</p>
+        <p>행사장에서 카메라로 QR을 스캔하면 즉시 입장 처리. 대기줄 없이 빠르게 체크인할 수 있습니다.</p>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
       <div class="feature-card" onclick="openFM('release')">
         <div class="feature-icon ic-purple">⏱️</div>
         <h3>취소표 자동 릴리즈</h3>
-        <p>취소된 자리를 설정한 간격(15분 등)마다 자동으로 재오픈합니다. 대기자도 놓치지 않고 신청 기회를 얻을 수 있습니다.</p>
+        <p>취소된 자리를 일정 간격마다 자동으로 재오픈해 대기자에게도 신청 기회를 돌려줍니다.</p>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
 
-      <!-- Row 2: 결제 · 정산 -->
-      <div class="feature-card" onclick="openFM('payment')">
-        <div class="feature-icon" style="background:#f0f4ff">
-          <img id="toss-feature-icon" src="logo-toss-symbol-alpha.png" alt="토스" style="width:36px;height:36px;object-fit:contain;">
+      <!-- Row 2: 권한 위임 (핵심) -->
+      <div class="feature-card bento-wide" onclick="openFM('delegation')">
+        <div class="feature-icon ic-blue">🔄</div>
+        <h3>권한 위임 & 인수인계</h3>
+        <p>인증 주최자가 같은 학교 사용자에게 권한을 위임하면 진행 중·종료된 행사까지 안전하게 이관됩니다.</p>
+        <div class="bento-delegation">
+          <div class="bento-delegation-person">
+            <div class="bento-delegation-avatar from">강</div>
+            <div>
+              <div class="bento-delegation-name">강민수</div>
+              <div class="bento-delegation-role">인증 주최자</div>
+            </div>
+          </div>
+          <div class="bento-delegation-arrow">→</div>
+          <div class="bento-delegation-person">
+            <div class="bento-delegation-avatar to">박</div>
+            <div>
+              <div class="bento-delegation-name">박지수</div>
+              <div class="bento-delegation-role">참가자 → 주최자</div>
+            </div>
+          </div>
+          <span class="bento-delegation-meta">📦 행사 11건 이관</span>
         </div>
-        <h3>토스페이먼츠 결제</h3>
-        <p>유료 행사도 간편하게. 토스페이먼츠 연동으로 카드·계좌이체·간편결제를 지원합니다.</p>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
       <div class="feature-card" onclick="openFM('refund')">
         <div class="feature-icon ic-green">💰</div>
         <h3>환불 관리</h3>
-        <p>참가자는 행사 전 환불 신청, 주최자는 환불 처리를 한 곳에서. 토스페이먼츠와 자동 연동됩니다.</p>
+        <p>참가자의 환불 신청과 주최자의 처리 과정을 한 곳에서. 토스페이먼츠와 자동 연동됩니다.</p>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
       <div class="feature-card" onclick="openFM('whitelist')">
         <div class="feature-icon ic-green">✅</div>
         <h3>화이트리스트</h3>
         <p>특정 학번을 지정해 무료 신청 또는 우선 신청 혜택을 부여합니다. CSV 일괄 업로드도 지원합니다.</p>
+        <div class="bento-wl-mini">
+          <div class="bento-wl-row">
+            <span class="bento-wl-id">20251234</span>
+            <span class="bento-wl-check">✓</span>
+          </div>
+          <div class="bento-wl-row">
+            <span class="bento-wl-id">20259988</span>
+            <span class="bento-wl-check">✓</span>
+          </div>
+          <div class="bento-wl-row">
+            <span class="bento-wl-id">20247621</span>
+            <span class="bento-wl-check">✓</span>
+          </div>
+          <div class="bento-wl-row is-csv">
+            <span class="bento-wl-id">+ 학번 1,247명</span>
+            <span class="bento-wl-csv">CSV</span>
+          </div>
+        </div>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
 
       <!-- Row 3: 운영 · 권한 -->
-      <div class="feature-card" onclick="openFM('dashboard')">
+      <div class="feature-card bento-wide" onclick="openFM('dashboard')">
         <div class="feature-icon ic-amber">📊</div>
         <h3>실시간 운영 대시보드</h3>
         <p>신청 현황, 체크인율, 환불 요청까지 한눈에. 주최자라면 대시보드에서 모든 것을 관리하세요.</p>
+        <div class="bento-dash-header" aria-hidden="true">
+          <span class="bento-live-badge">
+            <span class="bento-live-dot"></span>
+            LIVE
+          </span>
+          <span style="font-size:10px;color:#9186c8;margin-left:auto;font-weight:600;">방금 전 업데이트</span>
+        </div>
+        <div class="bento-kpi-grid" aria-hidden="true">
+          <div class="bento-kpi">
+            <div class="bento-kpi-label">🎟️ 신청자</div>
+            <div class="bento-kpi-value">248<span class="bento-kpi-sub"> 명</span></div>
+            <div class="bento-kpi-delta up">▲ +18</div>
+          </div>
+          <div class="bento-kpi">
+            <div class="bento-kpi-label">✅ 체크인율</div>
+            <div class="bento-kpi-value">87.3<span class="bento-kpi-sub">%</span></div>
+            <div class="bento-kpi-delta up">▲ +2.1%</div>
+          </div>
+          <div class="bento-kpi">
+            <div class="bento-kpi-label">💰 매출</div>
+            <div class="bento-kpi-value">₩2.4<span class="bento-kpi-sub">M</span></div>
+            <div class="bento-kpi-delta up">▲ +₩320K</div>
+          </div>
+        </div>
+        <div class="bento-chart-wrap" aria-hidden="true">
+          <div class="bento-chart-title">
+            <span>📈 시간대별 신청 추이</span>
+            <span style="color:#7c3aed;">최근 8시간</span>
+          </div>
+          <div class="bento-chart">
+            <div class="bento-chart-bar" style="height:40%;animation-delay:0.05s"></div>
+            <div class="bento-chart-bar" style="height:62%;animation-delay:0.12s"></div>
+            <div class="bento-chart-bar" style="height:48%;animation-delay:0.19s"></div>
+            <div class="bento-chart-bar" style="height:78%;animation-delay:0.26s"></div>
+            <div class="bento-chart-bar" style="height:54%;animation-delay:0.33s"></div>
+            <div class="bento-chart-bar" style="height:88%;animation-delay:0.40s"></div>
+            <div class="bento-chart-bar" style="height:70%;animation-delay:0.47s"></div>
+            <div class="bento-chart-bar" style="height:95%;animation-delay:0.54s"></div>
+          </div>
+          <div class="bento-chart-axis">
+            <span>10시</span><span>12시</span><span>14시</span><span>16시</span><span>지금</span>
+          </div>
+        </div>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
       <div class="feature-card" onclick="openFM('cohost')">
@@ -2850,7 +4212,7 @@
       <div class="feature-card" onclick="openFM('roles')">
         <div class="feature-icon ic-purple">🛡️</div>
         <h3>다양한 역할 권한</h3>
-        <p>일반 참가자부터 인증 주최자, 학교 관리자, 슈퍼 운영자까지 세분화된 역할 기반 접근 제어를 제공합니다.</p>
+        <p>참가자, 인증 주최자, 학교 관리자, 슈퍼 운영자까지 4단계로 세분화된 역할 기반 접근 제어를 제공합니다.</p>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
 
@@ -2864,13 +4226,13 @@
       <div class="feature-card" onclick="openFM('qna')">
         <div class="feature-icon ic-indigo">💬</div>
         <h3>행사 Q&A</h3>
-        <p>행사 페이지에서 참가자가 직접 질문을 남기고, 주최자가 답변합니다. 익명 질문도 지원합니다.</p>
+        <p>참가자가 행사 페이지에 직접 질문을 남기면 주최자가 답변합니다. 익명 질문도 지원합니다.</p>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
       <div class="feature-card" onclick="openFM('review')">
         <div class="feature-icon ic-amber">⭐</div>
         <h3>리뷰 & 별점</h3>
-        <p>행사 종료 후 참가자가 1-5점 별점과 후기를 남길 수 있습니다. 익명 작성도 지원해 솔직한 피드백을 받아보세요.</p>
+        <p>행사 종료 후 1~5점 별점과 후기를 남길 수 있고, 익명 작성도 지원해 솔직한 피드백을 모읍니다.</p>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
 
@@ -2884,7 +4246,7 @@
       <div class="feature-card" onclick="openFM('bookmark')">
         <div class="feature-icon ic-pink">🔖</div>
         <h3>즐겨찾기</h3>
-        <p>관심 있는 행사를 즐겨찾기에 추가하고, 모아보기 탭에서 한 번에 확인하세요. 놓치고 싶지 않은 행사를 저장해두세요.</p>
+        <p>관심 있는 행사를 즐겨찾기에 추가하고 모아보기 탭에서 한 번에 확인하세요.</p>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
       <div class="feature-card" onclick="openFM('kakao')">
@@ -2894,7 +4256,15 @@
           </svg>
         </div>
         <h3>카카오 소셜 로그인</h3>
-        <p>카카오 계정으로 빠르게 가입하고 로그인하세요. 학교 이메일 인증까지 연동해 소속을 확인합니다.</p>
+        <p>카카오 계정으로 빠르게 가입·로그인하고, 학교 이메일 인증을 연동해 소속을 확인합니다.</p>
+        <span class="fm-hint">🔍 클릭해서 미리보기</span>
+      </div>
+      <div class="feature-card" onclick="openFM('payment')">
+        <div class="feature-icon" style="background:#f0f4ff">
+          <img id="toss-feature-icon" src="logo-toss-symbol-alpha.png" alt="토스" style="width:36px;height:36px;object-fit:contain;">
+        </div>
+        <h3>토스페이먼츠 결제</h3>
+        <p>유료 행사도 간편하게. 토스페이먼츠 연동으로 카드·계좌이체·간편결제를 지원합니다.</p>
         <span class="fm-hint">🔍 클릭해서 미리보기</span>
       </div>
     </div>
@@ -2905,9 +4275,9 @@
 <section id="stories" class="section">
   <div class="container">
     <div class="section-title reveal">
-      <span class="badge">🔀 Before / After</span>
-      <h2 style="margin-top:16px;">누가, 얼마나<br><span class="text-gradient">편해지나요?</span></h2>
-      <p>학교 구성원 모두의 행사 경험이 달라집니다.</p>
+      <span class="badge">Before / After</span>
+      <h2 style="margin-top:16px;">누가, 얼마나<br><span style="color:#7c3aed;">편해지나요?</span></h2>
+      <p>학교 구성원 모두의 행사 경험이 달라집니다</p>
     </div>
 
     <!-- 유저 탭 -->
@@ -3029,8 +4399,8 @@
 <section id="how" class="section">
   <div class="container">
     <div class="section-title reveal">
-      <span class="badge">🗺️ 사용 흐름</span>
-      <h2 style="margin-top:16px;">행사 참여, 이렇게<br><span class="text-gradient">간단합니다</span></h2>
+      <span class="badge">사용 흐름</span>
+      <h2 style="margin-top:16px;">행사 참여, 이렇게<br><span style="color:#7c3aed;">간단합니다</span></h2>
     </div>
 
     <!-- 탭 -->
@@ -3045,28 +4415,28 @@
         <div class="step-num">1</div>
         <div class="step-icon">🔍</div>
         <h3>행사 탐색</h3>
-        <p>학교, 날짜, 무료/유료 필터로 내게 맞는 행사를 빠르게 찾기</p>
+        <p>학교·날짜·무료/유료 필터로 내게 맞는 행사를 빠르게 찾기</p>
         <span class="step-arrow">→</span>
       </div>
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-icon">✍️</div>
         <h3>간편 신청</h3>
-        <p>로그인 후 클릭 한 번으로 신청 완료. 유료 행사는 결제까지</p>
+        <p>로그인 후 클릭 한 번으로 신청 완료, 유료 행사는 결제까지</p>
         <span class="step-arrow">→</span>
       </div>
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-icon">🎫</div>
         <h3>QR 티켓 수령</h3>
-        <p>신청 즉시 고유 QR 코드 발급. 내 티켓 탭에서 언제든 확인</p>
+        <p>신청 즉시 고유 QR 코드 발급, 내 티켓 탭에서 언제든 확인</p>
         <span class="step-arrow">→</span>
       </div>
       <div class="step">
         <div class="step-num">4</div>
         <div class="step-icon">✅</div>
         <h3>현장 체크인</h3>
-        <p>QR 스캔 한 번으로 입장 완료. 빠르고 간편한 스마트 입장</p>
+        <p>QR 스캔 한 번으로 입장 완료, 빠르고 간편한 스마트 입장</p>
       </div>
     </div>
 
@@ -3076,14 +4446,14 @@
         <div class="step-num">1</div>
         <div class="step-icon">📋</div>
         <h3>인증 신청</h3>
-        <p>학생회·동아리 인증 신청 후 학교 관리자 승인으로 주최자 권한 획득</p>
+        <p>학생회·동아리 인증을 신청하면 학교 관리자 승인으로 주최자 권한 획득</p>
         <span class="step-arrow">→</span>
       </div>
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-icon">🎪</div>
         <h3>행사 개설</h3>
-        <p>무료·유료 설정, 정원, 화이트리스트, 공동 호스트까지 상세 설정 후 발행</p>
+        <p>무료·유료, 정원, 화이트리스트, 공동 호스트까지 상세 설정 후 발행</p>
         <span class="step-arrow">→</span>
       </div>
       <div class="step">
@@ -3097,7 +4467,7 @@
         <div class="step-num">4</div>
         <div class="step-icon">📁</div>
         <h3>결과 리포트</h3>
-        <p>행사 종료 후 참가자 명단·수익·체크인율 리포트를 PDF로 다운로드</p>
+        <p>행사 종료 후 참가자 명단·수익·체크인 리포트를 PDF로 다운로드</p>
       </div>
     </div>
   </div>
@@ -3107,9 +4477,9 @@
 <section id="demo" class="section">
   <div class="container">
     <div class="section-title reveal">
-      <span class="badge">📱 주요 화면</span>
-      <h2 style="margin-top:16px;">직접 경험해보세요<br><span class="text-gradient">페스티켓의 모든 것</span></h2>
-      <p>참가자부터 주최자까지, 모두를 위한 기능을 한 화면에서 확인하세요.</p>
+      <span class="badge">주요 화면</span>
+      <h2 style="margin-top:16px;">직접 경험해보세요<br><span style="color:#7c3aed;">페스티켓의 모든 것</span></h2>
+      <p>참가자부터 주최자까지, 모두를 위한 기능을 한 화면에서 확인하세요</p>
     </div>
 
     <!-- 탭 버튼 -->
@@ -3170,8 +4540,8 @@
           </div>
         </div>
         <div class="demo-text">
-          <h2>내 학교 행사를<br><span class="text-gradient">한눈에 탐색</span></h2>
-          <p>학교별 맞춤 피드로 내 학교 행사만 모아보거나, 전국 대학 행사를 한 번에 탐색할 수 있습니다.</p>
+          <h2>내 학교 행사를<br><span style="color:#7c3aed;">한눈에 탐색</span></h2>
+          <p>학교별 맞춤 피드로 내 학교 행사만 모아보거나 전국 대학 행사를 <br>한 번에 탐색할 수 있습니다.</p>
           <div class="demo-feature-list">
             <div class="demo-feature-item">
               <div class="demo-feature-bullet">🏫</div>
@@ -3249,7 +4619,7 @@
           </div>
         </div>
         <div class="demo-text">
-          <h2>신청 즉시<br><span class="text-gradient">QR 티켓 발급</span></h2>
+          <h2>신청 즉시<br><span style="color:#7c3aed;">QR 티켓 발급</span></h2>
           <p>결제 또는 신청 완료 시 즉시 발급되는 고유 QR 티켓. 종이 없이 스마트하게 입장하세요.</p>
           <div class="demo-feature-list">
             <div class="demo-feature-item">
@@ -3320,7 +4690,7 @@
           </div>
         </div>
         <div class="demo-text">
-          <h2>실시간으로<br><span class="text-gradient">행사를 모니터링</span></h2>
+          <h2>실시간으로<br><span style="color:#7c3aed;">행사를 모니터링</span></h2>
           <p>신청자, 입장률, 수익을 한 화면에서 실시간으로 파악하고 행사를 효율적으로 운영하세요.</p>
           <div class="demo-feature-list">
             <div class="demo-feature-item">
@@ -3383,7 +4753,7 @@
         </div>
         <div class="demo-text">
           <h2>중요한 순간을<br><span class="text-gradient">놓치지 않도록</span></h2>
-          <p>티켓 발급, 행사 D-1 알림, 결제 완료까지. 꼭 필요한 알림을 정확한 타이밍에 전달합니다.</p>
+          <p>티켓 발급, 행사 D-1 알림, 결제 완료까지 꼭 필요한 알림을 정확한 타이밍에 전달합니다.</p>
           <div class="demo-feature-list">
             <div class="demo-feature-item">
               <div class="demo-feature-bullet">🔔</div>
@@ -3412,9 +4782,9 @@
 <section id="tech" class="section">
   <div class="container">
     <div class="section-title reveal">
-      <span class="badge">🛠️ 기술 스택</span>
-      <h2 style="margin-top:16px;">검증된 기술로<br><span class="text-gradient">안정적으로</span></h2>
-      <p>빠른 개발과 안정적인 운영을 위해 최신 스택을 선택했습니다.</p>
+      <span class="badge">기술 스택</span>
+      <h2 style="margin-top:16px;">적합한 도구로<br><span style="color:#7c3aed;">정확하게</span></h2>
+      <p>각 도메인 특성에 맞춰 스택을 선택했습니다</p>
     </div>
 
     <div class="tech-grid reveal">
@@ -3507,12 +4877,204 @@
   </div>
 </section>
 
+<!-- ─────────── ARCHITECTURE ─────────── -->
+<section id="architecture" class="section">
+  <div class="container">
+    <div class="section-title arch-section-title reveal">
+      <h2 class="arch-hero-heading" style="color:#7c3aed;">ARCHITECTURE</h2>
+      <p class="arch-hero-sub" style="font-size:15px;color:#6b63a0;font-weight:500;margin-top:14px;letter-spacing:-0.2px;">탭을 클릭해 시나리오별 호출 흐름을 확인하세요</p>
+    </div>
+
+    <div class="arch-scenario-tabs-wrap reveal">
+      <div class="arch-scenario-tabs">
+        <button class="arch-scenario-tab active" onclick="switchArchScenario('all', this)">전체</button>
+        <button class="arch-scenario-tab" onclick="switchArchScenario('login', this)">로그인</button>
+        <button class="arch-scenario-tab" onclick="switchArchScenario('create', this)">행사 생성</button>
+        <button class="arch-scenario-tab" onclick="switchArchScenario('apply', this)">행사 신청</button>
+        <button class="arch-scenario-tab" onclick="switchArchScenario('checkin', this)">QR 체크인</button>
+        <button class="arch-scenario-tab" onclick="switchArchScenario('payment', this)">결제</button>
+        <button class="arch-scenario-tab" onclick="switchArchScenario('refund', this)">환불</button>
+        <button class="arch-scenario-tab" onclick="switchArchScenario('delegation', this)">권한 위임</button>
+      </div>
+    </div>
+
+    <div class="arch-split" id="arch-split" data-scenario="all">
+    <div class="arch-stack reveal" id="arch-stack" data-scenario="all">
+      <!-- Layer 1: Client -->
+      <div class="arch-layer" data-arch="all login apply payment create checkin refund delegation">
+        <div class="arch-layer-title">
+          <svg class="arch-layer-title-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="9.5" stroke="#7c3aed" stroke-width="1.6"/>
+            <path d="M2.5 12h19M12 2.5c3 3 3 16 0 19M12 2.5c-3 3-3 16 0 19" stroke="#7c3aed" stroke-width="1.4" fill="none"/>
+          </svg>
+          Client (Browser)
+        </div>
+        <div class="arch-layer-row">
+          <div class="arch-card" data-id="client">
+            <div class="arch-card-logos">
+              <span class="arch-card-logo" title="React"><img src="https://cdn.simpleicons.org/react/61DAFB" alt="React" /></span>
+              <span class="arch-card-logo" title="Vite"><img src="https://cdn.simpleicons.org/vite/646CFF" alt="Vite" /></span>
+              <span class="arch-card-logo" title="Tailwind CSS"><img src="https://cdn.simpleicons.org/tailwindcss/06B6D4" alt="Tailwind CSS" /></span>
+              <span class="arch-card-logo" title="Framer Motion"><img src="https://cdn.simpleicons.org/framer/0055FF" alt="Framer Motion" /></span>
+            </div>
+            <p class="arch-card-title">
+              React 18 + Vite
+              <small>Tailwind CSS · Framer Motion</small>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connector: Client -> Server -->
+      <div class="arch-connector" data-id="rest" data-arch="all login apply payment create checkin refund delegation">
+        <span class="arch-connector-label">REST API + JWT</span>
+        <span class="arch-connector-line"></span>
+        <span class="arch-connector-arrow"></span>
+      </div>
+
+      <!-- Layer 2: Server -->
+      <div class="arch-layer" data-arch="all login apply payment create checkin refund delegation">
+        <div class="arch-layer-title">
+          <svg class="arch-layer-title-logo" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" style="border-radius:4px">
+            <defs><linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="amplify-grad-arch"><stop stop-color="#BD0816" offset="0%"/><stop stop-color="#FF5252" offset="100%"/></linearGradient></defs>
+            <rect x="0" y="0" width="80" height="80" fill="url(#amplify-grad-arch)"/>
+            <path d="M59.611,59.179 L39.507,20 L45.258,20 L65.363,59.179 Z M67.889,59.722 L46.759,18.544 C46.589,18.21 46.245,18 45.87,18 L37.87,18 C37.521,18 37.198,18.181 37.016,18.479 C36.835,18.776 36.821,19.147 36.98,19.457 L58.11,60.636 C58.281,60.969 58.625,61.179 59,61.179 L67,61.179 C67.348,61.179 67.672,60.998 67.853,60.7 C68.035,60.403 68.049,60.033 67.889,59.722 Z M47.599,59.179 L32.215,30.332 L35.366,25.121 L53.341,59.179 Z M36.31,22.624 C36.141,22.305 35.815,22.101 35.455,22.091 C35.109,22.07 34.757,22.265 34.57,22.573 L30.21,29.784 C30.027,30.086 30.017,30.461 30.182,30.772 L46.117,60.65 C46.291,60.975 46.631,61.179 47,61.179 L55,61.179 C55.35,61.179 55.675,60.995 55.856,60.695 C56.037,60.395 56.048,60.022 55.884,59.712 Z M14.773,59.179 L28.885,35.84 L31.76,41.229 L25.134,52.678 C24.955,52.988 24.955,53.369 25.133,53.679 C25.312,53.988 25.642,54.179 26,54.179 L38.667,54.179 L41.333,59.179 Z M40.149,52.708 C39.975,52.383 39.635,52.179 39.266,52.179 L27.734,52.179 L33.769,41.75 C33.943,41.451 33.949,41.084 33.787,40.779 L29.823,33.346 C29.653,33.029 29.327,32.827 28.967,32.817 C28.583,32.8 28.27,32.992 28.085,33.299 L12.144,59.661 C11.958,59.971 11.952,60.356 12.129,60.67 C12.306,60.985 12.638,61.179 13,61.179 L43,61.179 C43.351,61.179 43.676,60.995 43.857,60.694 C44.038,60.392 44.048,60.018 43.882,59.708 Z" fill="#FFFFFF"/>
+          </svg>
+          Server (AWS Amplify)
+        </div>
+        <div class="arch-layer-row">
+          <div class="arch-card" data-id="server">
+            <div class="arch-card-logos">
+              <span class="arch-card-logo" title="Node.js"><img src="https://cdn.simpleicons.org/nodedotjs/339933" alt="Node.js" /></span>
+              <span class="arch-card-logo" title="Express"><img src="https://cdn.simpleicons.org/express/555555" alt="Express" /></span>
+              <span class="arch-card-logo" title="Prisma"><img src="https://cdn.simpleicons.org/prisma/2D3748" alt="Prisma" /></span>
+              <span class="arch-card-logo" title="JWT"><img src="https://cdn.simpleicons.org/jsonwebtokens/d63aff" alt="JWT" /></span>
+            </div>
+            <p class="arch-card-title">
+              Node.js + Express
+              <small>Prisma ORM · JWT Auth</small>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5-way fanout labels -->
+      <div class="arch-fanout">
+        <div class="arch-fanout-item" data-id="fan-query" data-arch="all login apply payment create checkin refund delegation">
+          <span class="arch-connector-label">쿼리</span>
+          <span class="arch-connector-line"></span>
+          <span class="arch-connector-arrow"></span>
+        </div>
+        <div class="arch-fanout-item" data-id="fan-upload" data-arch="all create">
+          <span class="arch-connector-label">파일 업로드</span>
+          <span class="arch-connector-line"></span>
+          <span class="arch-connector-arrow"></span>
+        </div>
+        <div class="arch-fanout-item" data-id="fan-pay" data-arch="all payment refund">
+          <span class="arch-connector-label">결제 요청</span>
+          <span class="arch-connector-line"></span>
+          <span class="arch-connector-arrow"></span>
+        </div>
+        <div class="arch-fanout-item" data-id="fan-oauth" data-arch="all login">
+          <span class="arch-connector-label">OAuth 인증</span>
+          <span class="arch-connector-line"></span>
+          <span class="arch-connector-arrow"></span>
+        </div>
+        <div class="arch-fanout-item" data-id="fan-mail" data-arch="all login apply payment refund delegation">
+          <span class="arch-connector-label">메일 발송</span>
+          <span class="arch-connector-line"></span>
+          <span class="arch-connector-arrow"></span>
+        </div>
+      </div>
+
+      <!-- Layer 3: Data + External -->
+      <div class="arch-bottom-row">
+        <!-- Supabase Group -->
+        <div class="arch-layer arch-group arch-group-supabase" data-arch="all login apply payment create checkin refund delegation">
+          <div class="arch-layer-title">
+            <span class="arch-layer-title-logo"><img src="https://cdn.simpleicons.org/supabase/3ECF8E" alt="Supabase" /></span>
+            Supabase
+          </div>
+          <div class="arch-layer-row">
+            <div class="arch-node n-postgres" data-id="postgres" data-arch="all login apply payment create checkin refund delegation">
+              <div class="arch-node-icon"><img src="https://cdn.simpleicons.org/postgresql/4169E1" alt="PostgreSQL" /></div>
+              <div class="arch-node-name">PostgreSQL</div>
+              <div class="arch-node-desc">데이터베이스</div>
+            </div>
+            <div class="arch-node n-storage" data-id="storage" data-arch="all create">
+              <div class="arch-node-icon"><img src="https://cdn.simpleicons.org/supabase/3ECF8E" alt="Supabase Storage" /></div>
+              <div class="arch-node-name">Storage</div>
+              <div class="arch-node-desc">이미지 업로드</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- External Services Group -->
+        <div class="arch-layer arch-group arch-group-external" data-arch="all login apply payment refund delegation">
+          <div class="arch-layer-title">
+            <svg class="arch-layer-title-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 13.2l-3.9 3.9-1.4-1.4L8.6 12 4.7 8.1 6.1 6.7 10 10.6V13.2zM14 13.2V10.6l3.9-3.9 1.4 1.4L15.4 12l3.9 3.9-1.4 1.4L14 13.2z" stroke="#b45309" stroke-width="1.6" fill="none"/>
+            </svg>
+            External Services
+          </div>
+          <div class="arch-layer-row">
+            <div class="arch-node n-toss" data-id="toss" data-arch="all payment refund">
+              <div class="arch-node-icon arch-node-icon-toss">
+                <img src="logo-toss-symbol-alpha.png" alt="토스페이먼츠" />
+              </div>
+              <div class="arch-node-name">토스페이먼츠</div>
+              <div class="arch-node-desc">결제·환불</div>
+            </div>
+            <div class="arch-node n-kakao" data-id="kakao" data-arch="all login">
+              <div class="arch-node-icon arch-node-icon-kakao">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="24" height="24" rx="5" fill="#FEE500"/>
+                  <path d="M12 5C7.58 5 4 7.96 4 11.6c0 2.36 1.35 4.44 3.43 5.74l-.78 2.88 3.3-2.19c.66.1 1.34.16 2.05.16 4.42 0 8-2.96 8-6.59C20 7.96 16.42 5 12 5z" fill="#3B1D1D"/>
+                </svg>
+              </div>
+              <div class="arch-node-name">Kakao OAuth</div>
+              <div class="arch-node-desc">소셜 로그인</div>
+            </div>
+            <div class="arch-node n-gmail" data-id="gmail" data-arch="all login apply payment refund delegation">
+              <div class="arch-node-icon">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 6.5h2v11h14v-11h2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-11z" fill="#EA4335"/>
+                  <path d="M3 6.5L12 13l9-6.5v2L12 15 3 8.5v-2z" fill="#FBBC04"/>
+                  <path d="M3 6.5h2v11H3z" fill="#34A853"/>
+                  <path d="M19 6.5h2v11h-2z" fill="#4285F4"/>
+                  <path d="M3 6.5l9 6.5 9-6.5" stroke="#C5221F" stroke-width="0.5" fill="none"/>
+                </svg>
+              </div>
+              <div class="arch-node-name">Gmail SMTP</div>
+              <div class="arch-node-desc">이메일 인증</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 시나리오 스토리 패널 -->
+    <div class="arch-story reveal" id="arch-story" data-scenario="all">
+      <div class="arch-story-header">
+        <div class="arch-story-title">
+          <span id="arch-story-name">전체 흐름</span>
+        </div>
+        <div class="arch-story-meta" id="arch-story-meta">탭을 선택해 시나리오별 호출 흐름을 확인하세요</div>
+      </div>
+      <ol class="arch-story-steps" id="arch-story-steps">
+        <!-- JS가 채움 -->
+      </ol>
+    </div>
+    </div>
+  </div>
+</section>
+
 <!-- ─────────── TEAM ─────────── -->
 <section id="team" class="section">
   <div class="container">
     <div class="section-title reveal">
       <span class="badge">👥 팀 소개</span>
-      <h2 style="margin-top:16px;">함께 만든<br><span class="text-gradient">56팀</span></h2>
+      <h2 style="margin-top:16px;">함께 만든<br><span style="color:#7c3aed;">56팀</span></h2>
       <p>국민대학교 소프트웨어융합대학 2026 캡스톤 56팀입니다.</p>
     </div>
 
@@ -3645,6 +5207,7 @@
           <li><a href="#how">사용 흐름</a></li>
           <li><a href="#demo">주요 화면</a></li>
           <li><a href="#tech">기술 스택</a></li>
+          <li><a href="#architecture">아키텍처</a></li>
           <li><a href="#team">팀 소개</a></li>
         </ul>
       </div>
@@ -3694,6 +5257,208 @@
     btn.classList.add('active');
   }
 
+  // Architecture scenario switcher
+  function switchArchScenario(scenario, btn) {
+    document.querySelectorAll('.arch-scenario-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const stack = document.getElementById('arch-stack');
+    const split = document.getElementById('arch-split');
+    if (stack) stack.setAttribute('data-scenario', scenario);
+    if (split) split.setAttribute('data-scenario', scenario);
+    renderArchScenario(scenario);
+  }
+
+  // 시나리오 정의: 각 단계마다 다이어그램 위 어떤 노드를 강조할지(target),
+  // 스토리 패널에 어떤 텍스트를 표시할지
+  const ARCH_SCENARIOS = {
+    'all': {
+      name: '전체 흐름',
+      meta: '',
+      steps: [
+        { target: 'client', title: '브라우저에서 사용자 액션 발생', desc: '리액트 화면이 입력을 받고 서버로 보낼 요청을 준비합니다.' },
+        { target: 'rest',   title: '인증 토큰을 자동으로 붙여 서버에 요청', desc: '저장된 로그인 토큰이 모든 요청에 자동으로 첨부되어 안전하게 전송됩니다.' },
+        { target: 'server', title: '서버가 토큰을 검증하고 알맞은 곳으로 라우팅', desc: '인증을 통과한 요청이 인증·행사·결제 같은 도메인별 코드로 분기됩니다.' },
+        { target: 'fan-query', title: '데이터베이스 조회·갱신', desc: 'Prisma가 비즈니스 규칙을 검증하면서 필요한 데이터를 읽고 씁니다.', tag: 'DB' },
+        { target: 'postgres',  title: 'PostgreSQL이 결과 반환', desc: '응답이 다시 서버를 거쳐 화면에 부드럽게 반영됩니다.' }
+      ]
+    },
+    'login': {
+      name: '로그인 흐름',
+      meta: '카카오 로그인 → 학교 이메일 인증 → 자동 로그인',
+      steps: [
+        { target: 'client', title: '카카오 로그인 버튼 클릭', desc: '서버가 사용자를 카카오 인증 페이지로 안전하게 안내합니다.' },
+        { target: 'fan-oauth', title: '카카오로부터 인증 정보 수령', desc: '카카오에서 발급한 일회성 코드를 서버가 받아 사용자의 액세스 권한을 얻습니다.', tag: 'OAuth' },
+        { target: 'kakao', title: '카카오에서 사용자 프로필 조회', desc: '닉네임과 카카오 고유 ID를 받아옵니다.' },
+        { target: 'fan-query', title: '데이터베이스에서 기존 사용자 확인', desc: '이미 가입된 사용자면 바로 로그인 처리, 신규 사용자면 학교 이메일 입력 단계로 넘어갑니다.', tag: 'Prisma' },
+        { target: 'fan-mail', title: '학교 이메일로 인증 링크 발송', desc: '신규 사용자에겐 24시간 동안 유효한 인증 링크가 학교 메일로 전송됩니다.', tag: 'SMTP' },
+        { target: 'gmail', title: 'Gmail로 인증 메일 전달', desc: '사용자가 메일의 링크를 클릭하면 학교 소속이 확인됩니다.' },
+        { target: 'server', title: '로그인 토큰 발급 후 브라우저에 저장', desc: '인증 완료된 사용자에게 로그인 토큰이 발급되고, 이후 요청에 자동으로 첨부됩니다.' }
+      ]
+    },
+    'apply': {
+      name: '행사 신청 흐름',
+      meta: '무료 행사 신청 + 화이트리스트 우선 통로',
+      steps: [
+        { target: 'client', title: '참가자가 신청 버튼 클릭', desc: '행사 상세 페이지에서 신청을 시작하면 본인 학교·학번 정보가 함께 전송됩니다.' },
+        { target: 'fan-query', title: '신청 가능 여부 사전 검증', desc: '공개 상태인지, 신청 마감 전인지, 본인 학교 행사인지, 이미 신청한 적은 없는지 확인합니다.', tag: '비즈니스 룰' },
+        { target: 'fan-query', title: '화이트리스트 학번 매칭 확인', desc: '학생회비 납부자 등 화이트리스트에 등록된 학번이라면 유료 행사라도 결제 없이 무료 신청 통로로 분기합니다.', tag: '화이트리스트' },
+        { target: 'fan-query', title: '정원 체크 + 신청 레코드 생성', desc: '한 번의 트랜잭션 안에서 정원 미만임을 확인하고 신청을 즉시 확정 상태로 저장합니다. 취소표 릴리즈 잠금도 함께 반영됩니다.', tag: 'Transaction' },
+        { target: 'postgres', title: 'PostgreSQL이 신청 확정', desc: '신청 ID가 발급되어 그 자체가 QR 티켓 페이로드로 사용됩니다.' },
+        { target: 'fan-mail', title: 'QR 티켓 메일 발송', desc: '신청 ID를 QR로 만들어 신청 완료 메일에 첨부합니다.', tag: 'SMTP' },
+        { target: 'gmail', title: 'Gmail이 신청 완료 메일 전달', desc: '사용자는 메일이나 마이티켓 페이지에서 QR을 확인할 수 있습니다.' }
+      ]
+    },
+    'payment': {
+      name: '결제 흐름',
+      meta: '결제 준비 → 토스 결제창 → 승인 → QR 티켓 메일',
+      steps: [
+        { target: 'client', title: '신청 버튼 클릭으로 결제 시작', desc: '프론트엔드가 서버에 결제 준비를 요청합니다.' },
+        { target: 'fan-query', title: '화이트리스트 우선 매칭 확인', desc: '학생회비 납부자 학번이면 결제창 대신 무료 신청 통로로 안내합니다.', tag: '화이트리스트' },
+        { target: 'fan-query', title: '정원 체크 + 결제 대기 레코드 생성', desc: '한 번의 트랜잭션 안에서 정원 미만임을 확인하고, 고유 주문번호와 함께 결제 대기 상태로 자리를 임시 확보합니다.', tag: 'Transaction' },
+        { target: 'client', title: '토스페이먼츠 결제창 표시', desc: '주문번호와 금액으로 토스 결제창을 띄워 카드·간편결제로 진행합니다.' },
+        { target: 'fan-pay', title: '결제 완료 정보를 서버로 전달', desc: '토스가 알려준 결제 키와 금액을 서버가 검증을 위해 받습니다.' },
+        { target: 'toss', title: '서버가 토스에 최종 승인 요청', desc: '서버 시크릿 키로 인증해 위변조를 차단하고 카드사 승인을 마무리합니다.', tag: 'HTTPS' },
+        { target: 'fan-query', title: '결제 완료 상태로 갱신', desc: '대기 상태였던 신청을 결제 완료로 바꾸고 결제 키·금액·시각을 기록합니다.', tag: 'Prisma' },
+        { target: 'fan-mail', title: 'QR 티켓이 첨부된 신청 완료 메일 발송', desc: '신청 ID를 그대로 QR 코드로 만들어 메일에 첨부합니다.', tag: 'SMTP' },
+        { target: 'gmail', title: 'Gmail이 QR 티켓 메일 전달', desc: '현장에서 이 QR을 스캔해 즉시 입장 처리가 됩니다.' }
+      ]
+    },
+    'create': {
+      name: '행사 생성 흐름',
+      meta: '이미지 업로드 → 행사 정보 저장',
+      steps: [
+        { target: 'client', title: '주최자가 행사 정보·포스터 입력', desc: '인증 주최자 권한이 있는 사용자만 폼이 활성화됩니다.' },
+        { target: 'rest', title: '포스터 이미지를 서버로 전송', desc: '5MB 이하 JPG·PNG·WEBP 이미지가 서버로 전송됩니다.' },
+        { target: 'server', title: '서버가 메모리에서 이미지 수신', desc: '디스크를 사용하지 않고 메모리로 직접 받아 빠르고 안전하게 처리합니다.', tag: 'multer' },
+        { target: 'fan-upload', title: '서버가 Supabase Storage에 이미지 업로드', desc: '서버용 시크릿 키를 가진 클라이언트가 충돌 없는 고유 경로로 업로드합니다.' },
+        { target: 'storage', title: 'Storage가 공개 URL 반환', desc: '저장된 이미지의 공개 URL이 서버를 거쳐 프론트로 전달됩니다.' },
+        { target: 'rest', title: '받은 이미지 URL과 함께 행사 생성 요청', desc: '제목·일시·정원·가격·이미지 URL이 한 번에 서버로 전송됩니다.' },
+        { target: 'fan-query', title: '비즈니스 규칙 검증 후 행사 저장', desc: '시작 시각이 미래인지, 정원·가격이 유효한지 등 규칙을 확인하고 데이터베이스에 저장합니다.', tag: 'Prisma' },
+        { target: 'postgres', title: '행사 레코드 생성 완료', desc: '초안 또는 공개 상태로 저장되어 즉시 목록에 반영됩니다.' }
+      ]
+    },
+    'checkin': {
+      name: 'QR 체크인 흐름',
+      meta: '현장 QR 스캔 → 즉시 입장 처리',
+      steps: [
+        { target: 'client', title: '주최자가 카메라로 QR 스캔', desc: '브라우저의 QR 스캐너 라이브러리로 참가자 티켓을 인식합니다.' },
+        { target: 'rest', title: '스캔된 신청 ID를 서버로 전송', desc: '신청 ID 자체가 QR의 페이로드라 별도 디코딩이 필요 없습니다.' },
+        { target: 'server', title: '권한 확인', desc: '해당 행사의 호스트, 공동 호스트 또는 학교 관리자만 체크인할 수 있습니다.', tag: '권한' },
+        { target: 'fan-query', title: '신청 정보·상태 검증', desc: '결제 완료 상태인지, 이미 체크인되었는지, 취소된 티켓은 아닌지 확인합니다.' },
+        { target: 'fan-query', title: '중복 체크인 방지 트랜잭션', desc: '동시에 두 번 스캔되어도 한 번만 입장 처리되도록 트랜잭션으로 안전하게 갱신합니다.', tag: 'Transaction' },
+        { target: 'postgres', title: '체크인 완료 시각 기록', desc: '입장 완료 상태로 전환되고 화면에 즉시 결과가 반환됩니다.' }
+      ]
+    },
+    'refund': {
+      name: '환불 처리 흐름',
+      meta: '환불 신청 → 토스 취소 → 실패 시 자동 재시도',
+      steps: [
+        { target: 'client', title: '참가자가 환불 신청 버튼 클릭', desc: '환불 마감 시각 이전에만 신청할 수 있습니다.' },
+        { target: 'fan-query', title: '환불 대기 상태로 전환 (자리 유지)', desc: '먼저 데이터베이스에 환불 대기 상태와 멱등키를 기록해 자리를 유지합니다.', tag: '2-Phase' },
+        { target: 'fan-pay', title: '토스에 결제 취소 요청', desc: '멱등키를 함께 보내 같은 요청이 중복 처리되지 않도록 합니다.', tag: '멱등성' },
+        { target: 'toss', title: '토스가 카드사 환불 처리', desc: '성공하면 환불 금액과 시각이 응답으로 돌아옵니다.' },
+        { target: 'fan-query', title: '환불 완료 상태로 갱신', desc: '환불 금액과 시각을 기록하고 자리를 정원에서 해제합니다.', tag: 'Prisma' },
+        { target: 'fan-pay', title: '일시적 실패 시 백그라운드 재시도', desc: '네트워크 오류 같은 일시적 실패는 0분·1분·5분·15분·1시간 간격으로 자동 재시도됩니다.', tag: '백오프' },
+        { target: 'fan-mail', title: '환불 완료 안내 메일 발송', desc: '환불이 정상 처리되면 결과 메일이 발송됩니다.', tag: 'SMTP' },
+        { target: 'gmail', title: 'Gmail이 환불 안내 메일 전달', desc: '영구 실패가 발생하면 운영자가 수동으로 처리할 수 있도록 큐에 남깁니다.' }
+      ]
+    },
+    'delegation': {
+      name: '권한 위임 흐름',
+      meta: '인증 주최자 권한 + 행사 한 번에 안전하게 이관',
+      steps: [
+        { target: 'client', title: '인증 주최자가 후임자 검색', desc: '같은 학교의 일반 사용자 중에서 이름·학번으로 검색해 선택합니다.' },
+        { target: 'fan-query', title: '진행 중인 행사 잔여 확인', desc: '아직 끝나지 않은 행사가 있으면 위임이 차단됩니다.', tag: '안전 가드' },
+        { target: 'fan-query', title: '한 번의 트랜잭션으로 일괄 이관', desc: '권한 강등·승격·위임 기록·행사 호스트 이관까지 모두 함께 처리되어 중간 실패가 없습니다.', tag: 'Transaction' },
+        { target: 'postgres', title: '데이터베이스에 변경 사항 반영', desc: '기존 주최자는 일반 사용자로, 후임자는 인증 주최자로 즉시 전환됩니다.' },
+        { target: 'fan-mail', title: '후임자와 학교 관리자에게 알림', desc: '위임이 완료되었음을 양쪽에 알림으로 전달합니다.', tag: 'SMTP' },
+        { target: 'gmail', title: 'Gmail이 위임 완료 메일 전달', desc: '인수인계받은 후임자는 즉시 같은 행사들을 관리할 수 있습니다.' }
+      ]
+    }
+  };
+
+  function renderArchScenario(scenario) {
+    const data = ARCH_SCENARIOS[scenario];
+    if (!data) return;
+
+    // 헤더 갱신
+    const emojiEl = document.getElementById('arch-story-emoji');
+    const nameEl  = document.getElementById('arch-story-name');
+    const metaEl  = document.getElementById('arch-story-meta');
+    if (emojiEl) emojiEl.textContent = data.emoji;
+    if (nameEl)  nameEl.textContent  = data.name;
+    if (metaEl)  metaEl.textContent  = data.meta;
+
+    // 기존 배지 제거
+    document.querySelectorAll('.arch-step-badge').forEach(b => b.remove());
+
+    // 새 배지 + 스토리 단계 렌더
+    const stepsEl = document.getElementById('arch-story-steps');
+    if (stepsEl) stepsEl.innerHTML = '';
+
+    data.steps.forEach((step, idx) => {
+      const num = idx + 1;
+
+      // 다이어그램 위 배지
+      const target = document.querySelector('.arch-stack [data-id="' + step.target + '"]');
+      if (target) {
+        const badge = document.createElement('span');
+        badge.className = 'arch-step-badge';
+        badge.textContent = num;
+
+        // fanout / connector 는 라벨(.arch-connector-label) 안쪽 prefix
+        const label = (target.classList.contains('arch-fanout-item') || target.classList.contains('arch-connector'))
+          ? target.querySelector('.arch-connector-label')
+          : null;
+
+        if (label) {
+          badge.classList.add('arch-step-badge-inline');
+          // 기존 배지가 있으면 그 뒤에, 없으면 텍스트 앞 (라벨 시작)에 삽입
+          // → 단계 번호가 자연스럽게 왼→오 순서로 누적됨
+          const existing = label.querySelectorAll('.arch-step-badge-inline');
+          if (existing.length > 0) {
+            existing[existing.length - 1].after(badge);
+          } else {
+            label.insertBefore(badge, label.firstChild);
+          }
+        } else {
+          target.appendChild(badge);
+        }
+        // stagger 등장
+        setTimeout(() => badge.classList.add('show'), 80 + idx * 90);
+      }
+
+      // 스토리 패널 단계
+      if (stepsEl) {
+        const li = document.createElement('li');
+        li.className = 'arch-story-step';
+        li.style.animationDelay = (idx * 0.07) + 's';
+        li.innerHTML =
+          '<span class="arch-story-step-num">' + num + '</span>' +
+          '<div class="arch-story-step-body">' +
+            '<div class="arch-story-step-title">' + step.title +
+              (step.tag ? '<span class="arch-story-step-tag">' + step.tag + '</span>' : '') +
+            '</div>' +
+            '<div class="arch-story-step-desc">' + step.desc + '</div>' +
+          '</div>';
+        // 호버 시 다이어그램에서 해당 단계 강조
+        li.addEventListener('mouseenter', () => {
+          const t = document.querySelector('.arch-stack [data-id="' + step.target + '"]');
+          if (t) t.classList.add('arch-step-hover');
+        });
+        li.addEventListener('mouseleave', () => {
+          document.querySelectorAll('.arch-step-hover').forEach(el => el.classList.remove('arch-step-hover'));
+        });
+        stepsEl.appendChild(li);
+      }
+    });
+  }
+
+  // 초기 렌더 (페이지 로드 시 '전체')
+  if (typeof window !== 'undefined') {
+    window.addEventListener('DOMContentLoaded', () => renderArchScenario('all'));
+  }
+
   // Scroll reveal animation
   const reveals = document.querySelectorAll('.reveal');
   const observer = new IntersectionObserver((entries) => {
@@ -3710,6 +5475,72 @@
   const tossChipImg = document.querySelector('.tech-chip img[alt="토스페이먼츠"]');
   const tossFeatureImg = document.getElementById('toss-feature-icon');
   if (tossChipImg && tossFeatureImg) tossFeatureImg.src = tossChipImg.src;
+
+  // ── 행사 등록 무제한 카운트업 → ∞ ──
+  (function infinityCountUp() {
+    const el = document.getElementById('event-count-num');
+    if (!el) return;
+    const target = parseInt(el.dataset.target || '9999', 10);
+    const duration = 1800;
+    let started = false;
+
+    function runCount() {
+      if (started) return;
+      started = true;
+      const startTime = performance.now();
+      function step(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+        const current = Math.floor(eased * target);
+        el.textContent = current.toLocaleString();
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        } else {
+          // 카운트업 완료 → ∞로 전환
+          setTimeout(() => {
+            el.textContent = '∞';
+            el.classList.add('is-infinity');
+          }, 120);
+        }
+      }
+      requestAnimationFrame(step);
+    }
+
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          runCount();
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.5 });
+    io.observe(el);
+  })();
+
+  // ── QR 글리치/스캔 라인 트리거 ──
+  (function qrGlitchTrigger() {
+    const el = document.getElementById('stat-qr');
+    if (!el) return;
+    let played = false;
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !played) {
+          played = true;
+          el.classList.add('is-active');
+          // 5초마다 반복
+          setInterval(() => {
+            el.classList.remove('is-active');
+            // reflow trigger to restart animation
+            void el.offsetWidth;
+            el.classList.add('is-active');
+          }, 5000);
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.5 });
+    io.observe(el);
+  })();
 
   // ── CTA 배너: 마우스 따라가는 글로우 ──
   (function ctaMouseGlow() {
@@ -3736,6 +5567,8 @@
   (function scrollIndicators() {
     const bar = document.getElementById('scroll-progress-bar');
     const dots = Array.from(document.querySelectorAll('.section-dot'));
+    const fill = document.getElementById('section-dots-fill');
+    const dotsWrap = document.getElementById('section-dots');
     if (!bar && !dots.length) return;
 
     const sections = dots
@@ -3756,7 +5589,19 @@
       sections.forEach((sec, i) => {
         if (sec.offsetTop <= probe) activeIdx = i;
       });
-      dots.forEach((d, i) => d.classList.toggle('active', i === activeIdx));
+      dots.forEach((d, i) => {
+        d.classList.toggle('active', i === activeIdx);
+        d.classList.toggle('passed', i < activeIdx);
+      });
+
+      // 세로 트랙 채움: 활성 점까지의 거리로 계산
+      if (fill && dotsWrap && dots[activeIdx]) {
+        const wrapRect = dotsWrap.getBoundingClientRect();
+        const activeRect = dots[activeIdx].getBoundingClientRect();
+        const fillTop = 14; // CSS top:14px와 일치
+        const targetH = (activeRect.top - wrapRect.top) + activeRect.height / 2 - fillTop;
+        fill.style.height = Math.max(0, targetH) + 'px';
+      }
     };
 
     const onScroll = () => {
@@ -4521,6 +6366,46 @@
         <div style="display:flex;gap:8px;align-items:center;">
           <input class="mock-input" style="flex:1;margin:0;" type="text" placeholder="이름 또는 이메일 검색" readonly>
           <div class="mock-btn mock-btn-primary" style="border-radius:10px;white-space:nowrap;">+ 추가</div>
+        </div>
+      `
+    },
+    'delegation': {
+      icon: '🔄', iconBg: 'ic-blue', title: '권한 위임 & 인수인계', sub: '안전한 역할 이양',
+      html: `
+        <div class="mock-card" style="padding:14px;margin-bottom:14px;">
+          <div class="mock-label" style="margin-bottom:10px;">위임 진행</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <div style="flex:1;text-align:center;">
+              <div class="mock-avatar" style="margin:0 auto 6px;background:linear-gradient(135deg,#7c3aed,#6366f1);">강</div>
+              <div style="font-size:13px;font-weight:700;color:#1e1b4b;">강민수</div>
+              <span class="mock-badge mb-purple" style="font-size:10px;margin-top:4px;">인증 주최자</span>
+            </div>
+            <div style="font-size:28px;color:#7c3aed;">→</div>
+            <div style="flex:1;text-align:center;">
+              <div class="mock-avatar" style="margin:0 auto 6px;background:linear-gradient(135deg,#3b82f6,#6366f1);">박</div>
+              <div style="font-size:13px;font-weight:700;color:#1e1b4b;">박지수</div>
+              <span class="mock-badge mb-blue" style="font-size:10px;margin-top:4px;">참가자 → 주최자</span>
+            </div>
+          </div>
+        </div>
+        <div class="mock-card" style="background:#f0fdf4;border-color:#bbf7d0;padding:12px 14px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <span style="font-size:18px;">📦</span>
+            <span style="font-size:13px;font-weight:700;color:#065f46;">행사 인수인계 포함</span>
+          </div>
+          <div style="font-size:11px;color:#047857;line-height:1.6;">
+            • 작성 중인 초안 <strong>3건</strong> 이전<br>
+            • 종료된 행사 <strong>8건</strong> 이전<br>
+            • 진행 중 행사가 있으면 위임 불가 (안전장치)
+          </div>
+        </div>
+        <div class="mock-card" style="padding:12px 14px;">
+          <div class="mock-label" style="margin-bottom:6px;">자동 처리</div>
+          <div style="font-size:11px;color:#9186c8;line-height:1.7;">
+            ✓ 위임자 권한 즉시 회수 (참가자로 환원)<br>
+            ✓ 피위임자 권한 즉시 부여 (인증 주최자)<br>
+            ✓ 학교 총관리자에게 알림 발송
+          </div>
         </div>
       `
     },
