@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -1877,6 +1877,421 @@
     .story-card-after .story-pill-icon {
       background: #7c3aed;
       color: white;
+    }
+
+    /* ── Before/After 개선판: 메트릭 리본 + 타임라인 + Mini UI Mock ── */
+    .story-panel { max-width: 980px; margin: 0 auto; }
+
+    /* 1) 상단 메트릭 리본 */
+    .story-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin: 0 auto 28px;
+      padding: 18px 22px;
+      background: linear-gradient(135deg, rgba(124,58,237,0.07), rgba(99,102,241,0.04));
+      border: 1.5px solid rgba(124,58,237,0.18);
+      border-radius: 18px;
+      box-shadow: 0 6px 20px rgba(124,58,237,0.08);
+    }
+    .story-metric {
+      display: flex; align-items: center; gap: 12px;
+      padding: 6px 4px;
+    }
+    .story-metric-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: rgba(124,58,237,0.1);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .story-metric-body { flex: 1; min-width: 0; }
+    .story-metric-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #8a7fc0;
+      letter-spacing: 0.3px;
+      margin-bottom: 3px;
+      text-transform: uppercase;
+    }
+    .story-metric-values {
+      display: flex; align-items: baseline;
+      gap: 7px; flex-wrap: wrap;
+      font-weight: 800;
+    }
+    .story-metric-before {
+      color: #b4a8c8;
+      font-size: 13px;
+      text-decoration: line-through;
+      text-decoration-color: rgba(180,168,200,0.6);
+    }
+    .story-metric-arrow {
+      color: #7c3aed;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .story-metric-after {
+      color: #5b21b6;
+      font-size: 18px;
+      font-variant-numeric: tabular-nums;
+    }
+    .story-metric-delta {
+      font-size: 10px;
+      font-weight: 800;
+      color: #047857;
+      background: rgba(16,185,129,0.14);
+      padding: 3px 8px;
+      border-radius: 99px;
+      flex-shrink: 0;
+      letter-spacing: 0.3px;
+    }
+    /* active 패널의 after 값 부드러운 펄스 */
+    .story-panel.active .story-metric-after {
+      animation: storyMetricPulse 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    .story-panel.active .story-metric:nth-child(2) .story-metric-after { animation-delay: 0.12s; }
+    .story-panel.active .story-metric:nth-child(3) .story-metric-after { animation-delay: 0.24s; }
+    @keyframes storyMetricPulse {
+      0%   { transform: scale(0.4); opacity: 0; filter: blur(4px); }
+      60%  { transform: scale(1.22); opacity: 1; filter: blur(0); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* 2) Mini UI Mock — 큰 이모지 대체 */
+    .story-mock {
+      width: 100%;
+      max-width: 220px;
+      aspect-ratio: 1;
+      border-radius: 16px;
+      margin: 6px auto 22px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Before mock — 분산된 4타일 콜라주 */
+    .story-card-before .story-mock {
+      background: #ddd6e9;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 10px;
+      padding: 12px;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .story-mock-tile {
+      background: white;
+      border-radius: 9px;
+      padding: 8px 6px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      transform: rotate(var(--r, 0deg));
+      animation: storyTileFloat 4.5s ease-in-out infinite;
+      animation-delay: var(--d, 0s);
+      position: relative;
+    }
+    @keyframes storyTileFloat {
+      0%, 100% { transform: rotate(var(--r, 0deg)) translateY(0); }
+      50%      { transform: rotate(var(--r, 0deg)) translateY(-3px); }
+    }
+    .story-mock-tile-emoji {
+      font-size: 22px;
+      filter: grayscale(0.15);
+      line-height: 1;
+    }
+    .story-mock-tile-emoji img,
+    .story-mock-tile-emoji svg {
+      width: 22px;
+      height: 22px;
+      display: block;
+      filter: none;
+    }
+    /* 에브리타임 — webp 인라인 (base64) */
+    .story-mock-img-everytime {
+      width: 22px;
+      height: 22px;
+      display: block;
+      border-radius: 4px;
+      background: url('data:image/webp;base64,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5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly4TCu6Cou0HRWNB7suXLly5cuXLly5cuXLly5cuXLlysJx/+KeDuVCQT9DhKY7MkbSYIgyYMLxWNB7suXLly5cuXLly5cuXLly5cuXLlYasLk2HowJmfzlGpKLbTqvFvVBcTADorGg92XLly5cuXLly5cuXLlwnxNPCTKRPLSUh1dqMg62Huy5cuXLly5cuXLly5cuXLly5cuXLlwn47dM77QdEyAFeX5oPdly5cuXLly5cuXLly5cuXLly5cuXCXcrGLHOEF/gt6HDOrGg92XLly5cuXLly5cuXLly5cuXLly5WQTYseks8G1RoFJwmAHRWNB7suXLly5cuXLly5cuVhOmyt08Zof2i6a6qcuNiGIxqMkh/GMQ4AR6nqUXgvwHjDSCurGg92XLly5cuXLly5cuXLly5WQnKBd65mGSAU/6kGBIKNjcYYAhDhQEHtjOU2sYAdH/J9F8jFGulVzfaN2ITADorGg92XLly5cuXLly5cuXCIHWqvesHQIZJqUPiQN+IYXisaD3ZcuXLly5cuXLly5cuXLly5cuXKwweL3gtcvWIRsbZcuXLly5cuXLly5cuXLly5cuXLly5crDWoLLwLP4VYgdV5jaOSgLhjpCYAdFY0Huy5cuXLly5cuXLly5WBGR4Ux7q81XFwOmkoEAGJgFgkctA92XLly5cuXLly5cuXLly5cJ+DM/ErqtuQwb02nEFbSoNh43qDC8ViA82pwqJNxB6QFRNKRMXFgB/sQmADsLEeBgyQBEFKxAl4Z0QK1O7QdFY0Huy5cuXLlwrtB0Be4VO6P5trsuXKwNBrOiE3AAUEO6DnLlysfCJtAyt1KVSQLhjpCYAdFY0Huysyeq1iOQuE1gSST1QmAG8GuUdWeTkI6KbJnLl630AA4AHPkUjj3Fjo3qQ5zFcj3ZcuXLly5cuXLhNDEBqxcgepIHAGJvukJKe14kG1h0niURqviI2NsuEprNlcP0amDdpBew9hOkJgB0VjQe7Lly4Sha4Xx9kfLhR7PZxdzpQFsjZVXXEmPfkgjvJYQjkG6VkgXDGmNdkpECjbYhLxyPTMOxU+AB0VjQe7Lly5crRpYGN3maz90C0FYAJaPAg3nKu0HRVU2wgkumsl5TSU5csG98KcwMjTxM+WXaTJEe7Lly5cuXLly5crM5l+nLS+vEweFALR73q7PF9uZ0VjQe7LlwiX/c066Ml4ADeq08iDmw+bKW9UFxMAOisaD3ZWWNWIf3HBuGGgGgjsFNi5DC8VjQe7LhPyHJNhStvlxn8TLPTE3q7QdFY0Huy5cuXLly4WKFMnJyBgLhfvzI1OlQbXO7jxWNB7sJUSDU01+l1dqWTYaBmLS7YmmC4Y6QmAHRWNB7suXLhSdbKBEcHVQkuTkR+GO1NNUO66Fa25pIPdlYZuC78VpuuU92XCKKZUWBfxSU5cuXLly5cuXLly5crIzVDqrDOWjzxoP9xqALKPCTnQ/BbGQrAuWDABuF8FkZi5Acb7suFAr2NTg3k/+tbXT0kHuy5cuXLly5cuXK0aGV2UadqtpAXDGnLAao6PUDka+WRCND7FWHObs3VUHMKZnxbxM+V2iq9pQywhH21dlwl/HRHc7DM4/hFY0Huy5cuXLly5cuXLhSb0OKOeskzXZKukJgB0VjQe7LlwlRIJoLZeWH+vFY0Huy5cuXLly5cuXLhS7TAqkYVw8ieWXLly5cuXLlwkBn7OY6/14rGg92XLly5cuXLly5cuEgBAn2hwhA44qALhjpCYAdFVYP0gJ5y+r/14rGg92XLly5cuXLly5cuXObK1cGan13VeH8J8ADorGg9RASz4+DeRM4Y6QmAHRWNB7suXLly5cuXLnedFP9giUgP+6ytz4xMAOiqrAstREZ5XYhMAOisaD3ZcuXLly5cuXLly5c5u9JjKShSxCrs9xtFqUvu5zLrh8Ce1l6uBWaR250DvcvCxdSU5cuXLly5cuXLly5cuXLly5cuXLlzvPNM0YQ//6QXtpICajnVD3wzncjUCSXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5cuXLly5WAAP76gYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAjaTXyQJYOk8QrtgyN87YkAZm2XXvBfxFAGczy0vvKKbTQZHyO6xFDIQS2VAhZqkTn728rS+7S84RTPv21lJoywZWxCe7LPRYUi3UIANL23NvrP+HN2+aSH7j6KvSMrRjiyljSFIAeGXdO5NhUk7tWcsXc3vY5xdtyos7Fg9LADSXW2LsGyzr6EFeFT+cg3Xm593XyobExR0rdi4kg2E33hwJxYHMPhobTHqcdJ9qi3jxNHqx8GktznyBRhD5ZGNgUZNAHGHt5w9kLzhuVp/3459/620kf0Rk6J6VtbF3kCgMNtUdyuXzOW+fL8XaQUyfB7dmFAHZ5l/7JRcxJkH6KeeaLfik+PegNPs/7ZMrL03UpgCR156k5MoCP7Giku7CNqIe1iu6KwTkvhtKf0TbJPEBP3d1pVCYlRZi2phcOnP6lYF8/Wg2y1X+hPUjhRGAQBfleqGlvhiEAhl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') center/cover no-repeat;
+    }
+    .story-mock-tile-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      line-height: 1.25;
+      color: #6b6580;
+      word-break: keep-all;
+    }
+    .story-mock-tile-badge {
+      position: absolute;
+      top: -4px; right: -4px;
+      font-size: 8.5px;
+      font-weight: 800;
+      background: #ef4444;
+      color: white;
+      padding: 1px 6px;
+      border-radius: 99px;
+      box-shadow: 0 2px 5px rgba(239,68,68,0.4);
+    }
+
+    /* After mock — 실제 제품 UI */
+    .story-card-after .story-mock {
+      background: linear-gradient(135deg, #ffffff 0%, #f3edff 100%);
+      border: 1px solid rgba(124,58,237,0.15);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 8px rgba(124,58,237,0.06);
+    }
+    .story-mock-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 10px; font-weight: 800;
+      color: #5b21b6;
+      padding: 2px 4px;
+    }
+    .story-mock-bar-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 0 0 rgba(16,185,129,0.5);
+      animation: storyMockLive 1.8s ease-in-out infinite;
+    }
+    @keyframes storyMockLive {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+      50%      { box-shadow: 0 0 0 4px rgba(16,185,129,0); }
+    }
+    .story-mock-tag {
+      font-size: 9px;
+      font-weight: 700;
+      background: rgba(124,58,237,0.1);
+      color: #7c3aed;
+      padding: 2px 7px;
+      border-radius: 5px;
+    }
+
+    /* Admin After: KPI + 차트 */
+    .story-mock-kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .story-mock-kpi {
+      background: white;
+      border-radius: 8px;
+      padding: 7px 9px;
+      border: 1px solid rgba(124,58,237,0.08);
+    }
+    .story-mock-kpi-label {
+      font-size: 8.5px;
+      font-weight: 700;
+      color: #8a7fc0;
+      letter-spacing: 0.3px;
+    }
+    .story-mock-kpi-num {
+      font-size: 17px;
+      font-weight: 900;
+      color: #1e1b4b;
+      line-height: 1.1;
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+    .story-mock-chart {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      padding: 6px 6px 4px;
+      background: white;
+      border-radius: 8px;
+      min-height: 48px;
+      border: 1px solid rgba(124,58,237,0.08);
+    }
+    .story-mock-chart-bar {
+      flex: 1;
+      background: linear-gradient(180deg, #8b5cf6, #6366f1);
+      border-radius: 2px 2px 0 0;
+      transform-origin: bottom;
+      animation: storyMockBarGrow 1s cubic-bezier(0.16,1,0.3,1) both;
+    }
+    @keyframes storyMockBarGrow {
+      from { transform: scaleY(0); }
+      to   { transform: scaleY(1); }
+    }
+
+    /* Host After: 신청자 명단 */
+    .story-mock-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      border-radius: 8px;
+      padding: 6px 8px;
+      border: 1px solid rgba(124,58,237,0.06);
+    }
+    .story-mock-avatar {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: white;
+      font-size: 10px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .story-mock-row-text { flex: 1; min-width: 0; }
+    .story-mock-row-name { font-size: 10px; font-weight: 800; color: #1e1b4b; }
+    .story-mock-row-meta { font-size: 8.5px; color: #8a7fc0; font-weight: 600; margin-top: 1px; }
+    .story-mock-check {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: #10b981;
+      color: white;
+      font-size: 9px;
+      font-weight: 900;
+      display: inline-flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* User After: QR 티켓 */
+    .story-mock-ticket {
+      flex: 1;
+      background: linear-gradient(135deg, #7c3aed, #6366f1);
+      border-radius: 10px;
+      padding: 10px;
+      display: flex; flex-direction: column; align-items: center;
+      color: white;
+      gap: 5px;
+      box-shadow: 0 4px 12px rgba(124,58,237,0.25);
+    }
+    .story-mock-ticket-title { font-size: 10.5px; font-weight: 800; }
+    .story-mock-ticket-meta { font-size: 8.5px; opacity: 0.82; }
+    .story-mock-ticket-qr {
+      width: 56px; height: 56px;
+      background: white;
+      border-radius: 6px;
+      padding: 4px;
+      margin: 3px 0;
+    }
+    .story-mock-ticket-qr svg { display: block; width: 100%; height: 100%; }
+    .story-mock-ticket-pill {
+      display: inline-flex; align-items: center; gap: 3px;
+      background: rgba(255,255,255,0.22);
+      color: white;
+      font-size: 9px; font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 99px;
+    }
+
+    /* 3) 타임라인 */
+    .story-timeline {
+      width: 100%;
+      margin-top: 4px;
+      padding: 14px 16px;
+      border-radius: 12px;
+    }
+    .story-card-before .story-timeline {
+      background: rgba(255,255,255,0.55);
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+    .story-card-after .story-timeline {
+      background: linear-gradient(135deg, #f5efff, #ede4ff);
+      border: 1px solid rgba(124,58,237,0.2);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+    }
+    .story-timeline-header {
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      color: #6b63a0;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      text-align: left;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .story-card-after .story-timeline-header { color: #5b21b6; }
+    .story-timeline-list {
+      list-style: none;
+      margin: 0; padding: 0;
+      display: flex; flex-direction: column;
+      gap: 8px;
+      position: relative;
+    }
+    .story-timeline-list::before {
+      content: '';
+      position: absolute;
+      left: 32px;
+      top: 12px;
+      bottom: 12px;
+      width: 1.5px;
+      background: linear-gradient(180deg, rgba(176,168,196,0.45) 0%, rgba(176,168,196,0.1) 100%);
+    }
+    .story-card-after .story-timeline-list::before {
+      background: linear-gradient(180deg, rgba(124,58,237,0.4) 0%, rgba(124,58,237,0.1) 100%);
+    }
+    .story-timeline-list li {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 12.5px;
+      font-weight: 600;
+      line-height: 1.4;
+      position: relative;
+      z-index: 1;
+      text-align: left;
+    }
+    .story-timeline-list .t {
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      font-size: 10px;
+      font-weight: 800;
+      color: white;
+      background: #b0a8c4;
+      padding: 4px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.4px;
+      min-width: 60px;
+      text-align: center;
+      flex-shrink: 0;
+      box-sizing: border-box;
+    }
+    .story-card-after .story-timeline-list .t {
+      background: linear-gradient(135deg, #8b5cf6, #6366f1);
+      box-shadow: 0 2px 6px rgba(124,58,237,0.3);
+    }
+    .story-card-before .story-timeline-list li { color: #6b6580; }
+    .story-card-after .story-timeline-list li { color: #2d1f6e; font-weight: 700; }
+
+    /* After 타임라인의 "회복 시간" 콜아웃 */
+    .story-timeline-saved {
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.05));
+      border: 1px dashed rgba(16,185,129,0.4);
+      border-radius: 9px;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #047857;
+      letter-spacing: -0.2px;
+    }
+    .story-timeline-saved-icon { font-size: 16px; }
+
+    /* 카드 베이스 미세 조정 — 타임라인 가독성 위해 opacity/scale 완화 */
+    .story-card-before {
+      opacity: 1;
+      transform: scale(0.96);
+    }
+    @media (max-width: 760px) {
+      .story-card-before { transform: scale(1); }
+      .story-metrics { grid-template-columns: 1fr; gap: 10px; padding: 14px; }
+      .story-metric { padding: 4px 2px; }
+      .story-mock { max-width: 200px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .story-mock-tile { animation: none; }
+      .story-mock-chart-bar { animation: none; transform: none; }
+      .story-panel.active .story-metric-after { animation: none; }
     }
 
     /* ─────────────────────────────── TEAM ─── */
@@ -4289,105 +4704,372 @@
 
     <!-- 학교 총관리자 -->
     <div id="story-admin" class="story-panel active reveal">
+      <!-- 메트릭 리본 -->
+      <div class="story-metrics">
+        <div class="story-metric">
+          <span class="story-metric-icon">📅</span>
+          <div class="story-metric-body">
+            <div class="story-metric-label">현황 파악</div>
+            <div class="story-metric-values">
+              <span class="story-metric-after">실시간</span>
+            </div>
+          </div>
+          <span class="story-metric-delta">즉시</span>
+        </div>
+        <div class="story-metric">
+          <span class="story-metric-icon">📦</span>
+          <div class="story-metric-body">
+            <div class="story-metric-label">데이터 보존</div>
+            <div class="story-metric-values">
+              <span class="story-metric-after">자동</span>
+            </div>
+          </div>
+          <span class="story-metric-delta">100%</span>
+        </div>
+        <div class="story-metric">
+          <span class="story-metric-icon">⚠️</span>
+          <div class="story-metric-body">
+            <div class="story-metric-label">민원 인지</div>
+            <div class="story-metric-values">
+              <span class="story-metric-after">사전</span>
+            </div>
+          </div>
+          <span class="story-metric-delta">↓ 위험</span>
+        </div>
+      </div>
+
       <div class="story-compare">
         <div class="story-upgrade-badge">Upgrade</div>
 
         <!-- Before -->
         <div class="story-card story-card-before">
           <div class="story-card-label">BEFORE</div>
-          <div class="story-card-title">기존 운영 방식</div>
-          <div class="story-card-sub">수기 · 사후 대응</div>
-          <div class="story-card-visual">🏫</div>
-          <ul class="story-pills">
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>자교 행사 현황 직접 조사</li>
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>참가비 관리 사각지대</li>
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>민원 발생 후 사후 인지</li>
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>행사 이력·데이터 미보존</li>
-          </ul>
+          <div class="story-card-title">분산된 정보, 취합의 어려움</div>
+
+          <div class="story-mock">
+            <div class="story-mock-tile" style="--r:-3deg; --d:0s">
+              <span class="story-mock-tile-emoji">📄</span>
+              <span class="story-mock-tile-label">학생회 보고서</span>
+            </div>
+            <div class="story-mock-tile" style="--r:2deg; --d:1s">
+              <span class="story-mock-tile-emoji"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-label="Excel"><rect width="32" height="32" rx="5" fill="#107C41"/><path d="M10.5 10 L21.5 22 M21.5 10 L10.5 22" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg></span>
+              <span class="story-mock-tile-label">엑셀 v3.xlsx</span>
+            </div>
+            <div class="story-mock-tile" style="--r:-2deg; --d:2s">
+              <span class="story-mock-tile-emoji"><img src="kakao-icon.svg" alt="카카오톡" /></span>
+              <span class="story-mock-tile-label">동아리 카톡</span>
+            </div>
+            <div class="story-mock-tile" style="--r:3deg; --d:3s">
+              <span class="story-mock-tile-emoji">📞</span>
+              <span class="story-mock-tile-label">민원 전화</span>
+              <span class="story-mock-tile-badge">3</span>
+            </div>
+          </div>
+
+          <div class="story-timeline">
+            <div class="story-timeline-header">📅 담당자의 한 주</div>
+            <ol class="story-timeline-list">
+              <li><span class="t">월 09:00</span> 부서별 현황 취합 요청</li>
+              <li><span class="t">수 14:00</span> 학생회·동아리 회신 대기</li>
+              <li><span class="t">금 18:00</span> 엑셀 정리 + 보고서 작성</li>
+              <li><span class="t">다음주</span> 누락 발견 → 재조회</li>
+            </ol>
+          </div>
         </div>
 
         <!-- After -->
         <div class="story-card story-card-after">
           <div class="story-card-label">페스티켓 도입 후</div>
-          <div class="story-card-title">통합 관리 대시보드</div>
-          <div class="story-card-sub">선제적 관리 · 데이터 자동 보존</div>
-          <div class="story-card-visual">📊</div>
-          <ul class="story-pills">
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>전체 행사 현황 실시간 확인</li>
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>참가자 정보·수익 한눈에</li>
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>문제 발생 전 선제 대응</li>
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>연도별 데이터 자동 보존</li>
-          </ul>
+          <div class="story-card-title">통합 대시보드 한 화면</div>
+
+          <div class="story-mock">
+            <div class="story-mock-bar">
+              <span>🏫 학교 대시보드</span>
+              <span class="story-mock-bar-dot"></span>
+            </div>
+            <div class="story-mock-kpi-grid">
+              <div class="story-mock-kpi">
+                <div class="story-mock-kpi-label">진행 행사</div>
+                <div class="story-mock-kpi-num">23</div>
+              </div>
+              <div class="story-mock-kpi">
+                <div class="story-mock-kpi-label">참가자</div>
+                <div class="story-mock-kpi-num">1,247</div>
+              </div>
+            </div>
+            <div class="story-mock-chart">
+              <div class="story-mock-chart-bar" style="height:40%; animation-delay:0.05s"></div>
+              <div class="story-mock-chart-bar" style="height:70%; animation-delay:0.1s"></div>
+              <div class="story-mock-chart-bar" style="height:55%; animation-delay:0.15s"></div>
+              <div class="story-mock-chart-bar" style="height:85%; animation-delay:0.2s"></div>
+              <div class="story-mock-chart-bar" style="height:65%; animation-delay:0.25s"></div>
+              <div class="story-mock-chart-bar" style="height:95%; animation-delay:0.3s"></div>
+            </div>
+          </div>
+
+          <div class="story-timeline">
+            <div class="story-timeline-header">📅 담당자의 한 주</div>
+            <ol class="story-timeline-list">
+              <li><span class="t">언제든</span> 대시보드 1회 열기 → 끝</li>
+            </ol>
+            <div class="story-timeline-saved">
+              <span class="story-timeline-saved-icon">✨</span>
+              <span>전체 데이터 자동 보존 · 시간 단축</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- 인증 주최자 -->
     <div id="story-host" class="story-panel reveal">
+      <div class="story-metrics">
+        <div class="story-metric">
+          <span class="story-metric-icon">⏰</span>
+          <div class="story-metric-body">
+            <div class="story-metric-label">운영 시간 / 하루</div>
+            <div class="story-metric-values">
+              <span class="story-metric-after">단축</span>
+            </div>
+          </div>
+          <span class="story-metric-delta">실시간</span>
+        </div>
+        <div class="story-metric">
+          <span class="story-metric-icon">📋</span>
+          <div class="story-metric-body">
+            <div class="story-metric-label">명단 정리</div>
+            <div class="story-metric-values">
+              <span class="story-metric-after">자동</span>
+            </div>
+          </div>
+          <span class="story-metric-delta">자동화</span>
+        </div>
+        <div class="story-metric">
+          <span class="story-metric-icon">✅</span>
+          <div class="story-metric-body">
+            <div class="story-metric-label">체크인 처리</div>
+            <div class="story-metric-values">
+              <span class="story-metric-after">바로</span>
+            </div>
+          </div>
+          <span class="story-metric-delta">↓ 93%</span>
+        </div>
+      </div>
+
       <div class="story-compare">
         <div class="story-upgrade-badge">Upgrade</div>
 
         <!-- Before -->
         <div class="story-card story-card-before">
           <div class="story-card-label">BEFORE</div>
-          <div class="story-card-title">기존 운영 방식</div>
-          <div class="story-card-sub">여러개의 플랫폼 병행</div>
-          <div class="story-card-visual">📝</div>
-          <ul class="story-pills">
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>에타·구글폼·계좌이체 분산</li>
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>입금 확인 수작업 반복</li>
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>환불 DM·문자로 개별 처리</li>
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>결과 정리 별도 작업 필요</li>
-          </ul>
+          <div class="story-card-title">4개 도구로 분산 운영</div>
+
+          <div class="story-mock">
+            <div class="story-mock-tile" style="--r:-3deg; --d:0s">
+              <span class="story-mock-tile-emoji"><img src="kakao-icon.svg" alt="카카오톡" /></span>
+              <span class="story-mock-tile-label">카카오톡</span>
+              <span class="story-mock-tile-badge">47</span>
+            </div>
+            <div class="story-mock-tile" style="--r:2deg; --d:1s">
+              <span class="story-mock-tile-emoji"><img src="https://cdn.simpleicons.org/googleforms/7248B9" alt="Google Forms" /></span>
+              <span class="story-mock-tile-label">구글폼</span>
+            </div>
+            <div class="story-mock-tile" style="--r:-2deg; --d:2s">
+              <span class="story-mock-tile-emoji"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-label="Excel"><rect width="32" height="32" rx="5" fill="#107C41"/><path d="M10.5 10 L21.5 22 M21.5 10 L10.5 22" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg></span>
+              <span class="story-mock-tile-label">엑셀 명단</span>
+            </div>
+            <div class="story-mock-tile" style="--r:3deg; --d:3s">
+              <span class="story-mock-tile-emoji"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-label="계좌이체"><rect width="32" height="32" rx="5" fill="#1f2937"/><text x="16" y="23" text-anchor="middle" font-family="'Arial Black',sans-serif" font-size="18" font-weight="900" fill="#fbbf24">₩</text></svg></span>
+              <span class="story-mock-tile-label">계좌이체</span>
+              <span class="story-mock-tile-badge">14</span>
+            </div>
+          </div>
+
+          <div class="story-timeline">
+            <div class="story-timeline-header">📅 주최자의 하루</div>
+            <ol class="story-timeline-list">
+              <li><span class="t">09:00</span> 신청 카톡 답장 60+건</li>
+              <li><span class="t">11:00</span> 엑셀 명단 수기 입력</li>
+              <li><span class="t">22:00</span> 계좌 입금 14건 대조</li>
+              <li><span class="t">02:00</span> 최종 명단 부원 송부</li>
+            </ol>
+          </div>
         </div>
 
         <!-- After -->
         <div class="story-card story-card-after">
           <div class="story-card-label">페스티켓 도입 후</div>
-          <div class="story-card-title">올인원 행사 운영</div>
-          <div class="story-card-sub">개설부터 마감까지 한 번에</div>
-          <div class="story-card-visual">🚀</div>
-          <ul class="story-pills">
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>홍보·신청·결제·명단 통합</li>
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>토스페이먼츠 자동 정산</li>
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>화이트리스트로 회비 필터</li>
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>CSV·PDF 리포트 원스톱</li>
-          </ul>
+          <div class="story-card-title">대시보드 한 번이면 끝</div>
+
+          <div class="story-mock">
+            <div class="story-mock-bar">
+              <span>📋 신청자 명단</span>
+              <span class="story-mock-tag">CSV ↓</span>
+            </div>
+            <div class="story-mock-row">
+              <span class="story-mock-avatar" style="background:#8b5cf6">김</span>
+              <div class="story-mock-row-text">
+                <div class="story-mock-row-name">김민지</div>
+                <div class="story-mock-row-meta">결제 완료 · QR 발급</div>
+              </div>
+              <span class="story-mock-check">✓</span>
+            </div>
+            <div class="story-mock-row">
+              <span class="story-mock-avatar" style="background:#ec4899">이</span>
+              <div class="story-mock-row-text">
+                <div class="story-mock-row-name">이도현</div>
+                <div class="story-mock-row-meta">결제 완료 · 체크인</div>
+              </div>
+              <span class="story-mock-check">✓</span>
+            </div>
+            <div class="story-mock-row">
+              <span class="story-mock-avatar" style="background:#10b981">박</span>
+              <div class="story-mock-row-text">
+                <div class="story-mock-row-name">박서윤</div>
+                <div class="story-mock-row-meta">결제 완료 · QR 발급</div>
+              </div>
+              <span class="story-mock-check">✓</span>
+            </div>
+          </div>
+
+          <div class="story-timeline">
+            <div class="story-timeline-header">📅 주최자의 하루</div>
+            <ol class="story-timeline-list">
+              <li><span class="t">09:00</span> 대시보드 1회 확인 → 끝</li>
+            </ol>
+            <div class="story-timeline-saved">
+              <span class="story-timeline-saved-icon">✨</span>
+              <span>신청·결제·명단·체크인 모두 자동</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- 참여자 -->
     <div id="story-user" class="story-panel reveal">
+      <div class="story-metrics">
+        <div class="story-metric">
+          <span class="story-metric-icon">🔍</span>
+          <div class="story-metric-body">
+            <div class="story-metric-label">행사 정보</div>
+            <div class="story-metric-values">
+              <span class="story-metric-after">한 화면</span>
+            </div>
+          </div>
+          <span class="story-metric-delta">통합</span>
+        </div>
+        <div class="story-metric">
+          <span class="story-metric-icon">🎫</span>
+          <div class="story-metric-body">
+            <div class="story-metric-label">티켓 수령</div>
+            <div class="story-metric-values">
+              <span class="story-metric-after">즉시 QR 발급</span>
+            </div>
+          </div>
+          <span class="story-metric-delta">즉시</span>
+        </div>
+        <div class="story-metric">
+          <span class="story-metric-icon">✅</span>
+          <div class="story-metric-body">
+            <div class="story-metric-label">현장 입장</div>
+            <div class="story-metric-values">
+              <span class="story-metric-after">QR 스캔</span>
+            </div>
+          </div>
+          <span class="story-metric-delta">즉시</span>
+        </div>
+      </div>
+
       <div class="story-compare">
         <div class="story-upgrade-badge">Upgrade</div>
 
         <!-- Before -->
         <div class="story-card story-card-before">
           <div class="story-card-label">BEFORE</div>
-          <div class="story-card-title">기존 참여 방식</div>
-          <div class="story-card-sub">분산된 정보 · 번거로운 절차</div>
-          <div class="story-card-visual">😩</div>
-          <ul class="story-pills">
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>에타·인스타·카톡 다 뒤져야</li>
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>행사마다 신청 방식 제각각</li>
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>폼·이체·캡쳐 반복 번거로움</li>
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3 L9 9 M9 3 L3 9"/></svg></span>환불은 주최자 직접 연락</li>
-          </ul>
+          <div class="story-card-title">신청 한 번에 왔다갔다</div>
+
+          <div class="story-mock">
+            <div class="story-mock-tile" style="--r:-3deg; --d:0s">
+              <span class="story-mock-tile-emoji"><span class="story-mock-img-everytime" role="img" aria-label="에브리타임"></span></span>
+              <span class="story-mock-tile-label">에브리타임</span>
+            </div>
+            <div class="story-mock-tile" style="--r:2deg; --d:1s">
+              <span class="story-mock-tile-emoji"><img src="https://cdn.simpleicons.org/instagram/E4405F" alt="Instagram" /></span>
+              <span class="story-mock-tile-label">인스타그램</span>
+            </div>
+            <div class="story-mock-tile" style="--r:-2deg; --d:2s">
+              <span class="story-mock-tile-emoji"><img src="https://cdn.simpleicons.org/googleforms/7248B9" alt="Google Forms" /></span>
+              <span class="story-mock-tile-label">구글폼</span>
+            </div>
+            <div class="story-mock-tile" style="--r:3deg; --d:3s">
+              <span class="story-mock-tile-emoji">💸</span>
+              <span class="story-mock-tile-label">이체 + 캡쳐</span>
+            </div>
+          </div>
+
+          <div class="story-timeline">
+            <div class="story-timeline-header">📅 신청부터 입장까지</div>
+            <ol class="story-timeline-list">
+              <li><span class="t">D-7</span> 에타에서 행사 정보 탐색</li>
+              <li><span class="t">D-7</span> 인스타 DM으로 방식 문의</li>
+              <li><span class="t">D-6</span> 구글폼 작성 + 이체</li>
+              <li><span class="t">D-6</span> 캡쳐 카톡 전송 · 입금 대기</li>
+              <li><span class="t">D-day</span> 현장 종이 명단 대기</li>
+            </ol>
+          </div>
         </div>
 
         <!-- After -->
         <div class="story-card story-card-after">
           <div class="story-card-label">페스티켓 도입 후</div>
-          <div class="story-card-title">클릭 한 번에 입장까지</div>
-          <div class="story-card-sub">신청 · 결제 · 입장 · 환불 자동</div>
-          <div class="story-card-visual">🎫</div>
-          <ul class="story-pills">
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>학교 행사 한 곳에 모아보기</li>
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>클릭 한 번에 QR 티켓 발급</li>
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>QR 스캔으로 즉시 입장</li>
-            <li><span class="story-pill-icon"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5 L5 9 L9.5 3.5"/></svg></span>취소 버튼 하나로 환불</li>
-          </ul>
+          <div class="story-card-title">클릭 → QR → 입장</div>
+
+          <div class="story-mock">
+            <div class="story-mock-bar">
+              <span>🎟️ 내 티켓</span>
+              <span class="story-mock-bar-dot"></span>
+            </div>
+            <div class="story-mock-ticket">
+              <div class="story-mock-ticket-title">국민대 여름 축제</div>
+              <div class="story-mock-ticket-meta">2026.05.22 · 운동장</div>
+              <div class="story-mock-ticket-qr">
+                <svg viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+                  <rect x="0" y="0" width="7" height="7" fill="#1e1b4b"/>
+                  <rect x="1" y="1" width="5" height="5" fill="#ffffff"/>
+                  <rect x="2" y="2" width="3" height="3" fill="#1e1b4b"/>
+                  <rect x="14" y="0" width="7" height="7" fill="#1e1b4b"/>
+                  <rect x="15" y="1" width="5" height="5" fill="#ffffff"/>
+                  <rect x="16" y="2" width="3" height="3" fill="#1e1b4b"/>
+                  <rect x="0" y="14" width="7" height="7" fill="#1e1b4b"/>
+                  <rect x="1" y="15" width="5" height="5" fill="#ffffff"/>
+                  <rect x="2" y="16" width="3" height="3" fill="#1e1b4b"/>
+                  <rect x="8" y="8" width="2" height="2" fill="#1e1b4b"/>
+                  <rect x="11" y="9" width="2" height="2" fill="#1e1b4b"/>
+                  <rect x="9" y="12" width="2" height="2" fill="#1e1b4b"/>
+                  <rect x="13" y="11" width="2" height="2" fill="#1e1b4b"/>
+                  <rect x="15" y="14" width="2" height="2" fill="#1e1b4b"/>
+                  <rect x="11" y="16" width="2" height="2" fill="#1e1b4b"/>
+                  <rect x="18" y="10" width="2" height="2" fill="#1e1b4b"/>
+                  <rect x="8" y="14" width="2" height="2" fill="#1e1b4b"/>
+                  <rect x="16" y="18" width="2" height="2" fill="#1e1b4b"/>
+                </svg>
+              </div>
+              <span class="story-mock-ticket-pill">✓ 입장 가능</span>
+            </div>
+          </div>
+
+          <div class="story-timeline">
+            <div class="story-timeline-header">📅 신청부터 입장까지</div>
+            <ol class="story-timeline-list">
+              <li><span class="t">3초</span> 행사 검색 → 클릭 → QR 발급</li>
+              <li><span class="t">D-day</span> QR 스캔 → 5초 입장</li>
+            </ol>
+            <div class="story-timeline-saved">
+              <span class="story-timeline-saved-icon">✨</span>
+              <span>간편 탑색, 행사 신청, 결제까지 앱 1개로 통합</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
